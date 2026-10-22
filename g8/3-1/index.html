@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>繩波波速驗證站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: 分割畫面 — 左（直向時為上）固定 CoSci 模擬器，右（下）可捲動的學習單；學生不用切換分頁 */
+:root{
+  --bg:#EFF2F5; --panel:#FFFFFF; --ink:#1B2430; --muted:#566273; --line:#CBD3DD;
+  --wave:#2C5D8A; --wave-soft:#DCE7F2; --rope:#8A4B22; --rope-soft:#F4E6DA;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:8px max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));padding-top:max(8px,env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.top .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--wave);font-weight:700}
+.top h1{font-family:var(--display);font-size:clamp(19px,2.6vw,24px);margin:0;line-height:1.3}
+.split{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(360px,1fr);min-height:0}
+@media (max-width:1000px), (orientation:portrait){.split{grid-template-columns:1fr;grid-template-rows:minmax(0,52fr) minmax(0,48fr)}}
+.sim{position:relative;min-height:0;background:var(--panel);border-right:1px solid var(--line);display:grid;grid-template-rows:minmax(0,1fr) auto}
+@media (max-width:1000px), (orientation:portrait){.sim{border-right:0;border-bottom:3px solid var(--rope)}}
+.sim iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+.simbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);padding:4px 12px;border-top:1px solid var(--line)}
+.simbar a{color:var(--wave);font-weight:700}
+.sheet{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+.sheet-in{display:grid;gap:16px;padding:16px max(14px,env(safe-area-inset-right,0px)) 40px max(14px,env(safe-area-inset-left,0px));padding-bottom:max(40px,env(safe-area-inset-bottom,0px))}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+h2{font-size:17px;margin:0;display:flex;gap:10px;align-items:baseline;text-wrap:balance}
+h2 .n{font-family:var(--mono);font-size:13px;color:var(--panel);background:var(--ink);border-radius:6px;padding:1px 8px;flex:none}
+p{margin:0}
+.opts{display:grid;gap:8px}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:start;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg);line-height:1.55}
+.opt b{font-family:var(--mono);font-size:17px;display:grid;place-items:center;height:32px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}
+.opt[aria-pressed="true"]{border-color:var(--wave);background:var(--wave-soft)}
+.opt[aria-pressed="true"] b{background:var(--wave);color:var(--panel);border-color:var(--wave)}
+.chips{display:grid;gap:8px}
+.chip{all:unset;box-sizing:border-box;cursor:pointer;padding:9px 12px;border:2px solid var(--line);border-radius:10px;background:var(--bg);line-height:1.5}
+.chip[aria-pressed="true"]{border-color:var(--rope);background:var(--rope-soft);font-weight:700}
+.opt:focus-visible,.chip:focus-visible,.btn:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.card{border-left:5px solid var(--rope);background:var(--rope-soft);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.card .k{font-size:13px;letter-spacing:.06em;color:var(--rope);font-weight:700}
+.card ol{margin:0;padding-left:1.3em;display:grid;gap:4px}
+.empty{color:var(--muted);border:2px dashed var(--line);border-radius:10px;padding:12px}
+details.howto{border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px 12px}
+details.howto summary{cursor:pointer;font-weight:700}
+details.howto ol{margin:6px 0 0;padding-left:1.3em;display:grid;gap:3px}
+.ui{font-weight:700;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:0 5px;white-space:nowrap}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;cursor:pointer;border:2px solid var(--wave);font-family:var(--body)}
+.btn.primary{background:var(--wave);color:var(--panel)}
+.btn.ghost{background:transparent;color:var(--wave)}
+.btn.small{min-height:38px;font-size:14px;padding:0 12px}
+.log{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:center;white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:12px;line-height:1.35}
+td.calc{font-family:var(--mono);font-weight:700;color:var(--wave)}
+td input,td select{font:inherit;font-size:16px;width:4.2em;padding:5px;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:center}
+td select{width:auto}
+.del{all:unset;cursor:pointer;color:var(--muted);font-size:13px;padding:4px}
+textarea{width:100%;min-height:64px;font:inherit;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);resize:vertical}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--body);font-size:14px;line-height:1.65;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:240px;overflow:auto}
+details.pv summary{cursor:pointer;color:var(--muted);font-size:14px}
+.status{min-height:1.4em;color:var(--wave);font-weight:700}
+.note{font-size:13px;color:var(--muted)}
+.miss{font-size:14px;color:var(--rope);font-weight:700}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="eyebrow">八年級自然・3-1 波的傳播與特徵</span>
+    <h1>怎樣才能讓繩波傳得更快？</h1>
+  </div>
+
+  <div class="split">
+    <div class="sim">
+      <iframe id="simFrame" src="https://cosci.tw/zh_TW/run/?name=XAZyrd1603352481056" title="CoSci 繩波-振幅頻率與波速模擬器" allow="fullscreen"></iframe>
+      <div class="simbar">
+        <span>CoSci 繩波-振幅頻率與波速</span>
+        <a href="https://cosci.tw/zh_TW/run/?name=XAZyrd1603352481056" target="_blank" rel="noopener">模擬器沒出現？改在新分頁開啟</a>
+      </div>
+    </div>
+
+    <div class="sheet"><div class="sheet-in">
+
+      <section aria-labelledby="s1">
+        <h2 id="s1"><span class="n">1</span>讀題，選出你的直覺答案</h2>
+        <p id="stem"></p>
+        <div class="opts" id="opts" role="group" aria-label="選項"></div>
+        <div id="reasonArea" hidden>
+          <p class="miss" id="reasonQ">你是不是這樣想？點一個最接近的</p>
+          <div class="chips" id="chips" role="group" aria-label="理由"></div>
+          <textarea id="reasonOther" aria-label="我的其他理由" placeholder="都不像？寫下你自己的理由（可不填）"></textarea>
+        </div>
+      </section>
+
+      <section aria-labelledby="s2">
+        <h2 id="s2"><span class="n">2</span>用模擬器做你的試驗</h2>
+        <details class="howto" id="howto">
+          <summary>怎麼量「波傳到 600 公分花幾秒」？</summary>
+          <ol>
+            <li>先按紅色的<span class="ui">重置</span>。</li>
+            <li>選<span class="ui">粗繩</span>或<span class="ui">細繩</span>，用 <span class="ui">A</span> 調振幅、<span class="ui">f</span> 調手擺動的頻率（點 ＋／－ 最準）。</li>
+            <li>暫停模式選<span class="ui">波傳遞到600公分處</span>，按<span class="ui">執行</span>。</li>
+            <li>藍色箭頭到 600 公分會自動停，讀碼錶秒數。</li>
+            <li>數 0～600 公分之間有幾個完整的波（一個波峰加一個波谷算一個）。</li>
+          </ol>
+        </details>
+        <div id="cardArea"></div>
+        <div class="log">
+          <table>
+            <thead><tr><th>試驗</th><th>繩子</th><th>A<br>(公分)</th><th>f<br>(Hz)</th><th>時間<br>(秒)</th><th>波數<br>(個)</th><th>波速<br>(公分/秒)</th><th>波長<br>(公分)</th><th></th></tr></thead>
+            <tbody id="logBody"></tbody>
+          </table>
+        </div>
+        <div class="row"><button class="btn small ghost" id="addRow" type="button">＋ 自己多做一組</button></div>
+        <p class="note">波速 ＝ 600 ÷ 時間；波長 ＝ 600 ÷ 波數，填好會自動算。</p>
+      </section>
+
+      <section aria-labelledby="s3">
+        <h2 id="s3"><span class="n">3</span>帶著數據去問 e度</h2>
+        <p>不用自己寫結論。按下複製，到因材網的 e度 貼上，e度 會一步一步帶你看懂這些數據。</p>
+        <div class="row">
+          <button class="btn primary" id="copy" type="button">複製提示詞</button>
+          <a class="btn ghost" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網 e度</a>
+        </div>
+        <p class="status" id="status" role="status"></p>
+        <details class="pv"><summary>看看提示詞內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞預覽"></pre></details>
+        <p class="note">iPad 小技巧：把因材網拖到螢幕右側開成分割畫面，就能一邊看數據、一邊回答 e度。</p>
+      </section>
+
+    </div></div>
+  </div>
+</div>
+
+<script>
+const STEM = "小明在操場甩一條粗繩做出繩波。一開始他的手每秒上下擺動 0.5 次，振幅 50 公分。他想讓波「更快」傳到繩子的另一端，下列哪一種做法可以做到？";
+const OPTS = {
+  A:"手擺動得更快，把頻率變成每秒 1 次",
+  B:"手擺動得更用力，把振幅加大到 200 公分",
+  C:"換成同樣材質、但比較細的繩子",
+  D:"以上三種做法都可以讓波傳得更快"
+};
+/* 各選項最可能的想法（依常見迷思預測），學生點選後帶入提示詞 */
+const REASONS = {
+  A:["手擺得越快，波就跑得越快","頻率越高，代表波前進得越快"],
+  B:["用力甩，波的能量比較大，所以跑得比較快","波越高（振幅越大），走得越快"],
+  C:["細繩比較輕，波比較容易傳過去","換了繩子（介質），波速才會改變"],
+  D:["手擺快、用力甩、換細繩都會讓波「更強」，所以都會更快","只要改變任何條件，波速都會跟著改變"]
+};
+/* 給 e度 的引導重點（依選項） */
+const FOCUS = {
+  A:"先引導我比較「頻率加倍」前後的時間與波速，再引導我注意 600 公分內波的個數和波長怎麼變。",
+  B:"先引導我比較「振幅加大」前後的時間與波速，讓我分辨「波比較高」和「波比較快」是不是同一件事。",
+  C:"先引導我比較粗繩和細繩的時間與波速，再追問我：為什麼甩得快或甩得用力不行，換繩子卻可以？",
+  D:"引導我逐一比較三種做法和起點的時間，找出哪幾種真的讓時間變短、哪幾種沒有。"
+};
+const BASE = {rope:"粗繩",A:50,f:0.5,label:"起點"};
+const TRIALS = {
+  A:[BASE,{rope:"粗繩",A:50,f:1,label:"頻率加倍"}],
+  B:[BASE,{rope:"粗繩",A:200,f:0.5,label:"振幅加大"}],
+  C:[BASE,{rope:"細繩",A:50,f:0.5,label:"換細繩"}],
+  D:[BASE,{rope:"粗繩",A:50,f:1,label:"頻率加倍"},{rope:"粗繩",A:200,f:0.5,label:"振幅加大"},{rope:"細繩",A:50,f:0.5,label:"換細繩"}]
+};
+const LOOK = {
+  A:"頻率變 2 倍，傳到 600 公分的時間有變嗎？波的個數變了嗎？",
+  B:"振幅變大、波變高了，時間有變短嗎？",
+  C:"換成細繩後，時間變了嗎？",
+  D:"三種做法裡，哪幾種真的讓時間變短？"
+};
+const $=id=>document.getElementById(id);
+let st={pick:null,reason:null,other:"",rows:[]};
+const KEY="wave31-v1";
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&s.pick)st=s;}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
+
+$("stem").textContent=STEM;
+Object.entries(OPTS).forEach(([k,t])=>{
+  const b=document.createElement("button");b.type="button";b.className="opt";b.id="opt"+k;b.setAttribute("aria-pressed","false");
+  b.innerHTML=`<b>${k}</b><span></span>`;b.querySelector("span").textContent=t;
+  b.addEventListener("click",()=>{ if(st.pick===k) return;
+    st.pick=k;st.reason=null;st.rows=TRIALS[k].map(t=>({...t,t:"",n:"",fixed:true}));save();renderAll();});
+  $("opts").appendChild(b);
+});
+const num=v=>{const x=parseFloat(v);return isFinite(x)&&x>0?x:null;};
+const fmt=x=>x==null?"—":(Math.round(x*10)/10).toString();
+const vOf=r=>{const t=num(r.t);return t?600/t:null;};
+const lOf=r=>{const n=num(r.n);return n?600/n:null;};
+
+function renderReason(){
+  $("reasonArea").hidden=!st.pick;
+  const c=$("chips");c.innerHTML="";
+  if(!st.pick)return;
+  REASONS[st.pick].forEach((t,i)=>{
+    const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=t;
+    b.setAttribute("aria-pressed",String(st.reason===i));
+    b.addEventListener("click",()=>{st.reason=(st.reason===i?null:i);save();renderReason();refreshPrompt();});
+    c.appendChild(b);
+  });
+  $("reasonOther").value=st.other||"";
+}
+function renderRows(){
+  const tb=$("logBody");tb.innerHTML="";
+  if(!st.rows.length){tb.innerHTML=`<tr><td colspan="9" class="note" style="text-align:left;white-space:normal">選好答案後，這裡會出現你要做的試驗。</td></tr>`;return;}
+  st.rows.forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    const sel=(id,vals,cur,lab)=>`<select id="${id}${i}" aria-label="${lab}">${vals.map(v=>`<option${String(cur)===String(v)?" selected":""}>${v}</option>`).join("")}</select>`;
+    tr.innerHTML=`<td>${i+1}<br><span class="note">${r.label}</span></td>
+      <td>${r.fixed?r.rope:sel("rope",["粗繩","細繩"],r.rope,"繩子")}</td>
+      <td>${r.fixed?r.A:sel("A",[50,100,150,200],r.A,"振幅")}</td>
+      <td>${r.fixed?r.f:sel("f",[0.25,0.5,0.75,1],r.f,"頻率")}</td>
+      <td><input id="t${i}" inputmode="decimal" aria-label="第${i+1}組時間" value="${r.t}"></td>
+      <td><input id="n${i}" inputmode="decimal" aria-label="第${i+1}組波數" value="${r.n}"></td>
+      <td class="calc" id="v${i}">${fmt(vOf(r))}</td><td class="calc" id="l${i}">${fmt(lOf(r))}</td>
+      <td>${r.fixed?"":`<button class="del" type="button" aria-label="刪除第${i+1}組">刪除</button>`}</td>`;
+    tb.appendChild(tr);
+    const upd=()=>{$("v"+i).textContent=fmt(vOf(r));$("l"+i).textContent=fmt(lOf(r));save();refreshPrompt();};
+    tr.querySelector("#t"+i).addEventListener("input",e=>{r.t=e.target.value;upd();});
+    tr.querySelector("#n"+i).addEventListener("input",e=>{r.n=e.target.value;upd();});
+    if(!r.fixed){
+      tr.querySelector("#rope"+i).addEventListener("change",e=>{r.rope=e.target.value;upd();});
+      tr.querySelector("#A"+i).addEventListener("change",e=>{r.A=+e.target.value;upd();});
+      tr.querySelector("#f"+i).addEventListener("change",e=>{r.f=+e.target.value;upd();});
+      tr.querySelector(".del").addEventListener("click",()=>{st.rows.splice(i,1);save();renderRows();refreshPrompt();});
+    }
+  });
+}
+function renderCard(){
+  if(!st.pick){$("cardArea").innerHTML=`<div class="empty">先在第 1 步選答案，這裡會出現你要做的試驗。</div>`;return;}
+  const steps=TRIALS[st.pick].map((t,i)=>`<li>試驗 ${i+1}（${t.label}）：<strong>${t.rope}</strong>、A ＝ <strong>${t.A}</strong>、f ＝ <strong>${t.f}</strong></li>`).join("");
+  $("cardArea").innerHTML=`<div class="card"><div class="k">選項 ${st.pick} 的試驗・每一組都先按「重置」再設定</div><ol>${steps}</ol><div><strong>邊做邊看：</strong>${LOOK[st.pick]}</div></div>`;
+}
+function renderAll(){
+  document.querySelectorAll(".opt").forEach(b=>b.setAttribute("aria-pressed",String(b.id==="opt"+st.pick)));
+  renderReason();renderCard();renderRows();refreshPrompt();$("status").textContent="";
+}
+function reasonText(){
+  const parts=[];
+  if(st.pick&&st.reason!=null) parts.push(REASONS[st.pick][st.reason]);
+  if((st.other||"").trim()) parts.push(st.other.trim());
+  return parts.length?parts.join("；"):"我說不太出來，只是直覺";
+}
+function tableText(){
+  const done=st.rows.filter(r=>num(r.t)||num(r.n));
+  if(!done.length) return "（我還沒有填數據）";
+  return done.map(r=>`試驗${st.rows.indexOf(r)+1}（${r.label}）：${r.rope}、振幅A＝${r.A}公分、頻率f＝${r.f}Hz → 傳到600公分花 ${r.t||"？"} 秒；600公分內有 ${r.n||"？"} 個完整的波`).join("\n");
+}
+function promptText(){
+  return `我是國中八年級學生，正在學「波的傳播與特徵」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我從數據裡找到結論。
+
+【題目】${STEM}
+${Object.entries(OPTS).map(([k,t])=>`(${k}) ${t}`).join("\n")}
+
+【我的選擇】我選（${st.pick||"＿"}），因為：${reasonText()}
+
+【我在模擬器量到的數據】（CoSci「繩波-振幅頻率與波速」，量波從手傳到 600 公分處花的時間）
+${tableText()}
+
+【請你這樣帶我】
+1. 我還不太會自己從數據看出結論，請你帶著我看：先問我兩組試驗「改了什麼條件」，再問我「時間有沒有變」，再請我自己算波速（波速＝距離÷時間）。
+2. ${st.pick?FOCUS[st.pick]:"根據我選的選項，引導我用數據檢查。"}
+3. 讓我自己用數據判斷我選的選項對不對，不要直接公布答案。
+4. 每次只問一個問題，用國中生聽得懂的話，回答簡短。
+5. 如果我的數據還沒填、或看起來怪怪的，請我回模擬器再量一次。
+6. 就算我判斷對了，也要追問另外三個選項各錯在哪裡，特別是頻率變快時，到底是什麼改變了。
+7. 最後請我用一句話說明：波速是由什麼決定的？`;
+}
+function refreshPrompt(){ $("prompt").textContent=promptText(); }
+$("reasonOther").addEventListener("input",e=>{st.other=e.target.value;save();refreshPrompt();});
+$("addRow").addEventListener("click",()=>{st.rows.push({rope:"粗繩",A:50,f:0.5,label:"自己設計",t:"",n:"",fixed:false});save();renderRows();refreshPrompt();});
+$("copy").addEventListener("click",()=>{
+  if(!st.pick){$("status").textContent="請先在第 1 步選一個答案。";return;}
+  const txt=promptText();
+  const fb=()=>{document.querySelector("details.pv").open=true;const rg=document.createRange();rg.selectNodeContents($("prompt"));const s=getSelection();s.removeAllRanges();s.addRange(rg);$("status").textContent="已幫你選取文字，請長按後選「拷貝」。";};
+  try{navigator.clipboard.writeText(txt).then(()=>{$("status").textContent="已複製！到 e度 對話框貼上就可以開始。";},fb);}catch(err){fb();}
+});
+renderAll();
+</script>
+</body>
+</html>
