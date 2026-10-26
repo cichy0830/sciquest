@@ -119,11 +119,12 @@ const SIM_MAIN="https://phet.colorado.edu/sims/html/bending-light/latest/bending
 const SIM_BACKUP="bending-light_all.html?locale=zh_TW&screens=1";
 const GATE_CODE="43"; /* 老師示範完公布的通關數字 */
 
-/* ===== 3 句迷思是非題（正解只在教師資料，網頁不顯示） ===== */
+/* ===== 4 句迷思是非題（正解只在教師資料，網頁不顯示） ===== */
 const STMTS=[
-  "光由空氣斜射入水中，折射線會偏向法線。",
-  "光由水中斜射入空氣，折射角比入射角小。",
-  "加水後看得到杯底的硬幣，是因為眼睛發出的光被水面偏折，才照到硬幣。"
+  "光從空氣進入水中，因為光的直進性，不會發生偏折。",
+  "光由水中斜射入空氣時，折射角比入射角小。",
+  "光沿原來的折射線反方向射回去，會沿原來的入射線射出。",
+  "加水後看得到硬幣，是因為眼睛發出的光被水面偏折。"
 ];
 const N={空氣:1.00,水:1.33};
 const deg=r=>r*180/Math.PI, rad=d=>d*Math.PI/180;
@@ -131,7 +132,7 @@ function snell(i,n1,n2){const s=n1*Math.sin(rad(i))/n2;return Math.abs(s)>1?null
 const TOL=4;
 
 /* ===== 狀態（存在這台 iPad 的瀏覽器裡） ===== */
-const KEY="refr43-v2";
+const KEY="refr43-v3";
 let st={seat:"",watched:false,pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=Object.assign(st,s);}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
@@ -180,45 +181,53 @@ add({k:"等一下",left:"sim",render:()=>`
     const f=$("fb");f.className="fb"+(st.gate?" good":"");f.textContent=st.gate?"可以開始了！":"";}),
   ok:()=>st.gate});
 
-/* --- 第 1 組：空氣 → 水 --- */
-add({k:"第 1 組・空氣→水",left:"sim",render:()=>`
+/* --- 空氣 → 水：第 1 組（垂直）、第 2 組（斜射） --- */
+add({k:"空氣→水",left:"sim",render:()=>`
   <h2>確認模擬器：上方是 <span class="ui">空氣</span>，下方是 <span class="ui">水</span></h2>
   <p>模擬器的上、下兩個方框各有一個選單，確認上面選<span class="ui">空氣</span>、下面選<span class="ui">水</span>。</p>`,check:"設定好了"});
-add({k:"第 1 組・空氣→水",left:"sim",render:()=>`
+add({k:"空氣→水",left:"sim",render:()=>`
   <h2>打開雷射筆</h2>
   <p>按雷射筆上的<span class="ui">紅色按鈕</span>，光線射向水面。</p>
   <p class="note">中間那條虛線就是<b>法線</b>：通過入射點、垂直界面的直線。</p>`,check:"看到光線了"});
-add({k:"第 1 組・空氣→水",left:"sim",render:()=>`
+add({k:"空氣→水",left:"sim",render:()=>`
+  <h2>移動光源，看光有沒有轉彎</h2>
+  <p>拖動雷射筆，從<b>正上方</b>慢慢往旁邊移，再移回來。看進到水裡的光線：</p>
+  ${choice("o0",[["only","只有從正上方射下時不轉彎"],["never","不管怎麼射都不轉彎"],["always","不管怎麼射都會轉彎"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o0","only","對！只有垂直射入時不偏折，斜斜射入都會偏折。","再移動一次雷射筆，特別看看正上方和斜射時有什麼不同。"),ok:()=>st.obs.o0==="only"});
+add({k:"空氣→水",left:"sim",render:()=>`
   <h2>放好量角器</h2>
   <p>從模擬器的工具箱把<span class="ui">量角器</span>拖出來，<b>中心</b>對準光打到水面的那一點。</p>
   <div class="tip"><span><b>0°</b> 要對準<b>法線</b>（虛線）</span><span><b>90°</b> 要對齊<b>交界面</b>（水面）</span></div>
   <p class="note">角度一律從法線量起，不是從水面量。</p>`,check:"0° 對法線、90° 對水面了"});
-add({k:"第 1 組・空氣→水",left:"sim",render:()=>angleStep("w",`拖動雷射筆，讓<b>入射角</b>大約 <b>45°</b>，再讀出水中的<b>折射角</b>。`,"空氣","水",true),
+add({k:"第 1 組・垂直射入",left:"sim",render:()=>angleStep("v",`把雷射筆拖到<b>正上方</b>，讓光<b>垂直</b>射入水面（入射角 0°），讀出折射角。`,"空氣","水",false,0),
+  bind:()=>bindAngles("v","空氣","水",false,0),ok:()=>passed("v")});
+add({k:"第 2 組・斜射入水",left:"sim",render:()=>angleStep("w",`拖動雷射筆，讓<b>入射角</b>大約 <b>45°</b>，再讀出水中的<b>折射角</b>。`,"空氣","水",true),
   bind:()=>bindAngles("w","空氣","水",true),ok:()=>passed("w")});
-add({k:"第 1 組・空氣→水",left:"sim",render:()=>`
-  <h2>看一看：進到水裡的光線</h2>
+add({k:"第 2 組・斜射入水",left:"sim",render:()=>`
+  <h2>看一看：斜射進水裡的光線</h2>
   <p>入射角 <b>${r1(num(st.d.w_i))}°</b>、折射角 <b>${r1(num(st.d.w_r))}°</b>。折射線跟入射線比起來：</p>
   ${choice("o1",[["toward","偏向法線（更靠近虛線）"],["away","偏離法線（離虛線更遠）"],["none","沒有偏折"]])}
   <p class="fb" id="fb" role="status"></p>`,
   bind:()=>bindChoice("o1","toward","對！記住它的樣子。","再看一次：折射角比入射角大還是小？"),ok:()=>st.obs.o1==="toward"});
 
-/* --- 第 2 組：反過來，水 → 空氣 --- */
-add({k:"第 2 組・水→空氣",left:"sim",render:()=>`
+/* --- 第 3 組：反過來，水 → 空氣 --- */
+add({k:"第 3 組・水→空氣",left:"sim",render:()=>`
   <h2>反過來：上方改 <span class="ui">水</span>、下方改 <span class="ui">空氣</span></h2>
   <p>現在光從水裡射向空氣，就像<b>杯底硬幣的光</b>要從水裡出來。</p>`,check:"換好了"});
-add({k:"第 2 組・水→空氣",left:"sim",render:()=>angleStep("a",`把入射角調成<b>第 1 組的折射角</b>，大約 <b>${r1(num(st.d.w_r))}°</b>，再讀出空氣中的折射角。`,"水","空氣",true,null,num(st.d.w_r)),
+add({k:"第 3 組・水→空氣",left:"sim",render:()=>angleStep("a",`把入射角調成<b>第 2 組的折射角</b>，大約 <b>${r1(num(st.d.w_r))}°</b>，再讀出空氣中的折射角。`,"水","空氣",true,null,num(st.d.w_r)),
   bind:()=>bindAngles("a","水","空氣",true,null,num(st.d.w_r)),ok:()=>passed("a")});
-add({k:"第 2 組・水→空氣",left:"sim",render:()=>`
+add({k:"第 3 組・水→空氣",left:"sim",render:()=>`
   <h2>看一看：從水裡出來的光線</h2>
   <p>入射角 <b>${r1(num(st.d.a_i))}°</b>、折射角 <b>${r1(num(st.d.a_r))}°</b>。折射線：</p>
   ${choice("o3",[["away","偏離法線"],["toward","偏向法線"],["none","沒有偏折"]])}
   <p class="fb" id="fb" role="status"></p>`,
   bind:()=>bindChoice("o3","away","對！光從水進到空氣，折射角比入射角大。","再看一次：折射角比入射角大還是小？"),ok:()=>st.obs.o3==="away"});
-add({k:"第 2 組・水→空氣",left:"sim",render:()=>`
-  <h2>比一比：第 1 組和第 2 組</h2>
+add({k:"第 3 組・水→空氣",left:"sim",render:()=>`
+  <h2>比一比：第 2 組和第 3 組</h2>
   <table><thead><tr><th></th><th>在空氣中的角度</th><th>在水中的角度</th></tr></thead><tbody>
-  <tr><td>第 1 組（空氣→水）</td><td>${r1(num(st.d.w_i))}°</td><td>${r1(num(st.d.w_r))}°</td></tr>
-  <tr><td>第 2 組（水→空氣）</td><td>${r1(num(st.d.a_r))}°</td><td>${r1(num(st.d.a_i))}°</td></tr></tbody></table>
+  <tr><td>第 2 組（空氣→水）</td><td>${r1(num(st.d.w_i))}°</td><td>${r1(num(st.d.w_r))}°</td></tr>
+  <tr><td>第 3 組（水→空氣）</td><td>${r1(num(st.d.a_r))}°</td><td>${r1(num(st.d.a_i))}°</td></tr></tbody></table>
   <p>兩組在空氣中的角度：</p>
   ${choice("o4",[["same","差不多一樣"],["diff","差很多"]])}
   <p class="fb" id="fb" role="status"></p>`,
@@ -245,9 +254,10 @@ add({k:"最後判斷",left:"data",render:()=>`
     st.post[g.dataset.n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
   ok:()=>STMTS.every((_,ix)=>st.post[ix+1])});
 
-add({k:"一句話",left:"data",render:()=>`
-  <h2>用一句話說明：為什麼加水後看得到杯底的硬幣？</h2>
-  <p class="note">提示：光從哪裡出發？在哪裡偏折？往哪個方向偏？最後到了哪裡？</p>
+add({k:"組內共學・一句話",left:"data",render:()=>`
+  <h2>組內每人說一句：為什麼加了水的杯子，就看得到硬幣？</h2>
+  <div class="tip"><b>用你的第 3 組數據，照句型說出來</b><span>硬幣反射的光從<b>水</b>射入<b>空氣</b>，入射角 <b>${a(st.d.a_i)}°</b>、折射角 <b>${a(st.d.a_r)}°</b>，光＿＿法線，所以光能越過杯緣進入＿＿。</span></div>
+  <p class="note">組長點名，每個人都要說。全組一起把句子修得更好，再把<b>修好的那一句</b>寫在下面。</p>
   <textarea id="why" aria-label="我的一句話">${esc(st.why)}</textarea>`,
   bind:()=>$("why").addEventListener("input",e=>{st.why=e.target.value;save();navState();}),
   ok:()=>st.why.trim().length>=8});
@@ -260,10 +270,10 @@ add({k:"完成",left:"data",render:()=>{
   ${STMTS.map((_,ix)=>{const n=ix+1;return `<tr><td>${n}</td><td>${mk(st.pre[n])}${st.conf[n]==="guess"?"（猜）":""}</td><td${st.pre[n]!==st.post[n]?' class="chg"':""}>${mk(st.post[n])}</td></tr>`;}).join("")}
   </tbody></table>
   <div>${chg.length?`<span class="chg">改變判斷：第 ${chg.join("、")} 題</span>`:"判斷都沒有改變"}</div>
-  <div><b>我的一句話：</b>${esc(st.why)}</div></div>
+  <div><b>修好的一句話：</b>${esc(st.why)}</div></div>
   <button type="button" class="btn primary" id="shot">📷 一鍵存成圖片</button>
   <p class="fb" id="fb" role="status"></p>
-  <p class="note">按下後選「儲存影像」存到相簿，或直接選 Padlet 分享上傳。</p>
+  <p class="note">上傳由顧問協助：按下後選 Padlet 分享上傳，或先「儲存影像」存到相簿。每組只傳一張代表卡。</p>
   <p><button type="button" class="tiny" id="reset">重新開始（下一位同學使用時）</button></p>`;},
   bind:()=>{$("shot").addEventListener("click",saveCard);
     let armed=false;$("reset").addEventListener("click",e=>{if(!armed){armed=true;e.target.textContent="再按一次確認清除";return;}
@@ -314,18 +324,21 @@ const changed=()=>STMTS.map((_,ix)=>{const n=ix+1;return st.pre[n]&&st.post[n]&&
 
 /* ===== 我的數據（e度 對話時一直顯示在左邊） ===== */
 const a=x=>r1(num(x));
-function dataSmall(){return `第 1 組 空氣→水：入射 ${a(st.d.w_i)}°、折射 ${a(st.d.w_r)}°<br>第 2 組 水→空氣：入射 ${a(st.d.a_i)}°、折射 ${a(st.d.a_r)}°`;}
+function dataSmall(){return `第 1 組 空氣→水（垂直）：入射 ${a(st.d.v_i)}°、折射 ${a(st.d.v_r)}°<br>第 2 組 空氣→水（斜射）：入射 ${a(st.d.w_i)}°、折射 ${a(st.d.w_r)}°<br>第 3 組 水→空氣：入射 ${a(st.d.a_i)}°、折射 ${a(st.d.a_r)}°`;}
 function renderData(){
   $("paneData").innerHTML=`<div class="dcard">
     <h2>我的數據</h2>
     <p class="note" style="margin:0">e度 問你「看第幾組數據」時，看這裡回答。角度都從法線量起。</p>
-    <div class="grp"><div class="tag">第 1 組<small>空氣→水</small></div>
+    <div class="grp"><div class="tag">第 1 組<small>空氣→水・垂直</small></div>
+      <div class="val">入射角 <b>${a(st.d.v_i)}°</b>　折射角 <b>${a(st.d.v_r)}°</b></div>
+      <div class="obs">我看到：垂直射入時光<b>不偏折</b>；斜射時都會偏折</div></div>
+    <div class="grp"><div class="tag">第 2 組<small>空氣→水・斜射</small></div>
       <div class="val">入射角 <b>${a(st.d.w_i)}°</b>　折射角 <b>${a(st.d.w_r)}°</b></div>
       <div class="obs">我看到：折射線<b>偏向法線</b>（折射角比入射角小）</div></div>
-    <div class="grp"><div class="tag">第 2 組<small>水→空氣</small></div>
+    <div class="grp"><div class="tag">第 3 組<small>水→空氣</small></div>
       <div class="val">入射角 <b>${a(st.d.a_i)}°</b>　折射角 <b>${a(st.d.a_r)}°</b></div>
       <div class="obs">我看到：折射線<b>偏離法線</b>（折射角比入射角大）</div></div>
-    <div class="grp" style="grid-template-columns:1fr"><div class="obs">比一比：第 2 組空氣中的角度 <b>${a(st.d.a_r)}°</b>，和第 1 組空氣中的角度 <b>${a(st.d.w_i)}°</b> 差不多 → 光反過來走，路徑一樣</div></div>
+    <div class="grp" style="grid-template-columns:1fr"><div class="obs">比一比：第 3 組空氣中的角度 <b>${a(st.d.a_r)}°</b>，和第 2 組空氣中的角度 <b>${a(st.d.w_i)}°</b> 差不多 → 光反過來走，路徑一樣</div></div>
     <div class="mine"><b>我原本的判斷</b>${STMTS.map((t,ix)=>`<span>${ix+1}. ${t}　<b>${mk(st.pre[ix+1])}</b></span>`).join("")}</div>
   </div>`;
 }
@@ -334,7 +347,7 @@ function renderData(){
 const mark=v=>v==="O"?"○ 對":v==="X"?"✗ 錯":"還沒判斷";
 function promptText(){
   const d=st.d;
-  return `我是國中八年級學生，正在學「4-3 光的折射」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 3 句話。
+  return `我是國中八年級學生，正在學「4-3 光的折射」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 4 句話。
 
 【情境】從斜上方看空杯子，看不到杯底的硬幣；加水後，同樣的位置卻看得到硬幣了。
 
@@ -342,15 +355,18 @@ function promptText(){
 ${STMTS.map((t,ix)=>`${ix+1}.「${t}」我覺得：${mark(st.pre[ix+1])}${st.conf[ix+1]==="guess"?"（用猜的）":st.conf[ix+1]==="sure"?"（有把握）":""}`).join("\n")}
 
 【我在模擬器上的數據】（因材網物理模擬「光的折射」，角度都從法線量起）
-第1組 空氣→水：入射角 ${a(d.w_i)}°，折射角 ${a(d.w_r)}°
-第2組 水→空氣：入射角 ${a(d.a_i)}°（等於第1組的折射角），折射角 ${a(d.a_r)}°
+第1組 空氣→水，垂直射入：入射角 ${a(d.v_i)}°，折射角 ${a(d.v_r)}°（拖動光源時，我看到只有垂直射入不偏折）
+第2組 空氣→水，斜射：入射角 ${a(d.w_i)}°，折射角 ${a(d.w_r)}°
+第3組 水→空氣：入射角 ${a(d.a_i)}°（等於第2組的折射角），折射角 ${a(d.a_r)}°
 
 【請你這樣帶我】
 1. 一次只問我一個問題，用國中生聽得懂的話，回答簡短。
-2. 第1、2句：先問我要看「第1組」還是「第2組」，再讓我用那一組的入射角和折射角自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
-3. 第3句：先問我「我們看得到硬幣，光是從哪裡出發、往哪裡走？」再請我用第2組的數據，說明光從水射入空氣時怎麼偏折、為什麼會越過杯緣進入眼睛。
-4. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
-5. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」。`;
+2. 每一句都先問我要看「第幾組」數據，再讓我自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
+3. 第1句：請我比較第1組和第2組，說明光從空氣進入水中，什麼情況下會偏折、什麼情況下不會。
+4. 第2句：請我看第3組的入射角和折射角。第3句：請我比較第2組和第3組在空氣中的角度。
+5. 第4句：先問我「我們看得到硬幣，光是從哪裡出發、往哪裡走？」再請我用第3組的數據，說明光從水射入空氣時怎麼偏折、為什麼會越過杯緣進入眼睛。
+6. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
+7. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」。`;
 }
 function copyPrompt(){
   const txt=promptText(),f=$("fb");
@@ -365,18 +381,19 @@ function cardCanvas(){
   g.font=`30px ${F}`;
   const stLines=STMTS.map(t=>wrap(g,t,600));
   const whyLines=wrap(g,st.why,W-160);
-  const H=380+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+150+whyLines.length*44+90;
+  const H=426+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+150+whyLines.length*44+90;
   cv.width=W;cv.height=H;
   g.fillStyle="#EFF2F5";g.fillRect(0,0,W,H);
   g.fillStyle="#fff";g.strokeStyle="#2C5D8A";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
   g.fillStyle="#2C5D8A";g.font=`700 26px ${F}`;g.fillText("八年級自然・4-3 光的折射",80,100);
   g.fillStyle="#1B2430";g.font=`900 52px ${F}`;g.fillText("我的證據卡",80,168);
   g.font=`700 34px ${F}`;g.fillText(`座號 ${st.seat}`,W-80-g.measureText(`座號 ${st.seat}`).width,168);
-  g.fillStyle="#DCE7F2";g.beginPath();g.roundRect(80,200,W-160,120,16);g.fill();
+  g.fillStyle="#DCE7F2";g.beginPath();g.roundRect(80,200,W-160,166,16);g.fill();
   g.fillStyle="#1B2430";g.font=`28px ${F}`;
-  g.fillText(`第 1 組 空氣→水：入射 ${a(st.d.w_i)}°　折射 ${a(st.d.w_r)}°（偏向法線）`,104,250);
-  g.fillText(`第 2 組 水→空氣：入射 ${a(st.d.a_i)}°　折射 ${a(st.d.a_r)}°（偏離法線）`,104,298);
-  let y=380;g.font=`700 24px ${F}`;g.fillStyle="#566273";g.fillText("敘述",80,y-12);g.fillText("直覺",W-300,y-12);g.fillText("最後",W-170,y-12);
+  g.fillText(`第 1 組 空氣→水（垂直）：入射 ${a(st.d.v_i)}°　折射 ${a(st.d.v_r)}°（不偏折）`,104,248);
+  g.fillText(`第 2 組 空氣→水（斜射）：入射 ${a(st.d.w_i)}°　折射 ${a(st.d.w_r)}°（偏向法線）`,104,296);
+  g.fillText(`第 3 組 水→空氣：入射 ${a(st.d.a_i)}°　折射 ${a(st.d.a_r)}°（偏離法線）`,104,344);
+  let y=426;g.font=`700 24px ${F}`;g.fillStyle="#566273";g.fillText("敘述",80,y-12);g.fillText("直覺",W-300,y-12);g.fillText("最後",W-170,y-12);
   STMTS.forEach((t,ix)=>{const n=ix+1,ls=stLines[ix];g.strokeStyle="#CBD3DD";g.lineWidth=2;g.beginPath();g.moveTo(80,y);g.lineTo(W-80,y);g.stroke();
     g.font=`30px ${F}`;g.fillStyle="#1B2430";ls.forEach((l,k)=>g.fillText((k?"　 ":`${n}. `)+l,80,y+44+k*42));
     g.font=`700 40px ${F}`;g.fillText(mk(st.pre[n]),W-290,y+48);
@@ -384,7 +401,7 @@ function cardCanvas(){
     y+=Math.max(1,ls.length)*42+30;});
   const chg=changed();
   g.fillStyle="#8A4B22";g.font=`700 30px ${F}`;g.fillText(chg.length?`改變判斷：第 ${chg.join("、")} 題`:"判斷都沒有改變",80,y+50);
-  y+=110;g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("我的一句話：",80,y);
+  y+=110;g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("我們組修好的一句話：",80,y);
   g.font=`30px ${F}`;whyLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));
   return cv;
 }
