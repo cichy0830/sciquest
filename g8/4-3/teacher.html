@@ -1,0 +1,264 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>折射偵探站控場</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* 投影控場：上方流程帶（整堂課在哪裡）、中間大字「現在做什麼」、右側倒數計時。為投影刻意採單一亮色系。 */
+:root{
+  --paper:#F6F7F9; --card:#FFFFFF; --ink:#141B26; --muted:#5A6676; --rule:#D3D9E1;
+  --beam:#C0761A; --beam-soft:#FBEBD3; --water:#1F5D8C; --water-soft:#DCEAF5;
+  --done:#9AA5B3; --alarm:#B3261E;
+  --t-self:#1F5D8C; --t-co:#2F7A4A; --t-peer:#7A4FA0; --t-guide:#C0761A; --t-ai:#141B26;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:clamp(14px,1.25vw,22px);line-height:1.5}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-block:clamp(10px,1.4vw,22px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));gap:clamp(10px,1.2vw,20px)}
+
+/* ── 流程帶 ── */
+.flow{display:grid;gap:6px}
+.phases{display:grid;grid-template-columns:5fr 25fr 10fr;gap:10px;font-size:.8em;font-weight:700;color:var(--muted)}
+.phase{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.phase::after{content:"";flex:1;height:2px;background:var(--rule)}
+.phase.now{color:var(--ink)}
+.phase.now::after{background:var(--ink)}
+.track{display:grid;grid-template-columns:var(--cols);gap:6px}
+.node{all:unset;cursor:pointer;position:relative;min-width:0;border:2px solid var(--rule);background:var(--card);border-radius:10px;padding:6px 8px 8px;display:grid;gap:2px;align-content:start}
+.node .nm{font-weight:900;font-size:.82em;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node .mn{font-family:var(--num);font-size:.7em;color:var(--muted)}
+.node .bar{position:absolute;left:0;bottom:0;height:4px;border-radius:0 0 8px 8px;background:var(--beam);width:0}
+.node.done{border-color:transparent;background:transparent;color:var(--done)}
+.node.done .nm::before{content:"✓ "}
+.node.now{border-color:var(--ink);background:var(--ink);color:#fff;box-shadow:0 6px 18px rgba(20,27,38,.22)}
+.node.now .mn{color:#C9D3DF}
+.node:focus-visible{outline:3px solid var(--beam);outline-offset:2px}
+
+/* ── 主畫面 ── */
+.main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,27vw,440px);gap:clamp(12px,1.6vw,28px)}
+.stage{min-width:0;min-height:0;overflow:auto;background:var(--card);border-radius:18px;padding:clamp(16px,2.2vw,40px);display:grid;align-content:start;gap:clamp(10px,1.2vw,20px);border:1px solid var(--rule)}
+.eyebrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:700;font-size:.9em;color:var(--muted)}
+.chip{color:#fff;border-radius:999px;padding:2px 12px;font-size:.9em;letter-spacing:.06em}
+.stage h1{font-family:var(--display);font-weight:900;font-size:clamp(26px,3vw,56px);line-height:1.2;margin:0;text-wrap:balance}
+.todo{list-style:none;margin:0;padding:0;display:grid;gap:clamp(8px,1vw,16px);counter-reset:s}
+.todo li{counter-increment:s;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;font-size:clamp(17px,1.75vw,32px);font-weight:500;line-height:1.4}
+.todo li::before{content:counter(s);font-family:var(--num);font-weight:600;font-size:.8em;color:var(--card);background:var(--water);border-radius:8px;min-width:1.6em;text-align:center;padding:0 .2em}
+.todo b{color:var(--water)}
+.extra{display:grid;gap:10px}
+.box{border-radius:14px;padding:clamp(10px,1.2vw,20px);background:var(--beam-soft);font-size:clamp(16px,1.6vw,28px);line-height:1.5}
+.box.water{background:var(--water-soft)}
+.box .k{display:block;font-size:.62em;font-weight:900;letter-spacing:.12em;color:var(--beam)}
+.box.water .k{color:var(--water)}
+.stmt{display:grid;grid-template-columns:auto 1fr;gap:10px}
+.stmt span:first-child{font-family:var(--num);font-weight:600}
+.code{font-family:var(--num);font-weight:600;font-size:clamp(48px,6vw,120px);line-height:1;color:var(--beam);letter-spacing:.06em}
+.reveal{all:unset;cursor:pointer;border:2px dashed var(--beam);border-radius:12px;padding:8px 18px;font-weight:700;color:var(--beam);justify-self:start}
+.reveal:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+.frame{font-size:clamp(16px,1.6vw,30px);font-weight:700;line-height:1.7}
+.frame u{text-decoration:none;border-bottom:3px solid var(--beam);padding:0 .6em}
+.qr{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.qr .q{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--rule);line-height:0}
+.qr .u{font-family:var(--num);font-size:clamp(14px,1.5vw,26px);word-break:break-all;min-width:0}
+video{width:100%;max-height:46vh;border-radius:12px;background:#000}
+.adv{border:3px solid var(--t-peer);border-radius:14px;padding:clamp(10px,1.1vw,18px) clamp(12px,1.3vw,22px);background:#F1EAF8;display:grid;gap:4px}
+.adv .k{font-size:clamp(13px,1vw,18px);font-weight:900;letter-spacing:.12em;color:var(--t-peer)}
+.adv ul{margin:0;padding-left:1.2em;display:grid;gap:4px;font-size:clamp(14px,1.15vw,22px);font-weight:500;line-height:1.45}
+.adv b{color:var(--t-peer)}
+.watch{font-size:.85em;color:var(--muted);border-top:1px solid var(--rule);padding-top:10px}
+.watch b{color:var(--ink)}
+
+/* ── 計時器 ── */
+.rcol{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(10px,1.2vw,18px)}
+.timer{background:var(--ink);color:#fff;border-radius:18px;padding:clamp(14px,1.8vw,30px);display:grid;align-content:space-between;gap:14px;min-height:0}
+.timer .lab{font-size:.85em;color:#B9C4D2;font-weight:700;letter-spacing:.1em}
+.clock{font-family:var(--num);font-weight:600;font-size:clamp(56px,7vw,140px);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ring{height:12px;background:#2C3646;border-radius:99px;overflow:hidden}
+.ring i{display:block;height:100%;width:100%;background:var(--beam);transform-origin:left}
+.timer.warn .clock{color:#F6C15A}
+.timer.over{background:var(--alarm)}
+.timer.over .ring i{background:#fff}
+.ctrls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ctrls button{all:unset;cursor:pointer;text-align:center;border-radius:10px;padding:10px 4px;font-weight:700;background:#2C3646;color:#fff;font-size:.9em}
+.ctrls button.go{background:var(--beam);color:var(--ink);grid-column:span 3;font-size:1.1em;padding:14px 4px}
+.ctrls button:focus-visible{outline:3px solid #F6C15A;outline-offset:2px}
+.total{font-size:.8em;color:#B9C4D2;font-family:var(--num)}
+
+/* ── 底列 ── */
+.foot{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.78em;color:var(--muted)}
+.foot .nav{display:flex;gap:8px}
+.foot button{all:unset;cursor:pointer;border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:6px 14px;font-weight:700;color:var(--ink)}
+.foot button:focus-visible{outline:3px solid var(--beam);outline-offset:2px}
+kbd{font-family:var(--num);border:1px solid var(--rule);border-radius:4px;padding:0 5px;background:var(--card)}
+
+@media (max-width:900px){
+  .main{grid-template-columns:1fr}
+  .track{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .phases{display:none}
+  .stage{overflow:visible}
+  html,body{height:auto}.app{height:auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.flash{animation:fl 1s steps(2) 3}
+@keyframes fl{50%{background:#fff;color:var(--alarm)}}
+</style>
+
+</head><body>
+<div class="app">
+  <div class="flow" aria-label="課程流程">
+    <div class="phases" id="phases"></div>
+    <div class="track" id="track"></div>
+  </div>
+
+  <div class="main">
+    <section class="stage" id="stage" aria-live="polite"></section>
+    <div class="rcol">
+    <aside class="timer" id="timer" aria-label="倒數計時">
+      <div>
+        <div class="lab" id="tLab">倒數</div>
+        <div class="clock" id="clock" role="timer">0:00</div>
+      </div>
+      <div class="ring"><i id="ring"></i></div>
+      <div class="ctrls">
+        <button type="button" class="go" id="go">開始倒數</button>
+        <button type="button" id="minus">−30 秒</button>
+        <button type="button" id="plus">+30 秒</button>
+        <button type="button" id="reset">重設</button>
+      </div>
+      <div class="total" id="total">全課已進行 0:00／40:00</div>
+    </aside>
+    <div class="adv" id="adv" hidden></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>八年級自然・4-3 光的折射｜花蓮縣立玉里國中 802｜智慧教室現場演示</span>
+    <span><kbd>←</kbd><kbd>→</kbd> 換活動　<kbd>空白鍵</kbd> 開始／暫停　<kbd>F</kbd> 全螢幕</span>
+    <span class="nav"><button type="button" id="prev">← 上一個</button><button type="button" id="next">下一個 →</button><button type="button" id="fs">全螢幕</button></span>
+  </div>
+</div>
+
+<script>
+const SITE="https://cichy0830.github.io/sciquest/g8/4-3/";
+const TAG={自學:"--t-self",共學:"--t-co",互學:"--t-peer",導學:"--t-guide","AI 協作":"--t-ai"};
+const STMTS=["光從空氣進入水中，因為光的直進性，不會發生偏折。","光由水中斜射入空氣時，折射角比入射角小。","光沿原來的折射線反方向射回去，會沿原來的入射線射出。","加水後看得到硬幣，是因為眼睛發出的光被水面偏折。"];
+/* 每一段：名稱、所屬階段、分鐘、四學標籤、學生要做的事、額外區塊、觀課看點 */
+const S=[
+ {nm:"看影片",ph:0,min:2,tags:["自學"],h:"杯底的硬幣去哪了？",
+  todo:["打開<b>折射偵探站</b>，輸入座號","按 ▶ 播放，<b>從頭看到最後</b>","想一想：硬幣沒有移動，為什麼加水後就看得到？"],
+  extra:"qr",watch:"網頁要學生<b>看完影片才能作答</b>，確保每個人都看過現象。"},
+ {nm:"直覺判斷",ph:0,min:3,tags:["自學"],h:"先憑直覺判斷 4 句話",
+  todo:["每一句選 <b>○ 對</b> 或 <b>✗ 錯</b>","再選「<b>有把握</b>」或「<b>用猜的</b>」","不用寫理由，等一下用證據檢查"],
+  extra:"stmts",watch:"4 句是非題對應四個迷思，<b>把握度</b>讓老師看出「有把握卻判斷錯」的學生。"},
+ {nm:"教師示範",ph:1,min:3,tags:["導學"],h:"看大螢幕：怎麼量角度",
+  todo:["上方選<b>空氣</b>、下方選<b>水</b>，打開雷射","量角器中心對準入射點","<b>0° 對準法線</b>、<b>90° 對齊水面</b>，從法線讀角度"],
+  extra:"code",watch:"示範後公布<b>通關數字</b>，全班同時開始，避免有人搶先跳步。"},
+ {nm:"模擬驗證",ph:1,min:7,tags:["自學","共學"],h:"移動光源，量三組數據",
+  todo:["<b>移動光源</b>：從正上方慢慢往旁邊拖，看光什麼時候會轉彎","<b>第 1 組</b> 垂直射入水　<b>第 2 組</b> 斜射入水（約 45°）","<b>第 3 組</b> 水→空氣：入射角調成第 2 組的折射角","組內比對第 2 組的折射角，<b>相差超過 3° 的人重量</b>"],
+  extra:"tip",adv:["跟大家一起量，<b>同時完成自己的證據卡</b>（含 e度 對話）","完成後舉手，老師確認後準備進組"],
+  watch:"網頁<b>一次只給一個動作</b>，並依折射定律即時檢查角度；顧問團在這段先完成整套流程。"},
+ {nm:"問 e度",ph:1,min:8,tags:["AI 協作"],h:"帶著自己的數據問 e度",
+  todo:["按「<b>複製給 e度 的話</b>」，到因材網 e度 貼上","e度 問「看第幾組數據」時，<b>看左邊的「我的數據」</b>回答","討論完，回網頁完成最後判斷和一句話"],
+  extra:"split",adv:["到<b>負責的組</b>坐下協助","幫卡住的同學複製、貼上、開分割畫面","同學答不出 e度 時，<b>只提示「看第幾組數據」</b>，不說答案"],
+  watch:"每位學生帶去的數據不同，e度 <b>一次只問一題、不給答案</b>；已完成證據卡的顧問團進組協助。"},
+ {nm:"組內共學",ph:1,min:5,tags:["共學"],h:"每人說一句：為什麼加了水就看得到硬幣？",
+  todo:["回想開場影片，<b>只講一件事</b>：為什麼加了水的杯子就看得到硬幣","用<b>自己的第 3 組數據</b>當證據，照句型說出來","組長點名，<b>每個人都要說</b>；全組一起把那句話修得更好"],
+  extra:"frame",adv:["協助組長，讓<b>每個組員都說出自己的一句話</b>","聽完後引導：光從哪裡出發？往哪裡偏？","帶全組<b>把一句話修得更清楚</b>，寫在網頁的「一句話」"],
+  watch:"不做開放式討論，只回答開場影片的同一個問題；<b>句型＋自己的數據</b>讓每個人都講得出來，顧問團帶著修句子。"},
+ {nm:"上傳 Padlet",ph:2,min:3,tags:["互學"],h:"每組上傳一張代表證據卡",
+  todo:["選出全組修得最好的那一句的證據卡","在網頁最後一頁按「<b>一鍵存成圖片</b>」","<b>每組只傳一張</b>，標題寫「第＿組」"],
+  extra:"padlet",adv:["<b>由顧問操作上傳</b>：存圖→分享→Padlet","確認標題寫上組別","上傳完回報老師"],
+  watch:"由顧問團操作上傳，避免技術卡關；證據卡上有<b>直覺 vs 最後判斷</b>與修過的一句話。"},
+ {nm:"組間互學",ph:2,min:3,tags:["互學"],h:"看看別組的一句話",
+  todo:["看其他組的卡，替<b>解釋得最清楚</b>的一組按讚","留一句：我們同意／不同意，因為第＿組數據……","不能按自己這組"],
+  extra:null,adv:["帶組員看 Padlet，提醒「看他們用了哪組數據」","協助輸入留言"],
+  watch:"組間互學聚焦在<b>同一個問題</b>（為什麼加水看得到硬幣），比較得出差異。"},
+ {nm:"教師導學",ph:2,min:5,tags:["導學"],h:"光到底走了哪條路？",
+  todo:["看得讚最多的卡，和一張還有迷思的卡","看光路動畫：光從<b>硬幣</b>出發，在水面<b>偏離法線</b>，越過杯緣進入<b>眼睛</b>","眼睛沿直線往回看，硬幣看起來<b>變淺</b>"],
+  extra:"video",watch:"收斂：空氣→水<b>偏向法線</b>、水→空氣<b>偏離法線</b>、光具<b>可逆性</b>；延伸泳池視深比實深淺。"},
+ {nm:"預告",ph:2,min:1,tags:["導學"],h:"下一節：4-4 透鏡成像",
+  todo:["光穿過<b>透鏡</b>時也會折射","想一想：放大鏡為什麼能把字變大？"],
+  extra:null,watch:"今天的偏向／偏離法線，是下一節透鏡會聚與發散的基礎。"}
+];
+const PH=[{nm:"引起動機",min:5},{nm:"發展活動",min:23},{nm:"總結活動",min:12}];
+const $=id=>document.getElementById(id);
+let cur=0, left=S[0].min*60, running=false, last=0, elapsed=0, totalRunning=false, beeped=false, revealed=false;
+try{const v=JSON.parse(localStorage.getItem("ctrl43")||"null");if(v){cur=v.cur||0;elapsed=v.elapsed||0;}}catch(e){}
+left=S[cur].min*60;
+const save=()=>{try{localStorage.setItem("ctrl43",JSON.stringify({cur,elapsed}));}catch(e){}};
+const mmss=s=>{const neg=s<0;s=Math.abs(Math.round(s));return (neg?"−":"")+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+
+function buildFlow(){
+  $("phases").innerHTML=PH.map((p,i)=>`<div class="phase" data-ph="${i}">${p.nm} ${p.min} 分</div>`).join("");
+  const w=s=>Math.max(s.min,2.6);const cols=S.map(s=>`${w(s)}fr`).join(" ");
+  $("phases").style.gridTemplateColumns=PH.map((p,i)=>`${S.filter(s=>s.ph===i).reduce((a,s)=>a+w(s),0)}fr`).join(" ");
+  $("track").style.setProperty("--cols",cols);
+  $("track").innerHTML=S.map((s,i)=>`<button type="button" class="node" data-i="${i}" aria-label="${s.nm}，${s.min} 分鐘"><span class="nm">${s.nm}</span><span class="mn">${s.min} 分${s.adv?" ・顧問":""}</span><span class="bar"></span></button>`).join("");
+  $("track").querySelectorAll(".node").forEach(b=>b.addEventListener("click",()=>goTo(+b.dataset.i)));
+}
+function extra(kind){
+  switch(kind){
+    case "qr":return `<div class="qr"><div class="q" id="qr"></div><div class="u">${SITE}</div></div>`;
+    case "stmts":return `<div class="box water"><span class="k">今天要檢查的 4 句話</span>${STMTS.map((t,i)=>`<div class="stmt"><span>${i+1}.</span><span>${t}</span></div>`).join("")}</div>`;
+    case "code":return `<div class="extra"><button type="button" class="reveal" id="rv">${revealed?"通關數字":"示範完，按這裡公布通關數字"}</button>${revealed?`<div class="code">43</div>`:""}</div>`;
+    case "tip":return `<div class="box"><span class="k">量角器</span>0° 對準<b>法線</b>（虛線）・90° 對齊<b>交界面</b>（水面）・角度從法線量起</div>`;
+    case "split":return `<div class="box water"><span class="k">iPad 分割畫面</span>左邊放<b>折射偵探站</b>（我的數據），右邊放<b>因材網 e度</b>，邊看數據邊回答。</div>`;
+    case "frame":return `<div class="box"><span class="k">句型（用自己的第 3 組數據）</span><div class="frame">硬幣反射的光從 <u></u> 射入 <u></u>，<br>入射角 <u></u>°、折射角 <u></u>°，光 <u></u> 法線，<br>所以光能越過杯緣進入 <u></u>。</div></div>`;
+    case "padlet":return `<div class="box water"><span class="k">Padlet</span>每組一張，標題寫「第＿組」。</div>`;
+    case "video":return `<video src="light-path.mp4" controls playsinline preload="metadata"></video>`;
+    default:return "";
+  }
+}
+function render(){
+  const s=S[cur];
+  $("track").querySelectorAll(".node").forEach((b,i)=>{b.classList.toggle("done",i<cur);b.classList.toggle("now",i===cur);b.setAttribute("aria-current",i===cur?"step":"false");});
+  $("phases").querySelectorAll(".phase").forEach((p,i)=>p.classList.toggle("now",i===s.ph));
+  $("stage").innerHTML=`<div class="eyebrow">${PH[s.ph].nm}・${s.nm}${s.tags.map(t=>`<span class="chip" style="background:var(${TAG[t]})">${t}</span>`).join("")}</div>
+    <h1>${s.h}</h1>
+    <ol class="todo">${s.todo.map(t=>`<li><span>${t}</span></li>`).join("")}</ol>
+    ${extra(s.extra)}
+    <div class="watch"><b>觀課看點：</b>${s.watch}</div>`;
+  if(s.extra==="qr"&&window.QRCode){new QRCode($("qr"),{text:SITE,width:Math.min(220,Math.round(innerWidth*.12)),height:Math.min(220,Math.round(innerWidth*.12)),correctLevel:QRCode.CorrectLevel.M});}
+  if($("rv"))$("rv").addEventListener("click",()=>{revealed=true;render();});
+  $("tLab").textContent=`${s.nm}・${s.min} 分鐘`;
+  $("adv").hidden=!s.adv;$("adv").innerHTML=s.adv?`<span class="k">顧問團任務</span><ul>${s.adv.map(t=>`<li>${t}</li>`).join("")}</ul>`:"";
+  tick(0);
+}
+function goTo(i){cur=Math.max(0,Math.min(S.length-1,i));left=S[cur].min*60;running=false;beeped=false;$("timer").classList.remove("over","warn");setGo();save();render();}
+function setGo(){$("go").textContent=running?"暫停":(left<S[cur].min*60?"繼續":"開始倒數");}
+function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1.2);o.start();o.stop(a.currentTime+1.2);}catch(e){}}
+function tick(dt){
+  if(running){left-=dt;elapsed+=dt;}
+  const full=S[cur].min*60;
+  $("clock").textContent=mmss(left);
+  $("ring").style.transform=`scaleX(${Math.max(0,left/full)})`;
+  const node=$("track").querySelectorAll(".node")[cur];if(node)node.querySelector(".bar").style.width=`${Math.min(100,100*(1-left/full))}%`;
+  $("timer").classList.toggle("warn",left<=60&&left>0);
+  if(left<=0){$("timer").classList.add("over");if(!beeped&&running){beeped=true;beep();$("timer").classList.add("flash");setTimeout(()=>$("timer").classList.remove("flash"),3200);}}
+  $("total").textContent=`全課已進行 ${mmss(elapsed)}／40:00`;
+}
+function loop(t){const dt=last?(t-last)/1000:0;last=t;if(running)tick(dt);if(running&&Math.floor(elapsed)%5===0)save();requestAnimationFrame(loop);}
+$("go").addEventListener("click",()=>{running=!running;setGo();});
+$("plus").addEventListener("click",()=>{left+=30;if(left>0)$("timer").classList.remove("over");tick(0);});
+$("minus").addEventListener("click",()=>{left-=30;tick(0);});
+$("reset").addEventListener("click",()=>goTo(cur));
+$("prev").addEventListener("click",()=>goTo(cur-1));
+$("next").addEventListener("click",()=>goTo(cur+1));
+function fs(){const d=document.documentElement;try{document.fullscreenElement?document.exitFullscreen():d.requestFullscreen().catch(()=>{});}catch(e){}}
+$("fs").addEventListener("click",fs);
+addEventListener("keydown",e=>{if(e.target.closest("video"))return;
+  if(e.key==="ArrowRight"||e.key==="PageDown"){goTo(cur+1);e.preventDefault();}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){goTo(cur-1);e.preventDefault();}
+  else if(e.key===" "){running=!running;setGo();e.preventDefault();}
+  else if(e.key==="f"||e.key==="F")fs();
+  else if(e.key==="r"||e.key==="R")goTo(cur);});
+try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{});}catch(e){}
+buildFlow();render();requestAnimationFrame(loop);
+</script>
+
+</body></html>
