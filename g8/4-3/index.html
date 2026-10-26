@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>折射偵探站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* 版面：左（直向時為上）固定 PhET 模擬器，右（下）一次只顯示一個步驟 */
+:root{
+  --bg:#EFF2F5; --panel:#FFFFFF; --ink:#1B2430; --muted:#566273; --line:#CBD3DD;
+  --wave:#2C5D8A; --wave-soft:#DCE7F2; --rope:#8A4B22; --rope-soft:#F4E6DA;
+  --ok:#2F6B3A; --ok-soft:#E1EFE3;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:8px max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));padding-top:max(8px,env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.top .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--wave);font-weight:700}
+.top h1{font-family:var(--display);font-size:clamp(19px,2.6vw,24px);margin:0;line-height:1.3}
+.prog{margin-left:auto;display:flex;gap:4px;align-items:center;font-size:13px;color:var(--muted)}
+.prog .bar{width:120px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--wave);width:0}
+.split{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,1fr);min-height:0}
+@media (max-width:900px), (orientation:portrait){.split{grid-template-columns:1fr;grid-template-rows:minmax(0,55fr) minmax(0,45fr)}}
+.sim{position:relative;min-height:0;background:#000;border-right:1px solid var(--line);display:grid;grid-template-rows:minmax(0,1fr) auto}
+@media (max-width:900px), (orientation:portrait){.sim{border-right:0;border-bottom:3px solid var(--rope)}}
+.sim iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+.simbar{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);padding:5px 12px;background:var(--panel);border-top:1px solid var(--line)}
+.simbar button,.simbar a{all:unset;cursor:pointer;color:var(--wave);font-weight:700}
+.simbar button:focus-visible,.simbar a:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.side{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;padding:14px max(14px,env(safe-area-inset-right,0px)) 30px max(14px,env(safe-area-inset-left,0px))}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--rope)}
+.step h2{margin:0;font-size:22px;line-height:1.45;text-wrap:balance}
+.step p{margin:0}
+.note{font-size:14px;color:var(--muted)}
+.ui{font-weight:700;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:0 6px;white-space:nowrap}
+.big{font-size:20px;line-height:1.6;padding:14px;border-radius:12px;background:var(--bg);border:2px solid var(--line)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:52px;min-width:88px;padding:8px 16px;border:2px solid var(--line);border-radius:12px;background:var(--bg);font-weight:700;font-size:18px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.opt[aria-pressed="true"]{border-color:var(--wave);background:var(--wave);color:var(--panel)}
+.opt:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.lab{font-size:14px;color:var(--muted);font-weight:700}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.field{display:grid;gap:4px}
+.field input{font:inherit;font-size:24px;font-weight:700;width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-align:center;font-variant-numeric:tabular-nums}
+.unit{font-size:14px;color:var(--muted)}
+textarea{font:inherit;width:100%;min-height:96px;padding:10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border-radius:12px;font-weight:700;font-size:17px;text-decoration:none;cursor:pointer;border:2px solid var(--wave);font-family:var(--body);background:transparent;color:var(--wave)}
+.btn.primary{background:var(--wave);color:var(--panel)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
+.fb{min-height:1.5em;font-weight:700;border-radius:10px}
+.fb.good{color:var(--ok);background:var(--ok-soft);padding:8px 12px}
+.fb.bad{color:var(--rope);background:var(--rope-soft);padding:8px 12px}
+.gate{border:2px dashed var(--rope);border-radius:12px;padding:14px;display:grid;gap:8px;background:var(--rope-soft)}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:center}
+th{color:var(--muted);font-weight:500;font-size:13px}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--body);font-size:14px;line-height:1.6;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:220px;overflow:auto}
+details summary{cursor:pointer;color:var(--muted);font-size:14px}
+.stmt{display:grid;gap:6px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg)}
+.stmt .t{line-height:1.5}
+.stmt .t b{font-family:var(--mono)}
+.was{font-size:13px;color:var(--muted)}
+.card{border-left:5px solid var(--wave);background:var(--wave-soft);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.chg{font-weight:700;color:var(--rope)}
+.tiny{all:unset;cursor:pointer;font-size:13px;color:var(--muted);text-decoration:underline}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="eyebrow">八年級自然・4-3 光的折射</span>
+    <h1>折射偵探站：杯底的硬幣去哪了？</h1>
+    <div class="prog" aria-label="進度"><span id="progTxt"></span><span class="bar"><i id="progBar"></i></span></div>
+  </div>
+
+  <div class="split">
+    <div class="sim">
+      <iframe id="simFrame" title="PhET 光的折射模擬器" allow="fullscreen"></iframe>
+      <div class="simbar">
+        <span>PhET「光的折射」（Bending Light，CC-BY 4.0）</span>
+        <span class="row" style="gap:14px">
+          <button type="button" id="swapSim">模擬器載不出來？換備用版</button>
+          <a id="openSim" target="_blank" rel="noopener">在新分頁開啟</a>
+        </span>
+      </div>
+    </div>
+    <div class="side" id="side" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+/* ===== 模擬器來源：主要用 PhET 官網；備用版是放在同資料夾的離線檔 ===== */
+const SIM_MAIN="https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html?locale=zh_TW&screens=1";
+const SIM_BACKUP="bending-light_all.html?locale=zh_TW&screens=1";
+/* 老師公布的通關數字（全班看完示範才一起開始） */
+const GATE_CODE="43";
+
+/* ===== 6 句迷思是非題（正解只給老師頁，網頁不顯示） ===== */
+const STMTS=[
+  "光由空氣斜射入水中，折射線會偏向法線。",
+  "光由空氣垂直射入水中，前進方向也會偏折。",
+  "光由水中斜射入空氣，折射角比入射角小。",
+  "入射角相同時，光射入玻璃比射入水中更偏向法線。",
+  "光沿原來的折射線反方向射回去，會沿原來的入射線射出。",
+  "加水後看得到杯底的硬幣，是因為眼睛發出的光被水面偏折，才照到硬幣。"
+];
+/* PhET 光的折射使用的折射率 */
+const N={空氣:1.00,水:1.33,玻璃:1.50};
+const deg=r=>r*180/Math.PI, rad=d=>d*Math.PI/180;
+function snell(i,n1,n2){const s=n1*Math.sin(rad(i))/n2;return Math.abs(s)>1?null:deg(Math.asin(s));}
+const TOL=4;
+
+/* ===== 狀態（存在這台 iPad 的瀏覽器裡） ===== */
+const KEY="refr43-v1";
+let st={seat:"",pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=Object.assign(st,s);}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
+const $=id=>document.getElementById(id);
+const num=v=>{const x=parseFloat(String(v??"").replace(/[^\d.\-]/g,""));return isFinite(x)?x:null;};
+const r1=x=>x==null?"—":(Math.round(x*10)/10).toString();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ===== 每個步驟只做一件事 ===== */
+const STEPS=[];
+const add=o=>STEPS.push(o);
+
+add({k:"開始",render:()=>`
+  <h2>先寫下你的座號</h2>
+  <div class="field" style="max-width:200px"><span class="lab">座號</span><input id="seat" inputmode="numeric" value="${esc(st.seat)}" aria-label="座號"></div>
+  <p class="note">剛才影片裡：從斜上方看空杯子，看不到杯底的硬幣；加水後，硬幣出現了。等一下我們用模擬器找出原因。</p>`,
+  bind:()=>$("seat").addEventListener("input",e=>{st.seat=e.target.value.trim();save();navState();}),
+  ok:()=>!!st.seat});
+
+STMTS.forEach((t,ix)=>{const n=ix+1;add({k:`直覺判斷 ${n}／6`,render:()=>`
+  <h2>你覺得這句話對嗎？</h2>
+  <div class="big"><b>${n}.</b> ${t}</div>
+  <div class="lab">憑直覺選</div>
+  <div class="opts" data-grp="pre">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.pre[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
+  <div class="lab">把握程度</div>
+  <div class="opts" data-grp="conf">${[["sure","有把握"],["guess","用猜的"]].map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.conf[n]===v}">${l}</button>`).join("")}</div>
+  <p class="note">不用寫理由，等一下用證據檢查。</p>`,
+  bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st[g.dataset.grp][n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();
+    if(st.pre[n]&&st.conf[n])setTimeout(()=>go(1),350);})),
+  ok:()=>!!(st.pre[n]&&st.conf[n])});});
+
+add({k:"等一下",render:()=>`
+  <h2>先看老師示範，等老師公布通關數字</h2>
+  <div class="gate"><span>老師會在大螢幕示範第一步。示範完會說出一個數字，填進來就能開始。</span>
+  <div class="field" style="max-width:180px"><span class="lab">通關數字</span><input id="code" inputmode="numeric" aria-label="通關數字" value="${st.gate?GATE_CODE:""}"></div></div>
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>$("code").addEventListener("input",e=>{st.gate=e.target.value.trim()===GATE_CODE;save();navState();
+    const f=$("fb");f.className="fb"+(st.gate?" good":"");f.textContent=st.gate?"可以開始了！":"";}),
+  ok:()=>st.gate});
+
+/* --- 任務一：空氣 → 水 --- */
+add({k:"任務一・空氣→水",render:()=>`
+  <h2>確認模擬器：上方是 <span class="ui">空氣</span>，下方是 <span class="ui">水</span></h2>
+  <p>左邊模擬器的上、下兩個方框各有一個選單，確認上面選<span class="ui">空氣</span>、下面選<span class="ui">水</span>。</p>`,check:"設定好了"});
+add({k:"任務一・空氣→水",render:()=>`
+  <h2>打開雷射筆</h2>
+  <p>按雷射筆上的<span class="ui">紅色按鈕</span>，光線射向水面。</p>
+  <p class="note">中間那條虛線就是<b>法線</b>：通過入射點、垂直界面的直線。</p>`,check:"看到光線了"});
+add({k:"任務一・空氣→水",render:()=>`
+  <h2>讓角度看得到</h2>
+  <p>從模擬器的工具箱（放著量角器的小框）把<span class="ui">量角器</span>拖到光打到水面的那一點，讓量角器中心對準入射點。</p>
+  <p class="note">角度一律從<b>法線</b>量起，不是從水面量。</p>`,check:"量角器放好了"});
+add({k:"任務一・空氣→水",render:()=>angleStep("w",`拖動雷射筆，讓<b>入射角</b>大約 <b>45°</b>，再讀出水中的<b>折射角</b>。`,"空氣","水",true),
+  bind:()=>bindAngles("w","空氣","水",true),ok:()=>passed("w")});
+add({k:"任務一・空氣→水",render:()=>`
+  <h2>看一看：進到水裡的光線</h2>
+  <p>剛才 入射角 <b>${r1(num(st.d.w_i))}°</b>、折射角 <b>${r1(num(st.d.w_r))}°</b>。折射線跟入射線比起來：</p>
+  ${choice("o1",[["toward","偏向法線（更靠近虛線）"],["away","偏離法線（離虛線更遠）"],["none","沒有偏折"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o1","toward","對！再看一次左邊的光線，記住它的樣子。","再看一次：折射角比入射角大還是小？"),ok:()=>st.obs.o1==="toward"});
+add({k:"任務一・空氣→水",render:()=>angleStep("v",`把雷射筆拖到<b>正上方</b>，讓光<b>垂直</b>射入水面（入射角 0°），再讀折射角。`,"空氣","水",false,0),
+  bind:()=>bindAngles("v","空氣","水",false,0),ok:()=>passed("v")});
+
+/* --- 任務二：換成玻璃 --- */
+add({k:"任務二・空氣→玻璃",render:()=>`
+  <h2>把下方的介質換成 <span class="ui">玻璃</span></h2>
+  <p>上方維持<span class="ui">空氣</span>，下方選單改成<span class="ui">玻璃</span>。</p>`,check:"換好了"});
+add({k:"任務二・空氣→玻璃",render:()=>angleStep("g",`把入射角調回跟任務一一樣，大約 <b>${r1(num(st.d.w_i))||45}°</b>，再讀出玻璃中的折射角。`,"空氣","玻璃",true,null,num(st.d.w_i)),
+  bind:()=>bindAngles("g","空氣","玻璃",true,null,num(st.d.w_i)),ok:()=>passed("g")});
+add({k:"任務二・空氣→玻璃",render:()=>`
+  <h2>比一比：水和玻璃</h2>
+  <table><thead><tr><th>介質</th><th>入射角</th><th>折射角</th></tr></thead><tbody>
+  <tr><td>空氣→水</td><td>${r1(num(st.d.w_i))}°</td><td>${r1(num(st.d.w_r))}°</td></tr>
+  <tr><td>空氣→玻璃</td><td>${r1(num(st.d.g_i))}°</td><td>${r1(num(st.d.g_r))}°</td></tr></tbody></table>
+  <p>入射角差不多時，哪一個的折射角比較<b>小</b>（更偏向法線）？</p>
+  ${choice("o2",[["glass","玻璃"],["water","水"],["same","一樣"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o2","glass","對！光在玻璃中走得比在水中更慢，偏折得更多。","再看一次表格的折射角，哪一個數字比較小？"),ok:()=>st.obs.o2==="glass"});
+
+/* --- 任務三：反過來，水 → 空氣 --- */
+add({k:"任務三・水→空氣",render:()=>`
+  <h2>反過來：上方改 <span class="ui">水</span>、下方改 <span class="ui">空氣</span></h2>
+  <p>現在光從水裡射向空氣，就像<b>杯底硬幣的光</b>要從水裡出來。</p>`,check:"換好了"});
+add({k:"任務三・水→空氣",render:()=>angleStep("a",`把入射角調成<b>任務一的折射角</b>，大約 <b>${r1(num(st.d.w_r))}°</b>，再讀出空氣中的折射角。`,"水","空氣",true,null,num(st.d.w_r)),
+  bind:()=>bindAngles("a","水","空氣",true,null,num(st.d.w_r)),ok:()=>passed("a")});
+add({k:"任務三・水→空氣",render:()=>`
+  <h2>看一看：從水裡出來的光線</h2>
+  <p>入射角 <b>${r1(num(st.d.a_i))}°</b>、折射角 <b>${r1(num(st.d.a_r))}°</b>。折射線：</p>
+  ${choice("o3",[["away","偏離法線"],["toward","偏向法線"],["none","沒有偏折"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o3","away","對！光從水進到空氣，折射角比入射角大。","再看一次：折射角比入射角大還是小？"),ok:()=>st.obs.o3==="away"});
+add({k:"任務三・水→空氣",render:()=>`
+  <h2>再比一比：去程和回程</h2>
+  <table><thead><tr><th></th><th>在空氣中的角度</th><th>在水中的角度</th></tr></thead><tbody>
+  <tr><td>任務一（空氣→水）</td><td>${r1(num(st.d.w_i))}°</td><td>${r1(num(st.d.w_r))}°</td></tr>
+  <tr><td>任務三（水→空氣）</td><td>${r1(num(st.d.a_r))}°</td><td>${r1(num(st.d.a_i))}°</td></tr></tbody></table>
+  <p>兩次在空氣中的角度：</p>
+  ${choice("o4",[["same","差不多一樣"],["diff","差很多"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o4","same","對！光反過來走，路徑一樣、方向相反。","再看一次表格左欄的兩個數字。"),ok:()=>st.obs.o4==="same"});
+
+/* --- 帶著數據問 e度 --- */
+add({k:"問 e度",render:()=>`
+  <h2>帶著你的數據去問 e度</h2>
+  <p>按<span class="ui">複製</span>，到因材網 e度 的對話框貼上。e度 會一題一題帶你檢查剛才的 6 句話，不會直接告訴你答案。</p>
+  <div class="row"><button class="btn primary" id="copy" type="button">複製給 e度 的話</button>
+  <a class="btn" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
+  <p class="fb" id="fb" role="status"></p>
+  <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>
+  <p class="note">e度 問你問題時，數據都在你貼過去的內容裡，不用另外抄。跟 e度 討論完，回到這裡按「下一步」。</p>`,
+  bind:()=>{$("prompt").textContent=promptText();$("copy").addEventListener("click",copyPrompt);},check:"跟 e度 討論完了"});
+
+add({k:"最後判斷",render:()=>`
+  <h2>跟 e度 討論後，再判斷一次</h2>
+  <div style="display:grid;gap:8px">${STMTS.map((t,ix)=>{const n=ix+1;return `<div class="stmt"><div class="t"><b>${n}.</b> ${t}</div>
+    <div class="row"><div class="opts" data-n="${n}">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.post[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
+    <span class="was">原本：${st.pre[n]==="O"?"○":st.pre[n]==="X"?"✗":"—"}</span></div></div>`;}).join("")}</div>`,
+  bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st.post[g.dataset.n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
+  ok:()=>STMTS.every((_,ix)=>st.post[ix+1])});
+
+add({k:"一句話",render:()=>`
+  <h2>用一句話說明：為什麼加水後看得到杯底的硬幣？</h2>
+  <p class="note">提示：光從哪裡出發？在哪裡偏折？往哪個方向偏？最後到了哪裡？</p>
+  <textarea id="why" aria-label="我的一句話">${esc(st.why)}</textarea>`,
+  bind:()=>$("why").addEventListener("input",e=>{st.why=e.target.value;save();navState();}),
+  ok:()=>st.why.trim().length>=8});
+
+add({k:"完成",render:()=>{
+  const chg=STMTS.map((_,ix)=>{const n=ix+1;return st.pre[n]&&st.post[n]&&st.pre[n]!==st.post[n]?n:null;}).filter(Boolean);
+  return `<h2>完成！這是你的證據卡</h2>
+  <div class="card"><div><b>座號 ${esc(st.seat)}</b>・4-3 光的折射</div>
+  <table><thead><tr><th>題</th><th>直覺</th><th>最後</th></tr></thead><tbody>
+  ${STMTS.map((_,ix)=>{const n=ix+1,m=v=>v==="O"?"○":v==="X"?"✗":"—";return `<tr><td>${n}</td><td>${m(st.pre[n])}${st.conf[n]==="guess"?"（猜）":""}</td><td${st.pre[n]!==st.post[n]?' class="chg"':""}>${m(st.post[n])}</td></tr>`;}).join("")}
+  </tbody></table>
+  <div>${chg.length?`<span class="chg">改變判斷的題目：第 ${chg.join("、")} 題</span>`:"判斷都沒有改變"}</div>
+  <div><b>我的一句話：</b>${esc(st.why)}</div></div>
+  <p class="note">等老師說明時，把這張卡留在畫面上。</p>
+  <p><button type="button" class="tiny" id="reset">重新開始（下一位同學使用時）</button></p>`;},
+  bind:()=>{let armed=false;$("reset").addEventListener("click",e=>{if(!armed){armed=true;e.target.textContent="再按一次確認清除";return;}
+    try{localStorage.removeItem(KEY);}catch(_){}location.reload();});},last:true});
+
+/* ===== 量角度的步驟 ===== */
+function angleStep(id,text,m1,m2,showI,fixI,target){
+  const iv=fixI!=null?fixI:st.d[id+"_i"]??"";
+  return `<h2>${text}</h2>
+  <div class="fields">
+    ${showI?`<label class="field"><span class="lab">入射角（${m1}中）</span><input id="ai" inputmode="decimal" value="${esc(iv)}"><span class="unit">度</span></label>`:""}
+    <label class="field"><span class="lab">折射角（${m2}中）</span><input id="ar" inputmode="decimal" value="${esc(st.d[id+"_r"]??"")}"><span class="unit">度</span></label>
+  </div>
+  <button type="button" class="btn primary" id="chk">檢查</button>
+  <p class="fb" id="fb" role="status"></p>`;
+}
+function passed(id){return !!(st.d[id+"_ok"]||st.skip[id]);}
+function bindAngles(id,m1,m2,showI,fixI,target){
+  const show=(cls,msg)=>{const f=$("fb");f.className="fb "+cls;f.innerHTML=msg;};
+  if(passed(id))show("good",st.skip[id]?"老師已確認，可以繼續。":"數據合理，可以按下一步。");
+  ["ai","ar"].forEach(k=>$(k)&&$(k).addEventListener("input",()=>{st.d[id+"_ok"]=false;save();navState();$("fb").textContent="";$("fb").className="fb";}));
+  $("chk").addEventListener("click",()=>{
+    const i=showI?num($("ai").value):fixI, r=num($("ar").value);
+    if(showI)st.d[id+"_i"]=$("ai").value; else st.d[id+"_i"]=String(fixI);
+    st.d[id+"_r"]=$("ar").value;
+    if(i==null||r==null){show("bad","兩個角度都要填數字喔。");save();return;}
+    if(target!=null&&Math.abs(i-target)>5){show("bad",`入射角要調到大約 ${r1(target)}°，再試一次。`);save();return;}
+    const exp=snell(i,N[m1],N[m2]);
+    let good=exp!=null&&Math.abs(r-exp)<=TOL;
+    if(good){st.d[id+"_ok"]=true;st.tries[id]=0;save();show("good","數據合理！可以按下一步。");navState();return;}
+    st.tries[id]=(st.tries[id]||0)+1;save();
+    let hint="跟模擬器的結果好像不一樣，再看一次量角器。";
+    if(r>90||r<0)hint="角度要在 0°～90° 之間喔。";
+    else if(exp!=null&&Math.abs(r-(90-exp))<=TOL)hint="你是不是從水面量的？角度要從<b>法線（虛線）</b>量起。";
+    else if(Math.abs(r-i)<=1&&i>3)hint="折射角跟入射角一樣嗎？再看一次光線有沒有偏折。";
+    show("bad",hint+(st.tries[id]>=2?`<br><button type="button" class="tiny" id="tskip">老師確認過了，繼續</button>`:""));
+    const sk=$("tskip");if(sk)sk.addEventListener("click",()=>{st.skip[id]=true;save();show("good","老師已確認，可以繼續。");navState();});
+  });
+}
+function choice(key,opts){return `<div class="opts" data-key="${key}">${opts.map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.obs[key]===v}">${l}</button>`).join("")}</div>`;}
+function bindChoice(key,right,good,bad){
+  const g=document.querySelector(`.opts[data-key="${key}"]`),f=$("fb");
+  const showFb=()=>{if(!st.obs[key])return;const ok=st.obs[key]===right;f.className="fb "+(ok?"good":"bad");f.textContent=ok?good:bad;};
+  showFb();
+  g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;st.obs[key]=b.dataset.v;save();
+    g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));showFb();navState();});
+}
+
+/* ===== 給 e度 的提示詞 ===== */
+const mark=v=>v==="O"?"○ 對":v==="X"?"✗ 錯":"還沒判斷";
+function promptText(){
+  const d=st.d,a=x=>r1(num(x));
+  return `我是國中八年級學生，正在學「4-3 光的折射」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 6 句話。
+
+【情境】從斜上方看空杯子，看不到杯底的硬幣；加水後，同樣的位置卻看得到硬幣了。
+
+【我原本的直覺判斷】
+${STMTS.map((t,ix)=>`${ix+1}.「${t}」我覺得：${mark(st.pre[ix+1])}${st.conf[ix+1]==="guess"?"（用猜的）":st.conf[ix+1]==="sure"?"（有把握）":""}`).join("\n")}
+
+【我在模擬器上的紀錄】（因材網物理模擬「光的折射」，角度都從法線量起）
+任務一 空氣→水：入射角 ${a(d.w_i)}°，折射角 ${a(d.w_r)}°；垂直射入時折射角 ${a(d.v_r)}°
+任務二 空氣→玻璃：入射角 ${a(d.g_i)}°，折射角 ${a(d.g_r)}°
+任務三 水→空氣：入射角 ${a(d.a_i)}°，折射角 ${a(d.a_r)}°
+
+【請你這樣帶我】
+1. 一次只問我一個問題，用國中生聽得懂的話，回答簡短。
+2. 依第 1 到第 5 句的順序，每一句都先問我「要看哪一組數據」，再讓我自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
+3. 最後問我第 6 句：我們看得到硬幣，光是從哪裡出發、往哪裡走？請我把杯子加水的情境和任務三的數據連起來說明。
+4. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
+5. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」。`;
+}
+function copyPrompt(){
+  const txt=promptText(),f=$("fb");
+  const fb=()=>{document.querySelector("details").open=true;const rg=document.createRange();rg.selectNodeContents($("prompt"));const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);f.className="fb bad";f.textContent="已幫你選取文字，請長按後選「拷貝」。";};
+  try{navigator.clipboard.writeText(txt).then(()=>{f.className="fb good";f.textContent="已複製！到 e度 對話框貼上就可以開始。";},fb);}catch(e){fb();}
+}
+
+/* ===== 步驟切換 ===== */
+function go(delta){st.i=Math.max(0,Math.min(STEPS.length-1,st.i+delta));save();render();}
+function navState(){
+  const s=STEPS[st.i],nx=$("next");if(!nx)return;
+  const ok=s.check?!!st.obs["c"+st.i]:(s.ok?s.ok():true);
+  nx.disabled=!ok;
+}
+function render(){
+  const s=STEPS[st.i];
+  let h=`<div class="step"><div class="kicker">${s.k}</div>${s.render()}`;
+  if(s.check)h+=`<div><button type="button" class="opt" id="ck" aria-pressed="${!!st.obs["c"+st.i]}">✓ ${s.check}</button></div>`;
+  if(!s.last)h+=`<div class="nav"><button type="button" class="btn" id="prev"${st.i?"":" disabled"}>上一步</button><button type="button" class="btn primary" id="next">下一步</button></div>`;
+  else h+=`<div class="nav"><button type="button" class="btn" id="prev">上一步</button></div>`;
+  h+=`</div>`;
+  $("side").innerHTML=h;$("side").scrollTop=0;
+  if(s.bind)s.bind();
+  if(s.check)$("ck").addEventListener("click",e=>{st.obs["c"+st.i]=true;save();e.currentTarget.setAttribute("aria-pressed","true");navState();});
+  $("prev").addEventListener("click",()=>go(-1));
+  if($("next"))$("next").addEventListener("click",()=>go(1));
+  navState();
+  $("progTxt").textContent=`${st.i+1}／${STEPS.length}`;
+  $("progBar").style.width=(100*(st.i+1)/STEPS.length)+"%";
+}
+
+/* ===== 模擬器 ===== */
+function setSim(){const u=st.sim==="backup"?SIM_BACKUP:SIM_MAIN;$("simFrame").src=u;$("openSim").href=u;
+  $("swapSim").textContent=st.sim==="backup"?"改回官網版":"模擬器載不出來？換備用版";}
+$("swapSim").addEventListener("click",()=>{st.sim=st.sim==="backup"?"main":"backup";save();setSim();});
+setSim();
+if(st.i>=STEPS.length)st.i=0;
+render();
+</script>
+</body>
+</html>
