@@ -5,25 +5,91 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SciQuest 國中自然互動網頁</title>
 <style>
-:root{--bg:#EFF2F5;--panel:#fff;--ink:#1B2430;--muted:#566273;--line:#CBD3DD;--wave:#2C5D8A}
+:root{--bg:#EFF2F5;--panel:#fff;--ink:#1B2430;--muted:#566273;--line:#CBD3DD;--wave:#2C5D8A;--edu:#7c3aed;--edubg:#f3e8ff;--sim:#0f766e;--simbg:#ccfbf1}
+*{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.7}
-.wrap{max-width:720px;margin:0 auto;padding:32px 16px 56px;display:grid;gap:18px}
+.wrap{max-width:720px;margin:0 auto;padding:32px 16px 56px;display:grid;gap:14px}
 h1{font-family:"Noto Serif TC","Songti TC",serif;margin:0;font-size:30px}
 p{margin:0;color:var(--muted)}
-h2{font-size:15px;letter-spacing:.1em;color:var(--wave);margin:12px 0 0}
-a.unit{display:grid;gap:2px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:inherit;text-decoration:none}
-a.unit:hover,a.unit:focus-visible{border-color:var(--wave);outline:none}
-a.unit b{font-size:17px}
-a.unit span{font-size:14px;color:var(--muted)}
+h2{font-size:15px;letter-spacing:.1em;color:var(--wave);margin:18px 0 0}
+h3{font-size:14px;color:var(--muted);margin:6px 0 0;font-weight:600}
+.legend{display:grid;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.legend div{display:flex;gap:10px;align-items:baseline;font-size:14px;color:var(--muted)}
+.tag{display:inline-block;flex:0 0 auto;font-size:12px;font-weight:700;padding:1px 10px;border-radius:999px;white-space:nowrap}
+.tag.edu{background:var(--edubg);color:var(--edu)}
+.tag.sim{background:var(--simbg);color:var(--sim)}
+.filter{display:flex;flex-wrap:wrap;gap:8px}
+.filter button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 14px;cursor:pointer}
+.filter button.on{background:var(--wave);border-color:var(--wave);color:#fff}
+.unit{position:relative;display:grid;gap:4px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:12px}
+.unit.edu{border-left-color:var(--edu)}
+.unit.sim{border-left-color:var(--sim)}
+.unit:hover,.unit:focus-within{border-color:var(--wave)}
+.unit .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.unit a.main{color:inherit;text-decoration:none;font-size:17px;font-weight:700}
+.unit a.main::after{content:"";position:absolute;inset:0;border-radius:12px}
+.unit span.desc{font-size:14px;color:var(--muted)}
+.unit a.demo{position:relative;z-index:1;justify-self:start;font-size:13px;color:var(--muted)}
+.hide{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>SciQuest</h1>
-  <p>國中自然各單元互動網頁：操作模擬器、記錄數據，再帶著證據去問因材網 e度。</p>
+  <p>國中自然各單元互動網頁：操作模擬器、記錄數據，用證據找出規律。</p>
+
+  <div class="legend">
+    <div><span class="tag edu">🤖 e度聯動</span>操作完模擬器，帶著自己的數據到因材網 e度，和 AI 討論釐清迷思。</div>
+    <div><span class="tag sim">🔬 模擬實驗</span>照課本實驗操作，先預測、再動手、從數據找規律，網頁內就能完成。</div>
+  </div>
+
+  <div class="filter" role="group" aria-label="篩選類型">
+    <button class="on" data-f="all">全部</button>
+    <button data-f="edu">🤖 e度聯動</button>
+    <button data-f="sim">🔬 模擬實驗</button>
+  </div>
+
   <h2>八年級</h2>
-  <a class="unit" href="g8/3-1/"><b>3-1 波的傳播與特徵：怎樣才能讓繩波傳得更快？</b><span>CoSci 繩波模擬器・波速、頻率、振幅</span></a>
-  <a class="unit" href="g8/4-3/"><b>4-3 光的折射：杯底的硬幣去哪了？</b><span>PhET 光的折射模擬器・法線、入射角、折射角、可逆性</span></a>
+
+  <h3>第 3 章</h3>
+  <div class="unit edu">
+    <div class="top"><a class="main" href="g8/3-1/">3-1 波的傳播與特徵：怎樣才能讓繩波傳得更快？</a><span class="tag edu">🤖 e度聯動</span></div>
+    <span class="desc">CoSci 繩波模擬器・波速、頻率、振幅</span>
+  </div>
+
+  <h3>第 4 章　光、影像與顏色</h3>
+  <div class="unit sim">
+    <div class="top"><a class="main" href="g8/4-2a-reflection/">4-2 光的反射定律：眼睛要在哪裡才看得到？</a><span class="tag sim">🔬 模擬實驗</span></div>
+    <span class="desc">縫隙觀察實驗・入射角、反射角、法線</span>
+    <a class="demo" href="g8/4-2a-reflection/?demo">🧑‍🏫 老師示範模式</a>
+  </div>
+  <div class="unit sim">
+    <div class="top"><a class="main" href="g8/4-2b-plane-mirror/">4-2 平面鏡成像：玻璃板後面的像在哪裡？</a><span class="tag sim">🔬 模擬實驗</span></div>
+    <span class="desc">玻璃板與兩支蠟燭・物距、像距、虛像</span>
+    <a class="demo" href="g8/4-2b-plane-mirror/?demo">🧑‍🏫 老師示範模式</a>
+  </div>
+  <div class="unit sim">
+    <div class="top"><a class="main" href="g8/4-2c-curved-mirror/">4-2 凹面鏡與凸面鏡：像會怎麼變？</a><span class="tag sim">🔬 模擬實驗</span></div>
+    <span class="desc">光路模擬・焦點、實像與虛像、正立與倒立</span>
+    <a class="demo" href="g8/4-2c-curved-mirror/?demo">🧑‍🏫 老師示範模式</a>
+  </div>
+  <div class="unit edu">
+    <div class="top"><a class="main" href="g8/4-3/">4-3 光的折射：杯底的硬幣去哪了？</a><span class="tag edu">🤖 e度聯動</span></div>
+    <span class="desc">PhET 光的折射模擬器・法線、入射角、折射角、可逆性</span>
+  </div>
+  <div class="unit sim">
+    <div class="top"><a class="main" href="g8/4-4-convex-lens/">4-4 凸透鏡成像：紙屏上的像在哪裡？</a><span class="tag sim">🔬 模擬實驗</span></div>
+    <span class="desc">蠟燭、凸透鏡、紙屏・物距、像距、焦點與 2F</span>
+    <a class="demo" href="g8/4-4-convex-lens/?demo">🧑‍🏫 老師示範模式</a>
+  </div>
 </div>
+<script>
+document.querySelectorAll('.filter button').forEach(b=>b.onclick=()=>{
+  const f=b.dataset.f;
+  document.querySelectorAll('.filter button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.unit').forEach(u=>u.classList.toggle('hide',f!=='all'&&!u.classList.contains(f)));
+  document.querySelectorAll('h3').forEach(h=>{let n=h.nextElementSibling,any=false;while(n&&n.classList.contains('unit')){if(!n.classList.contains('hide'))any=true;n=n.nextElementSibling;}h.classList.toggle('hide',!any);});
+});
+</script>
 </body>
 </html>
