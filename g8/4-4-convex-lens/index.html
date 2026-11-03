@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>凸透鏡成像</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--acc:#2563eb;--acc2:#dbeafe;--ok:#16a34a;--okbg:#dcfce7;--bad:#dc2626;--badbg:#fee2e2}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.6}
+header{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:18px 16px}
+header .in{max-width:980px;margin:0 auto}
+header h1{margin:0;font-size:1.45rem}
+header p{margin:4px 0 0;opacity:.88;font-size:.95rem}
+main{max-width:980px;margin:0 auto;padding:16px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.tab{border:2px solid var(--line);background:var(--card);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;font:inherit;color:inherit;font-weight:600}
+.tab small{display:block;color:var(--muted);font-size:.78rem;font-weight:400}
+.tab.active{border-color:var(--acc);background:var(--acc2)}
+.tab.done{border-color:var(--ok)}
+.tab:disabled{opacity:.45;cursor:not-allowed}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.07);transition:opacity .3s}
+.card h2{margin:0 0 6px;font-size:1.25rem}
+.card h3{margin:0 0 8px;font-size:1.1rem}
+.card h4{margin:14px 0 4px}
+.card p{margin:6px 0}
+.step-no{display:inline-block;background:var(--acc);color:#fff;border-radius:999px;padding:0 10px;margin-right:6px;font-size:.85rem}
+.locked{opacity:.38;pointer-events:none;filter:grayscale(1);position:relative}
+.lockmsg{display:none;color:var(--muted);font-size:.9rem}
+.locked .lockmsg{display:block}
+.q{font-weight:600}
+.opts{display:grid;gap:8px;margin-top:6px}
+.opt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer;color:inherit}
+.opt:disabled{cursor:default}
+.opt.sel{border-color:var(--acc);background:var(--acc2)}
+.opt.right{border-color:var(--ok);background:var(--okbg)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg)}
+.fb{margin-top:6px;font-size:.95rem;color:var(--muted)}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+.qblock{border-top:1px dashed var(--line);padding-top:10px;margin-top:10px}
+svg.sim{display:block;width:100%;height:auto;background:#fbfdff;border:1px solid var(--line);border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none}
+svg.screen{display:block;width:100%;max-width:200px;margin:0 auto;border:3px solid #64748b;border-radius:6px;background:#fff}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.ctrl label{display:flex;align-items:center;gap:8px;flex:1 1 240px}
+.ctrl label.chk{flex:0 0 auto}
+.ctrl input[type=range]{flex:1;min-width:120px}
+.readout{background:#f1f5f9;border-radius:8px;padding:8px 12px;font-weight:600;flex:1 1 260px;min-height:2.6em}
+.btn{border:none;background:var(--acc);color:#fff;border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:#e5e7eb;color:var(--ink);padding:6px 12px;font-weight:400;margin-top:8px}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+.seg{display:inline-flex;border:2px solid var(--acc);border-radius:10px;overflow:hidden}
+.seg button{border:none;background:#fff;padding:8px 14px;font:inherit;cursor:pointer;color:var(--acc);font-weight:600}
+.seg button.on{background:var(--acc);color:#fff}
+.tblwrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:#f1f5f9}
+.tasks{list-style:none;padding:0;margin:6px 0}
+.tasks li::before{content:"⬜ "}
+.tasks li.ok{color:var(--ok)}
+.tasks li.ok::before{content:"✅ "}
+.hint{color:var(--muted);font-size:.9rem}
+.compare{border-left:4px solid var(--acc);background:var(--acc2);padding:10px 12px;border-radius:8px;margin-top:12px}
+.lay4{display:grid;grid-template-columns:1fr 210px;gap:14px;align-items:start}
+@media (max-width:720px){.lay4{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
+#toast.show{opacity:.92}
+body.demo .rec{display:none}
+body.demo main{max-width:1200px}
+footer{text-align:center;padding:10px 16px 30px}
+@media print{header,.tabs,.btn,footer{display:none}.card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><div class="in">
+<h1>🔍 凸透鏡成像</h1>
+<p id="sub">八年級自然　第 4 章　光、影像與顏色｜先預測 → 動手做 → 從數據找規律</p>
+</div></header>
+<main>
+<div id="stage"></div>
+</main>
+<footer><button class="btn ghost" id="reset">🗑 清除我的實驗紀錄</button>　<a class="hint" id="mode" href="#"></a></footer>
+<div id="toast"></div>
+<script>
+/* ========== 工具 ========== */
+const NS='http://www.w3.org/2000/svg';
+function E(tag,attrs={},parent){const n=document.createElementNS(NS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);if(parent)parent.appendChild(n);return n;}
+function T(parent,x,y,txt,attrs={}){const t=E('text',Object.assign({x,y,'font-size':13,fill:'#374151','text-anchor':'middle'},attrs),parent);t.textContent=txt;return t;}
+function svgPt(svg,e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+function drag(svg,handle,fn){
+  handle.style.cursor='grab';
+  handle.addEventListener('pointerdown',e=>{
+    e.preventDefault();handle.setPointerCapture(e.pointerId);fn(svgPt(svg,e));
+    const mv=ev=>fn(svgPt(svg,ev));
+    const up=()=>{handle.removeEventListener('pointermove',mv);handle.removeEventListener('pointerup',up);handle.removeEventListener('pointercancel',up);};
+    handle.addEventListener('pointermove',mv);handle.addEventListener('pointerup',up);handle.addEventListener('pointercancel',up);
+  });
+}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const snap=(v,s)=>Math.round(v/s)*s;
+const fmt=v=>(Math.round(v*10)/10).toFixed(1);
+const norm=v=>{const l=Math.hypot(v[0],v[1])||1;return[v[0]/l,v[1]/l];};
+const far=(p,d,L=1400)=>[p[0]+d[0]*L,p[1]+d[1]*L];
+function markers(svg,list){const d=E('defs',{},svg);list.forEach(([id,c])=>{const m=E('marker',{id,viewBox:'0 0 10 10',refX:5,refY:5,markerWidth:7,markerHeight:7,orient:'auto'},d);E('path',{d:'M0 0 L10 5 L0 10 z',fill:c},m);});return d;}
+function rayLine(g,a,b,o={}){
+  const len=Math.hypot(b[0]-a[0],b[1]-a[1])||1,f=Math.min(.5,70/len);
+  const m=[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f];
+  const at={points:`${a[0]},${a[1]} ${m[0]},${m[1]} ${b[0]},${b[1]}`,fill:'none',stroke:o.color||'#ef4444','stroke-width':o.w||2.2};
+  if(o.dash)at['stroke-dasharray']='6 5';
+  if(o.mk)at['marker-mid']=`url(#${o.mk})`;
+  if(o.op)at.opacity=o.op;
+  return E('polyline',at,g);
+}
+function greedyGap(vals,gap){const s=[...vals].sort((a,b)=>a-b);let n=0,last=-1e9;for(const v of s){if(v-last>=gap){n++;last=v;}}return n;}
+let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ========== 第 1 站：光的反射定律 ========== */
+function sim1(box,api){
+  box.innerHTML=`<svg class="sim" viewBox="0 0 600 330"></svg>
+  <div class="ctrl"><label>入射角 <input type="range" min="10" max="80" step="1" value="30"></label></div>
+  <div class="ctrl"><div class="readout"></div><button class="btn rec">📋 記錄這一筆</button></div>
+  <p class="hint">拖曳左上方紅色的<b>光源</b>（或拉滑桿），改變光照到鏡面的角度。量角器的 0° 對準<b>法線</b>。</p>`;
+  const svg=box.querySelector('svg'),rng=box.querySelector('input'),out=box.querySelector('.readout');
+  markers(svg,[['m1','#ef4444']]);
+  const O=[300,280],R=150;
+  E('rect',{x:70,y:280,width:460,height:9,fill:'#94a3b8'},svg);
+  for(let x=80;x<532;x+=14)E('line',{x1:x,y1:289,x2:x-10,y2:302,stroke:'#94a3b8'},svg);
+  T(svg,505,320,'平面鏡',{fill:'#475569'});
+  E('path',{d:`M ${O[0]-R} ${O[1]} A ${R} ${R} 0 0 1 ${O[0]+R} ${O[1]}`,fill:'rgba(37,99,235,.05)',stroke:'#93c5fd'},svg);
+  for(let a=0;a<=90;a+=5){for(const s of[-1,1]){if(a===0&&s===1)continue;const r=a*Math.PI/180,len=a%10?6:12;
+    E('line',{x1:O[0]+s*R*Math.sin(r),y1:O[1]-R*Math.cos(r),x2:O[0]+s*(R-len)*Math.sin(r),y2:O[1]-(R-len)*Math.cos(r),stroke:'#60a5fa'},svg);
+    if(a%10===0)T(svg,O[0]+s*(R+13)*Math.sin(r),O[1]-(R+13)*Math.cos(r)+4,a,{'font-size':10,fill:'#2563eb'});}}
+  E('line',{x1:300,y1:280,x2:300,y2:42,stroke:'#64748b','stroke-dasharray':'6 5'},svg);T(svg,300,34,'法線',{fill:'#475569'});
+  const gRay=E('g',{},svg);
+  const src=E('g',{},svg);E('circle',{r:18,fill:'#fee2e2',stroke:'#ef4444','stroke-width':2},src);E('circle',{r:5,fill:'#ef4444'},src);
+  const lbl=T(svg,0,0,'光源（拖我）',{fill:'#b91c1c','font-size':12});
+  let th=30;
+  function upd(){
+    const r=th*Math.PI/180,sx=300-230*Math.sin(r),sy=280-230*Math.cos(r);
+    src.setAttribute('transform',`translate(${sx},${sy})`);lbl.setAttribute('x',sx);lbl.setAttribute('y',sy-24);
+    gRay.innerHTML='';
+    rayLine(gRay,[sx,sy],O,{mk:'m1'});
+    rayLine(gRay,O,[300+240*Math.sin(r),280-240*Math.cos(r)],{mk:'m1'});
+    const ar=55;
+    E('path',{d:`M 300 ${280-ar} A ${ar} ${ar} 0 0 0 ${300-ar*Math.sin(r)} ${280-ar*Math.cos(r)}`,fill:'none',stroke:'#16a34a','stroke-width':3},gRay);
+    E('path',{d:`M 300 ${280-ar} A ${ar} ${ar} 0 0 1 ${300+ar*Math.sin(r)} ${280-ar*Math.cos(r)}`,fill:'none',stroke:'#9333ea','stroke-width':3},gRay);
+    const h=r/2;
+    T(gRay,300-88*Math.sin(h)-14,280-88*Math.cos(h),'入射角',{fill:'#15803d','font-size':12});
+    T(gRay,300+88*Math.sin(h)+14,280-88*Math.cos(h),'反射角',{fill:'#7e22ce','font-size':12});
+    out.innerHTML=`入射角 ＝ <span style="color:#15803d">${th}°</span>　　反射角 ＝ <span style="color:#7e22ce">${th}°</span>`;
+    rng.value=th;
+  }
+  drag(svg,src,p=>{th=clamp(Math.round(Math.atan2(300-p.x,280-p.y)*180/Math.PI),10,80);upd();});
+  rng.oninput=()=>{th=+rng.value;upd();};
+  box.querySelector('.rec').onclick=()=>api.add({c:[th+'°',th+'°'],k:'t'+th,m:{th}});
+  upd();
+}
+
+/* ========== 第 2 站：平面鏡成像 ========== */
+function sim2(box,api){
+  box.innerHTML=`<svg class="sim" viewBox="0 0 600 345"></svg>
+  <div class="ctrl"><div class="readout"></div><button class="btn rec" disabled>📋 記錄這一筆</button></div>
+  <p class="hint">這是<b>從上往下看</b>的實驗桌，每一小格 1 cm。① 拖曳左邊<b>點燃的蠟燭</b>放到想要的位置。② 玻璃板後面會看到淡淡的「像」，拖曳右邊<b>沒點燃的蠟燭</b>，讓它和像完全重疊。</p>`;
+  const svg=box.querySelector('svg'),out=box.querySelector('.readout'),rec=box.querySelector('.rec');
+  for(let x=0;x<=600;x+=10)E('line',{x1:x,y1:25,x2:x,y2:310,stroke:x%50===0?'#e2e8f0':'#f1f5f9'},svg);
+  for(let y=30;y<=310;y+=10)E('line',{x1:0,y1:y,x2:600,y2:y,stroke:y%50===0?'#e2e8f0':'#f1f5f9'},svg);
+  E('rect',{x:297,y:25,width:6,height:285,fill:'#bae6fd',stroke:'#0284c7'},svg);
+  T(svg,300,18,'玻璃板（當作平面鏡）',{fill:'#0369a1'});
+  for(let d=0;d<=290;d+=10){for(const s of[-1,1]){const x=300+s*d;if(x<0||x>600)continue;E('line',{x1:x,y1:314,x2:x,y2:d%50===0?324:319,stroke:'#64748b'},svg);if(d%50===0&&!(d===0&&s===1))T(svg,x,338,d/10,{'font-size':11,fill:'#475569'});}}
+  T(svg,40,338,'cm',{'font-size':11,fill:'#475569'});
+  const guide=E('g',{},svg);
+  function candle(lit,op=1){const g=E('g',{opacity:op},svg);const glow=E('circle',{r:17,fill:'rgba(251,146,60,.28)'},g);E('circle',{r:9,fill:'#fde68a',stroke:'#d97706','stroke-width':2},g);const fl=E('circle',{r:4,fill:'#f97316'},g);if(!lit){glow.style.display='none';fl.style.display='none';}return{g,glow,fl};}
+  const ghost=candle(true,.35);ghost.g.style.pointerEvents='none';
+  const lit=candle(true),un=candle(false);
+  E('circle',{r:24,fill:'transparent'},lit.g);E('circle',{r:24,fill:'transparent'},un.g);
+  const tL=T(svg,0,0,'點燃的蠟燭',{'font-size':12,fill:'#b45309'}),tU=T(svg,0,0,'沒點燃的蠟燭',{'font-size':12,fill:'#475569'}),tG=T(svg,0,0,'像',{'font-size':12,fill:'#94a3b8'});
+  let L={x:200,y:170},U={x:470,y:110},matched=false;
+  function upd(){
+    const gx=600-L.x;
+    lit.g.setAttribute('transform',`translate(${L.x},${L.y})`);ghost.g.setAttribute('transform',`translate(${gx},${L.y})`);un.g.setAttribute('transform',`translate(${U.x},${U.y})`);
+    tL.setAttribute('x',L.x);tL.setAttribute('y',L.y-24);tU.setAttribute('x',U.x);tU.setAttribute('y',U.y+34);tG.setAttribute('x',gx);tG.setAttribute('y',L.y-24);
+    matched=(U.x===gx&&U.y===L.y);
+    un.glow.style.display=un.fl.style.display=matched?'':'none';
+    tG.style.display=matched?'none':'';
+    guide.innerHTML='';
+    const p=(300-L.x)/10;
+    if(matched){
+      E('line',{x1:L.x,y1:L.y,x2:U.x,y2:U.y,stroke:'#16a34a','stroke-dasharray':'5 4','stroke-width':2},guide);
+      E('path',{d:`M 303 ${L.y-10} L 313 ${L.y-10} L 313 ${L.y}`,fill:'none',stroke:'#16a34a','stroke-width':2},guide);
+      out.innerHTML=`✅ 重疊了！沒點燃的蠟燭看起來像被點燃。<br>物距 ＝ ${fmt(p)} cm　　像距 ＝ ${fmt((U.x-300)/10)} cm`;
+    }else out.innerHTML=`物距 ＝ ${fmt(p)} cm<br><span style="font-weight:400">拖曳沒點燃的蠟燭，讓它和「像」重疊。</span>`;
+    rec.disabled=!matched;
+  }
+  drag(svg,lit.g,pt=>{L.x=clamp(snap(pt.x,5),60,285);L.y=clamp(snap(pt.y,5),45,295);upd();});
+  drag(svg,un.g,pt=>{let x=clamp(pt.x,315,585),y=clamp(pt.y,45,295);if(Math.hypot(x-(600-L.x),y-L.y)<12){x=600-L.x;y=L.y;}else{x=Math.round(x);y=Math.round(y);}U={x,y};upd();});
+  rec.onclick=()=>{const p=(300-L.x)/10,q=(U.x-300)/10;api.add({c:[fmt(p)+' cm',fmt(q)+' cm'],k:'p'+p+'_'+L.y,m:{p}});};
+  upd();
+}
+
+/* ========== 第 3 站：凹面鏡與凸面鏡 ========== */
+function sim3(box,api){
+  box.innerHTML=`<div class="ctrl"><div class="seg"><button data-t="cc" class="on">凹面鏡</button><button data-t="cv">凸面鏡</button></div>
+  <label>物距 <input type="range" min="3" max="45" step="0.5" value="30"></label></div>
+  <svg class="sim" viewBox="0 0 640 340"></svg>
+  <div class="ctrl"><div class="readout"></div><button class="btn rec">📋 記錄這一筆</button></div>
+  <p class="hint">拖曳綠色箭頭（物體）左右移動。紅線是物體發出的光：<b>實線真的交會</b>的地方是<b>實像</b>；只有<b>虛線（反向延長線）交會</b>的是<b>虛像</b>。焦距 10 cm，每 1 cm ＝ 10 格。</p>`;
+  const svg=box.querySelector('svg'),rng=box.querySelector('input'),out=box.querySelector('.readout');
+  markers(svg,[['m3','#ef4444'],['o3','#16a34a'],['i3','#7c3aed']]);
+  const V=520,Y=170,K=10,HO=3,R=200;
+  E('line',{x1:0,y1:Y,x2:640,y2:Y,stroke:'#94a3b8','stroke-dasharray':'4 4'},svg);
+  T(svg,40,Y-8,'主軸',{'font-size':11,fill:'#64748b'});
+  const gM=E('g',{},svg),gR=E('g',{},svg),gO=E('g',{},svg);
+  let type='cc',p=30;
+  const hitX=h=>type==='cc'?(V-R)+Math.sqrt(R*R-h*h):(V+R)-Math.sqrt(R*R-h*h);
+  function drawMirror(){
+    gM.innerHTML='';let d='';
+    for(let h=-110;h<=110;h+=5)d+=(h===-110?'M':'L')+hitX(h)+' '+(Y+h);
+    for(let h=-108;h<=108;h+=12){const x=hitX(h);E('line',{x1:x,y1:Y+h,x2:x+9,y2:Y+h+7,stroke:'#94a3b8'},gM);}
+    E('path',{d,fill:'none',stroke:'#334155','stroke-width':4},gM);
+    const pts=type==='cc'?[[V-100,'F 焦點'],[V-200,'C']]:[[V+100,'F 焦點']];
+    pts.forEach(([x,t])=>{E('circle',{cx:x,cy:Y,r:4,fill:'#0f172a'},gM);T(gM,x,Y+20,t,{'font-size':12,fill:'#0f172a'});});
+    T(gM,V,Y+132,type==='cc'?'凹面鏡':'凸面鏡',{fill:'#334155'});
+  }
+  function zone(){
+    if(type==='cv')return'鏡前';
+    if(Math.abs(p-20)<=.26)return'C 點上';if(p>20)return'C 點外';
+    if(Math.abs(p-10)<=.26)return'F 點上';if(p>10)return'C 與 F 之間';return'F 與鏡子之間';
+  }
+  function info(){
+    const f=type==='cc'?10:-10;
+    if(type==='cc'&&Math.abs(p-10)<=.26)return{none:true};
+    const q=1/(1/f-1/p),m=-q/p,real=q>0;
+    const size=Math.abs(m)>1.02?'放大':Math.abs(m)<.98?'縮小':'等大';
+    return{q,m,real,txt:`${m<0?'倒立':'正立'}、${size}的${real?'實像':'虛像'}`};
+  }
+  function upd(){
+    const xo=V-p*K,tip=[xo,Y-HO*K],A=[hitX(-HO*K),Y-HO*K],B=[V,Y];
+    gO.innerHTML='';const og=E('g',{},gO);
+    E('line',{x1:xo,y1:Y,x2:tip[0],y2:tip[1]+4,stroke:'#16a34a','stroke-width':4,'marker-end':'url(#o3)'},og);
+    E('rect',{x:xo-18,y:tip[1]-12,width:36,height:HO*K+20,fill:'transparent'},og);
+    T(og,xo,Y+20,'物體',{'font-size':12,fill:'#15803d'});
+    drag(svg,og,pt=>{p=clamp(snap((V-pt.x)/K,.5),3,45);upd();});
+    gR.innerHTML='';
+    rayLine(gR,tip,A,{mk:'m3'});rayLine(gR,tip,B,{mk:'m3'});
+    const I=info();
+    if(I.none){
+      rayLine(gR,A,far(A,norm([V-100-A[0],Y-A[1]])),{mk:'m3'});
+      rayLine(gR,B,far(B,norm([-(V-xo),Y-tip[1]])),{mk:'m3'});
+      out.innerHTML=`物距 ${fmt(p)} cm（${zone()}）<br>反射光互相平行，<b>不會成像</b>`;
+    }else{
+      const xi=V-I.q*K,yi=Y-I.m*HO*K,P=[xi,yi];
+      [A,B].forEach(H=>{
+        if(I.real){rayLine(gR,H,far(H,norm([P[0]-H[0],P[1]-H[1]])),{mk:'m3'});}
+        else{rayLine(gR,H,far(H,norm([H[0]-P[0],H[1]-P[1]])),{mk:'m3'});rayLine(gR,H,P,{dash:true,color:'#f87171',w:1.6});}
+      });
+      E('line',{x1:xi,y1:Y,x2:xi,y2:yi+(I.m<0?-4:4),stroke:'#7c3aed','stroke-width':4,'stroke-dasharray':I.real?'':'6 4','marker-end':'url(#i3)'},gR);
+      T(gR,xi,Y+(I.m<0?-10:20),I.real?'實像':'虛像',{'font-size':12,fill:'#6d28d9'});
+      const offs=(xi<0||xi>640||Math.abs(yi-Y)>170)?'<br><span style="font-weight:400">（像很大或很遠，超出畫面）</span>':'';
+      out.innerHTML=`物距 ${fmt(p)} cm（${zone()}）<br>成像：<span style="color:#6d28d9">${I.txt}</span>${offs}`;
+    }
+    rng.value=p;
+  }
+  box.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{type=b.dataset.t;box.querySelectorAll('.seg button').forEach(x=>x.classList.toggle('on',x===b));drawMirror();upd();});
+  rng.oninput=()=>{p=+rng.value;upd();};
+  box.querySelector('.rec').onclick=()=>{const I=info();api.add({c:[type==='cc'?'凹面鏡':'凸面鏡',fmt(p)+' cm',zone(),I.none?'不成像（反射光平行）':I.txt],k:type+p,m:{t:type,real:!I.none&&I.real,virt:!I.none&&!I.real,none:!!I.none}});};
+  drawMirror();upd();
+}
+
+/* ========== 第 4 站：凸透鏡成像 ========== */
+function sim4(box,api){
+  box.innerHTML=`<svg class="sim" viewBox="0 0 700 300"></svg>
+  <div class="lay4"><div>
+    <div class="ctrl"><label>蠟燭 <input class="r1" type="range" min="1" max="47" step="0.5" value="20"></label><label>紙屏 <input class="r2" type="range" min="53" max="100" step="0.5" value="80"></label></div>
+    <div class="ctrl"><label class="chk"><input type="checkbox" class="cRay"> 顯示光路</label><label class="chk"><input type="checkbox" class="cEye"> 眼睛從右側透過透鏡看</label></div>
+    <div class="ctrl"><div class="readout"></div><button class="btn rec" disabled>📋 記錄這一筆</button></div>
+  </div><div><svg class="screen" viewBox="0 0 180 180"></svg><p class="hint" style="text-align:center">紙屏上看到的畫面</p></div></div>
+  <p class="hint">凸透鏡固定在 50 cm 處，焦距 10 cm。拖曳<b>蠟燭</b>或<b>紙屏</b>（或用滑桿），前後移動紙屏，找到<b>最清楚</b>的像再記錄。</p>`;
+  const svg=box.querySelector('svg'),scr=box.querySelector('svg.screen'),out=box.querySelector('.readout'),rec=box.querySelector('.rec');
+  const r1=box.querySelector('.r1'),r2=box.querySelector('.r2'),cRay=box.querySelector('.cRay'),cEye=box.querySelector('.cEye');
+  markers(svg,[['m4','#ef4444']]);
+  const X=cm=>50+cm*6,Y=150,LX=X(50),H=44,F=10;
+  E('rect',{x:45,y:244,width:610,height:12,rx:3,fill:'#cbd5e1'},svg);
+  for(let c=0;c<=100;c++)E('line',{x1:X(c),y1:256,x2:X(c),y2:c%10===0?270:c%5===0?266:262,stroke:'#475569'},svg);
+  for(let c=0;c<=100;c+=10)T(svg,X(c),285,c,{'font-size':11,fill:'#334155'});
+  T(svg,680,285,'cm',{'font-size':11,fill:'#334155'});
+  E('line',{x1:30,y1:Y,x2:690,y2:Y,stroke:'#94a3b8','stroke-dasharray':'4 4'},svg);
+  [[40,'F'],[60,'F'],[30,'2F'],[70,'2F']].forEach(([c,t])=>{E('circle',{cx:X(c),cy:Y,r:3.5,fill:'#0f172a'},svg);T(svg,X(c),Y+18,t,{'font-size':12,fill:'#0f172a'});});
+  E('path',{d:`M ${LX} ${Y-90} Q ${LX+20} ${Y} ${LX} ${Y+90} Q ${LX-20} ${Y} ${LX} ${Y-90} Z`,fill:'rgba(125,211,252,.45)',stroke:'#0284c7','stroke-width':2},svg);
+  T(svg,LX,Y-98,'凸透鏡',{fill:'#0369a1'});
+  const gR=E('g',{},svg);
+  function candleShape(parent,dash){
+    const g=E('g',{},parent);
+    E('rect',{x:-5,y:-30,width:10,height:30,fill:dash?'none':'#fde68a',stroke:dash?'#7c3aed':'#d97706','stroke-width':1.5,'stroke-dasharray':dash?'4 3':'','vector-effect':'non-scaling-stroke'},g);
+    E('ellipse',{cx:0,cy:-37,rx:5,ry:7,fill:dash?'none':'#f97316',stroke:dash?'#7c3aed':'none','stroke-width':1.5,'stroke-dasharray':dash?'4 3':'','vector-effect':'non-scaling-stroke'},g);
+    return g;
+  }
+  const cg=E('g',{},svg);candleShape(cg,false);E('rect',{x:-16,y:-50,width:32,height:56,fill:'transparent'},cg);
+  const cT=T(svg,0,0,'蠟燭',{'font-size':12,fill:'#b45309'});
+  const sg=E('g',{},svg);E('rect',{x:-16,y:-100,width:32,height:200,fill:'transparent'},sg);E('rect',{x:-3,y:-100,width:6,height:200,fill:'#fff',stroke:'#64748b','stroke-width':1.5},sg);
+  const sT=T(svg,0,0,'紙屏',{'font-size':12,fill:'#475569'});
+  const fd=E('defs',{},scr);const flt=E('filter',{id:'blur4',filterUnits:'userSpaceOnUse',x:0,y:0,width:180,height:180},fd);const gb=E('feGaussianBlur',{stdDeviation:0},flt);
+  const rg=E('radialGradient',{id:'glow4'},fd);E('stop',{offset:'0','stop-color':'#fdba74','stop-opacity':.55},rg);E('stop',{offset:'1','stop-color':'#fdba74','stop-opacity':0},rg);
+  const outer=E('g',{filter:'url(#blur4)'},scr),inner=E('g',{},outer);
+  const icon=E('g',{},inner);E('rect',{x:-5,y:-8,width:10,height:30,fill:'#fbbf24'},icon);E('ellipse',{cx:0,cy:-15,rx:5,ry:7,fill:'#f97316'},icon);
+  const glow=E('circle',{cx:90,cy:90,r:80,fill:'url(#glow4)'},scr);
+  const noT=T(scr,90,170,'找不到清楚的像',{'font-size':12,fill:'#94a3b8'});
+  let c=30,sc=80;
+  function info(){
+    const p=50-c;
+    if(Math.abs(p-F)<=.26)return{p,none:true};
+    const q=1/(1/F-1/p),m=-q/p,real=q>0;
+    const size=Math.abs(m)>1.02?'放大':Math.abs(m)<.98?'縮小':'等大';
+    return{p,q,m,real,size};
+  }
+  const zoneL=p=>Math.abs(p-20)<=.26?'2F 上':p>20?'2F 外':Math.abs(p-10)<=.26?'F 上':p>10?'F 與 2F 之間':'F 內';
+  function endAtScreen(H,d){const sx=X(sc);if(d[0]<=0)return far(H,d,300);const t=(sx-H[0])/d[0];return t>0?[H[0]+d[0]*t,H[1]+d[1]*t]:H;}
+  function upd(){
+    const I=info(),p=I.p,s=sc-50,xc=X(c);
+    cg.setAttribute('transform',`translate(${xc},${Y})`);cT.setAttribute('x',xc);cT.setAttribute('y',Y+36);
+    sg.setAttribute('transform',`translate(${X(sc)},${Y})`);sT.setAttribute('x',X(sc));sT.setAttribute('y',Y-106);
+    r1.value=c;r2.value=sc;
+    let clear=false;
+    if(!I.none&&I.real){
+      const blur=clamp(Math.abs(s-I.q)/I.q*25,0,18),k=1.4*I.m*(s/I.q);
+      gb.setAttribute('stdDeviation',blur.toFixed(2));inner.setAttribute('transform',`translate(90,90) scale(${k})`);
+      outer.setAttribute('opacity',clamp(1-blur/26,.35,1));outer.style.display='';glow.style.display='none';
+      clear=Math.abs(s-I.q)<=.5&&I.q<=50;noT.style.display=clear?'none':'';noT.textContent=clear?'':'像還不清楚';
+    }else{outer.style.display='none';glow.style.display='';noT.style.display='';noT.textContent='找不到清楚的像';}
+    gR.innerHTML='';
+    const tip=[xc,Y-H],h1=[LX,Y-H],h2=[LX,Y];
+    if(cRay.checked){
+      rayLine(gR,tip,h1,{mk:'m4'});rayLine(gR,tip,h2,{mk:'m4'});
+      if(I.none){
+        const d1=norm([X(60)-LX,Y-h1[1]]),d2=norm([LX-xc,H]);
+        rayLine(gR,h1,endAtScreen(h1,d1),{mk:'m4'});rayLine(gR,h2,endAtScreen(h2,d2),{mk:'m4'});
+      }else{
+        const P=[LX+I.q*6,Y-I.m*H];
+        [h1,h2].forEach(Hh=>{
+          const d=I.real?norm([P[0]-Hh[0],P[1]-Hh[1]]):norm([Hh[0]-P[0],Hh[1]-P[1]]);
+          rayLine(gR,Hh,endAtScreen(Hh,d),{mk:'m4'});
+          if(!I.real)rayLine(gR,Hh,P,{dash:true,color:'#f87171',w:1.5});
+        });
+        if(I.real&&P[0]<720){const ig=candleShape(gR,true);ig.setAttribute('transform',`translate(${P[0]},${Y}) scale(${Math.abs(I.m)},${I.m})`);ig.setAttribute('opacity',.6);}
+      }
+    }
+    if(cEye.checked&&!I.none&&!I.real){
+      const P0=LX+I.q*6,vg=candleShape(gR,true);vg.setAttribute('transform',`translate(${P0},${Y}) scale(${I.m})`);
+      T(gR,P0+28,Y-50,'虛像',{'font-size':12,fill:'#6d28d9'});T(gR,660,Y-40,'👁',{'font-size':26});
+    }
+    if(I.none){out.innerHTML=`物距 ${fmt(p)} cm（${zoneL(p)}）<br>光線經透鏡後<b>平行</b>射出，紙屏上找不到像。`;rec.disabled=true;rec.textContent='📋 記錄這一筆';}
+    else if(!I.real){out.innerHTML=`物距 ${fmt(p)} cm（${zoneL(p)}）<br>紙屏怎麼移都找不到像！勾選「眼睛從右側透過透鏡看」試試。`;rec.disabled=false;rec.textContent='📋 記錄：紙屏上找不到像';}
+    else{
+      rec.textContent='📋 記錄這一筆';rec.disabled=!clear;
+      if(clear)out.innerHTML=`✅ 像很清楚！物距 ${fmt(p)} cm、像距 ${fmt(s)} cm<br>紙屏上：<span style="color:#6d28d9">倒立、${I.size}的實像</span>`;
+      else out.innerHTML=`物距 ${fmt(p)} cm（${zoneL(p)}）<br><span style="font-weight:400">${I.q>50?'像距超過 50 cm，紙屏移到最遠還是不清楚。把蠟燭移遠一點試試。':'前後移動紙屏，找到最清楚的像。'}</span>`;
+    }
+  }
+  drag(svg,cg,pt=>{c=clamp(snap((pt.x-50)/6,.5),1,47);upd();});
+  drag(svg,sg,pt=>{sc=clamp(snap((pt.x-50)/6,.5),53,100);upd();});
+  r1.oninput=()=>{c=+r1.value;upd();};r2.oninput=()=>{sc=+r2.value;upd();};
+  cRay.onchange=upd;cEye.onchange=upd;
+  rec.onclick=()=>{const I=info();
+    if(I.real)api.add({c:[fmt(I.p)+' cm',zoneL(I.p),fmt(sc-50)+' cm',`倒立、${I.size}的實像`],k:'r'+I.p,m:{real:true,big:I.size==='放大',small:I.size==='縮小'}});
+    else api.add({c:[fmt(I.p)+' cm',zoneL(I.p),'—','紙屏上無像（透過透鏡看到正立、放大的虛像）'],k:'v'+I.p,m:{virt:true}});
+  };
+  upd();
+}
+
+/* ========== 四站設定 ========== */
+const STATIONS=[
+ {title:'光的反射定律',short:'反射定律',icon:'🔦',
+  intro:'課本實驗：用光源斜射平面鏡，用量角器量出<b>入射角</b>和<b>反射角</b>。改變光源角度，多量幾次，找出兩者的關係。',
+  pred:{q:'把光源慢慢壓低、靠近鏡面（入射角變大），反射光會怎樣？',opts:['反射光也跟著壓低，而且兩邊角度一樣','反射光反而往上抬（反射角變小）','反射光不會動','反射光會壓低，但角度不一定一樣'],ans:0,result:'入射角變大，反射角也跟著變大，而且兩者永遠相等。'},
+  sim:sim1,cols:['入射角','反射角'],
+  tasks:r=>[{t:'至少記錄 3 筆',ok:r.length>=3},{t:'其中 3 筆的入射角，彼此至少相差 10°',ok:greedyGap(r.map(x=>x.m.th),10)>=3}],
+  concl:[
+   {q:'從你的數據看，反射角和入射角的關係是？',opts:['反射角比入射角大','反射角＝入射角','反射角比入射角小','沒有固定關係'],ans:1,hint:'看看表格裡每一列的兩個數字。',ex:'反射角＝入射角，這就是「反射定律」。'},
+   {q:'入射角是「入射線」和哪一條線的夾角？',opts:['鏡面','法線','反射線'],ans:1,hint:'量角器的 0° 對準哪一條線？',ex:'入射角、反射角都要從「法線」量起，不是從鏡面量起。'},
+   {q:'如果光垂直照向鏡面（沿著法線入射），反射光會往哪裡走？',opts:['沿原路徑反射回來','沿鏡面滑走','穿過鏡子'],ans:0,hint:'這時入射角是幾度？反射角呢？',ex:'入射角 0°，反射角也是 0°，光沿原路徑反射回來。'}]},
+ {title:'平面鏡成像',short:'平面鏡成像',icon:'🕯️',
+  intro:'課本實驗：在白紙上立一片<b>玻璃板</b>當平面鏡，前面放點燃的蠟燭，後面拿一支<b>沒點燃</b>的蠟燭去找像的位置，量出<b>物距</b>和<b>像距</b>。',
+  pred:{q:'把點燃的蠟燭往遠離玻璃板的方向移，玻璃板後面的像會？',opts:['也往後退，而且和玻璃板的距離跟蠟燭一樣','往玻璃板靠近','位置不變','像會跑到玻璃板前面'],ans:0,result:'蠟燭後退，像也後退；像距永遠等於物距。'},
+  sim:sim2,cols:['物距','像距'],
+  tasks:r=>[{t:'至少記錄 3 筆',ok:r.length>=3},{t:'其中 3 筆的物距，彼此至少相差 2 cm',ok:greedyGap(r.map(x=>x.m.p),2)>=3}],
+  concl:[
+   {q:'從你的數據看，像距和物距的關係是？',opts:['像距比物距大','像距＝物距','像距比物距小'],ans:1,hint:'比較表格中每一列的兩個數字。',ex:'平面鏡成像，像距＝物距。'},
+   {q:'蠟燭和像的連線，與玻璃板（鏡面）的關係是？',opts:['互相垂直','互相平行','斜斜的，角度不一定'],ans:0,hint:'看看配對成功時出現的綠色虛線和直角記號。',ex:'物體與像的連線垂直於鏡面，像和物體對稱於鏡面。'},
+   {q:'後面那支蠟燭沒點燃，看起來卻像被點燃，這是因為？',opts:['玻璃板後面真的有光','我們看到的是點燃蠟燭的像，剛好和它重疊','沒點燃的蠟燭被照熱了'],ans:1,hint:'光真的有跑到玻璃板後面嗎？',ex:'平面鏡成的是虛像，光並沒有真的到達像的位置。'}]},
+ {title:'凹面鏡與凸面鏡',short:'曲面鏡成像',icon:'🥄',
+  intro:'用光路模擬觀察凹面鏡、凸面鏡的成像。生活中：化妝鏡、手電筒反光罩用凹面鏡；道路轉角鏡、汽車後照鏡用凸面鏡。',
+  pred:{q:'便利商店轉角的凸面鏡，從鏡中看到的像是？',opts:['正立、縮小','正立、放大','倒立、縮小','倒立、放大'],ans:0,result:'凸面鏡不論物體放在哪裡，都成正立、縮小的虛像，所以可以看到比較大的範圍。'},
+  sim:sim3,cols:['鏡子','物距','物體位置','成像情形'],
+  tasks:r=>[{t:'凹面鏡：記錄到 1 筆「實像」',ok:r.some(x=>x.m.t==='cc'&&x.m.real)},{t:'凹面鏡：記錄到 1 筆「虛像」',ok:r.some(x=>x.m.t==='cc'&&x.m.virt)},{t:'凸面鏡：至少記錄 2 筆',ok:r.filter(x=>x.m.t==='cv').length>=2},{t:'總共至少 5 筆',ok:r.length>=5}],
+  concl:[
+   {q:'用凹面鏡化妝鏡想看到「正立、放大」的臉，臉要在哪裡？',opts:['C 點外','C 與 F 之間','剛好在 F 點','F 與鏡子之間'],ans:3,hint:'找出表格中「正立、放大的虛像」那一列的物體位置。',ex:'物體在焦點與鏡子之間，凹面鏡成正立、放大的虛像。'},
+   {q:'凹面鏡成「實像」時，像是？',opts:['倒立','正立','都有可能'],ans:0,hint:'看看你記錄到的實像，是正立還是倒立？',ex:'凹面鏡的實像都是倒立的。'},
+   {q:'凸面鏡不論物體放在哪裡，成的像都是？',opts:['正立、縮小的虛像','倒立、縮小的實像','正立、放大的虛像'],ans:0,hint:'看凸面鏡那幾列。',ex:'凸面鏡都成正立、縮小的虛像，視野比較廣。'}]},
+ {title:'凸透鏡成像',short:'凸透鏡成像',icon:'🔍',
+  intro:'課本實驗：<b>蠟燭、凸透鏡、紙屏</b>排成一直線，移動紙屏找到清楚的像，記錄物距、像距與像的樣子。',
+  pred:{q:'蠟燭從遠處慢慢靠近凸透鏡（還沒進到焦點內），要在紙屏上看清楚像，紙屏要怎麼移？像會怎麼變？',opts:['紙屏要遠離透鏡，像變大','紙屏要靠近透鏡，像變小','紙屏不用動，像大小不變','紙屏要靠近透鏡，像變大'],ans:0,result:'物距變小，像距變大，像也變大。'},
+  sim:sim4,cols:['物距','蠟燭位置','像距','紙屏上的像'],
+  tasks:r=>[{t:'記錄 1 筆「放大」的實像',ok:r.some(x=>x.m.big)},{t:'記錄 1 筆「縮小」的實像',ok:r.some(x=>x.m.small)},{t:'實像至少記錄 3 筆',ok:r.filter(x=>x.m.real).length>=3},{t:'記錄 1 筆蠟燭在焦點內（F 內）的情形',ok:r.some(x=>x.m.virt)}],
+  concl:[
+   {q:'要在紙屏上得到「放大」的像，蠟燭要放在？',opts:['2F 外','F 與 2F 之間','F 內','剛好在 F'],ans:1,hint:'找出表格中「放大」那一列的蠟燭位置。',ex:'蠟燭在 F 與 2F 之間，成倒立、放大的實像（投影機的原理）。'},
+   {q:'能在紙屏上看到的像，都是？',opts:['倒立的實像','正立的實像','正立的虛像'],ans:0,hint:'看看紙屏上的蠟燭火焰朝哪個方向。',ex:'能投射在紙屏上的一定是實像；凸透鏡的實像都是倒立的。'},
+   {q:'蠟燭在焦點內時，會怎樣？',opts:['紙屏上找不到像；從另一側透過透鏡看，可以看到正立、放大的虛像','紙屏上可以看到倒立、放大的像','什麼都看不到'],ans:0,hint:'回想你勾選「眼睛從右側透過透鏡看」時看到什麼。',ex:'這就是放大鏡的原理：物體在焦點內，成正立、放大的虛像。'}]}
+];
+
+/* ========== 單頁進度與畫面 ========== */
+const ONLY=3;
+const DEMO=new URLSearchParams(location.search).has('demo');
+const st=STATIONS[ONLY];
+const KEY='sciquest-g8-ch4-'+['reflection','plane-mirror','curved-mirror','convex-lens'][ONLY]+'-v1';
+function fresh(){return{pred:null,rows:[],ans:{},done:false};}
+let ss=null;try{ss=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+if(!ss||!Array.isArray(ss.rows))ss=fresh();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ss));}catch(e){}}
+const stage=document.getElementById('stage');
+function tableHTML(rows){
+  if(!rows.length)return'<p class="hint">還沒有數據。操作實驗後按「記錄這一筆」。</p>';
+  return`<div class="tblwrap"><table><tr><th>#</th>${st.cols.map(c=>`<th>${c}</th>`).join('')}</tr>${rows.map((r,k)=>`<tr><td>${k+1}</td>${r.c.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</table></div>`;
+}
+function renderDemo(){
+  document.body.classList.add('demo');
+  stage.innerHTML=`<div class="card"><h2>${st.icon} ${st.title}　<span class="step-no">🧑‍🏫 老師示範模式</span></h2><p>${st.intro}</p><div id="sim"></div></div>`;
+  st.sim(stage.querySelector('#sim'),{add:()=>{}});
+}
+function renderStation(){
+  stage.innerHTML=`
+  <div class="card"><h2>${st.icon} ${st.title}</h2><p>${st.intro}</p></div>
+  <div class="card" id="c1"><h3><span class="step-no">步驟 1</span>先預測</h3><p class="q">${st.pred.q}</p><div class="opts" id="pOpts"></div><div class="fb" id="pFb"></div></div>
+  <div class="card" id="c2"><h3><span class="step-no">步驟 2</span>動手做實驗</h3><p class="lockmsg">🔒 先完成步驟 1 的預測，才能開始實驗。</p>
+    <div id="sim"></div><h4>🎯 任務</h4><ul class="tasks" id="tasks"></ul><h4>📊 我的數據</h4><div id="tbl"></div><button class="btn ghost" id="undo">↩ 刪除最後一筆</button></div>
+  <div class="card" id="c3"><h3><span class="step-no">步驟 3</span>從數據找規律</h3><p class="lockmsg">🔒 完成所有任務後解鎖。</p><div id="qs"></div><div id="cmp"></div></div>`;
+  const po=stage.querySelector('#pOpts');
+  st.pred.opts.forEach((o,k)=>{const b=document.createElement('button');b.className='opt'+(ss.pred===k?' sel':'');b.textContent=o;b.disabled=ss.pred!==null;b.onclick=()=>{ss.pred=k;save();renderStation();toast('已記下你的預測！開始做實驗吧');};po.appendChild(b);});
+  stage.querySelector('#pFb').textContent=ss.pred!==null?'✍️ 已記下你的預測，做完實驗後在步驟 3 對照看看。':'選一個你覺得對的（先別擔心對錯）。';
+  st.sim(stage.querySelector('#sim'),{add:row=>{
+    if(ss.rows.some(r=>r.k===row.k)){toast('這一筆記錄過了，換個角度或位置試試！');return;}
+    ss.rows.push(row);save();refresh();toast('已記錄 ✔');}});
+  stage.querySelector('#undo').onclick=()=>{if(!ss.rows.length)return;ss.rows.pop();save();refresh();};
+  let wasOk=null;
+  function refresh(){
+    stage.querySelector('#tbl').innerHTML=tableHTML(ss.rows);
+    const ts=st.tasks(ss.rows);
+    stage.querySelector('#tasks').innerHTML=ts.map(t=>`<li class="${t.ok?'ok':''}">${t.t}</li>`).join('');
+    const allOk=ts.every(t=>t.ok)||ss.done;
+    stage.querySelector('#c2').classList.toggle('locked',ss.pred===null);
+    stage.querySelector('#c3').classList.toggle('locked',!allOk);
+    if(wasOk===false&&allOk)toast('🎉 任務完成！往下到步驟 3');
+    wasOk=allOk;
+  }
+  function renderQs(){
+    const qs=stage.querySelector('#qs');qs.innerHTML='';
+    st.concl.forEach((Q,qi)=>{
+      const d=document.createElement('div');d.className='qblock';d.innerHTML=`<p class="q">${qi+1}. ${Q.q}</p><div class="opts"></div><div class="fb"></div>`;
+      const os=d.querySelector('.opts'),fb=d.querySelector('.fb');
+      Q.opts.forEach((o,k)=>{const b=document.createElement('button');b.className='opt';b.textContent=o;
+        if(ss.ans[qi]){b.disabled=true;if(k===Q.ans)b.classList.add('right');}
+        b.onclick=()=>{
+          if(k===Q.ans){ss.ans[qi]=true;if(st.concl.every((_,j)=>ss.ans[j]))ss.done=true;save();renderQs();}
+          else{b.classList.add('wrong');fb.className='fb bad';fb.textContent='再想想：'+Q.hint;}
+        };os.appendChild(b);});
+      if(ss.ans[qi]){fb.className='fb ok';fb.textContent='✔ '+Q.ex;}
+      qs.appendChild(d);
+    });
+    const cmp=stage.querySelector('#cmp');
+    if(ss.done){
+      const ok=ss.pred===st.pred.ans;
+      cmp.innerHTML=`<div class="compare"><b>🎉 完成！回頭看看你的預測</b><br>你預測：「${st.pred.opts[ss.pred]}」<br>實驗結果：${st.pred.result}<br>${ok?'🎯 預測正確！':'🤔 跟你原本想的不一樣，這正是要做實驗的原因！'}</div>
+      <p style="margin-top:12px"><button class="btn" id="pr">🖨 列印／存成 PDF</button></p>`;
+      cmp.querySelector('#pr').onclick=()=>window.print();
+    }else cmp.innerHTML='';
+  }
+  refresh();renderQs();
+}
+const modeA=document.getElementById('mode');
+if(DEMO){modeA.textContent='👩‍🎓 切換到學生模式';modeA.href=location.pathname;document.getElementById('reset').style.display='none';renderDemo();}
+else{modeA.textContent='🧑‍🏫 老師示範模式';modeA.href=location.pathname+'?demo';renderStation();}
+document.getElementById('reset').onclick=()=>{if(confirm('確定要清除這一頁的實驗紀錄，重新開始嗎？')){ss=fresh();save();renderStation();}};
+</script>
+</body>
+</html>
