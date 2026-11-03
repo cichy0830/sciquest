@@ -61,6 +61,9 @@ th{background:#f1f5f9}
 .tasks li.ok::before{content:"✅ "}
 .hint{color:var(--muted);font-size:.9rem}
 .compare{border-left:4px solid var(--acc);background:var(--acc2);padding:10px 12px;border-radius:8px;margin-top:12px}
+.sub{margin:4px 0 8px;font-size:1.02rem}
+hr.sep{border:none;border-top:2px dashed var(--line);margin:20px 0 12px}
+.measure input{width:72px;font:inherit;padding:6px;border:2px solid var(--line);border-radius:8px}
 .lay4{display:grid;grid-template-columns:1fr 210px;gap:14px;align-items:start}
 @media (max-width:720px){.lay4{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
@@ -115,8 +118,8 @@ function greedyGap(vals,gap){const s=[...vals].sort((a,b)=>a-b);let n=0,last=-1e
 let toastT;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
 
 /* ========== 第 1 站：光的反射定律 ========== */
-function sim1(box,api){
-  box.innerHTML=`<svg class="sim" viewBox="0 0 600 330"></svg>
+function simLaser(box,api){
+  box.innerHTML=`<h4 class="sub">🔦 實驗二：用光源再驗證</h4><svg class="sim" viewBox="0 0 600 330"></svg>
   <div class="ctrl"><label>入射角 <input type="range" min="10" max="80" step="1" value="30"></label></div>
   <div class="ctrl"><div class="readout"></div><button class="btn rec">📋 記錄這一筆</button></div>
   <p class="hint">拖曳左上方紅色的<b>光源</b>（或拉滑桿），改變光照到鏡面的角度。量角器的 0° 對準<b>法線</b>。</p>`;
@@ -152,8 +155,84 @@ function sim1(box,api){
   }
   drag(svg,src,p=>{th=clamp(Math.round(Math.atan2(300-p.x,280-p.y)*180/Math.PI),10,80);upd();});
   rng.oninput=()=>{th=+rng.value;upd();};
-  box.querySelector('.rec').onclick=()=>api.add({c:[th+'°',th+'°'],k:'t'+th,m:{th}});
+  box.querySelector('.rec').onclick=()=>api.add({c:['光源照射',th+'°',th+'°'],k:'l'+th,m:{th,exp:'laser'}});
   upd();
+}
+
+/* ---- 實驗一：縫隙觀察（課本實驗） ---- */
+function simSlit(box,api){
+  box.innerHTML=`<h4 class="sub">👁 實驗一：從縫隙找觀測物</h4>
+  <p class="hint">這是<b>從上往下看</b>的實驗桌。平面鏡立在桌上，鏡面用白紙遮住，只留中間一條<b>縫隙</b>。<br>① 把左邊的<b>觀測物（大頭針）</b>放到任意位置。② 拖曳右邊的<b>眼睛</b>，找到能從縫隙裡看到觀測物的位置。</p>
+  <div class="lay4"><svg class="sim" viewBox="0 0 600 360"></svg>
+  <div><svg class="screen" viewBox="0 0 180 180"></svg><p class="hint" style="text-align:center">眼睛看到的縫隙</p></div></div>
+  <div class="ctrl"><div class="readout"></div><button class="btn draw" disabled>✏️ 畫出光線</button></div>
+  <div class="measure" hidden><p>用量角器讀出角度（量角器的 0° 要對準<b>法線</b>）：</p>
+  <div class="ctrl"><label class="chk">入射角 <input type="number" class="ni" min="0" max="90" inputmode="numeric"> °</label><label class="chk">反射角 <input type="number" class="nr" min="0" max="90" inputmode="numeric"> °</label>
+  <button class="btn rec">📋 記錄這一筆</button><button class="btn ghost again">🔄 換觀測物位置再做一次</button></div></div>`;
+  const svg=box.querySelector('svg.sim'),scr=box.querySelector('svg.screen'),out=box.querySelector('.readout');
+  const bDraw=box.querySelector('.draw'),meas=box.querySelector('.measure'),ni=box.querySelector('.ni'),nr=box.querySelector('.nr');
+  markers(svg,[['m0','#ef4444']]);
+  const O=[300,300];
+  const gLines=E('g',{},svg);
+  E('rect',{x:60,y:300,width:480,height:8,fill:'#94a3b8'},svg);
+  for(let x=70;x<545;x+=14)E('line',{x1:x,y1:308,x2:x-10,y2:320,stroke:'#cbd5e1'},svg);
+  E('rect',{x:60,y:292,width:236,height:9,fill:'#fff',stroke:'#9ca3af'},svg);
+  E('rect',{x:304,y:292,width:236,height:9,fill:'#fff',stroke:'#9ca3af'},svg);
+  T(svg,150,286,'白紙',{'font-size':11,fill:'#6b7280'});T(svg,450,286,'白紙',{'font-size':11,fill:'#6b7280'});
+  T(svg,300,336,'▲ 縫隙',{'font-size':12,fill:'#0f172a'});
+  T(svg,470,340,'平面鏡（鏡面朝上）',{'font-size':12,fill:'#475569'});
+  const obj=E('g',{},svg);E('circle',{r:22,fill:'transparent'},obj);E('circle',{r:8,fill:'#dc2626',stroke:'#7f1d1d','stroke-width':2},obj);E('circle',{r:2.5,fill:'#fff'},obj);
+  const oT=T(svg,0,0,'觀測物（拖我）',{'font-size':12,fill:'#b91c1c'});
+  const eye=E('g',{},svg);E('circle',{r:24,fill:'rgba(37,99,235,.08)',stroke:'#93c5fd'},eye);T(eye,0,10,'👁',{'font-size':28});
+  const eT=T(svg,0,0,'眼睛（拖我）',{'font-size':12,fill:'#1d4ed8'});
+  E('rect',{x:0,y:0,width:180,height:180,fill:'#f8fafc'},scr);
+  E('rect',{x:0,y:62,width:180,height:56,fill:'#fff',stroke:'#cbd5e1'},scr);
+  E('rect',{x:82,y:62,width:16,height:56,fill:'#64748b'},scr);
+  const pin=E('g',{},scr);E('rect',{x:88,y:72,width:4,height:44,fill:'#dc2626'},pin);E('circle',{cx:90,cy:72,r:5,fill:'#dc2626'},pin);
+  const sT=T(scr,90,150,'',{'font-size':14});
+  const ang=(x,y,side)=>Math.atan2(side*(x-300),300-y)*180/Math.PI;
+  let ob={x:170,y:150},ey={x:470,y:90},drawn=false,vis=false;
+  function upd(){
+    obj.setAttribute('transform',`translate(${ob.x},${ob.y})`);oT.setAttribute('x',ob.x);oT.setAttribute('y',ob.y-16);
+    eye.setAttribute('transform',`translate(${ey.x},${ey.y})`);eT.setAttribute('x',ey.x);eT.setAttribute('y',ey.y-30);
+    const ai=ang(ob.x,ob.y,-1),ar=ang(ey.x,ey.y,1);
+    vis=Math.abs(ai-ar)<=2;
+    pin.style.display=vis?'':'none';
+    sT.textContent=vis?'👀 看到了！':'縫隙裡看不到';sT.setAttribute('fill',vis?'#16a34a':'#94a3b8');
+    bDraw.disabled=!vis||drawn;
+    if(!drawn)out.innerHTML=vis?'👀 看到了！眼睛現在可以從縫隙看到觀測物。<br><span style="font-weight:400">按「畫出光線」，把光走的路線畫下來。</span>':'還看不到觀測物，繼續移動眼睛找找看。';
+  }
+  function okPos(x,y,side){const a=ang(x,y,side);return a>=8&&a<=80;}
+  drag(svg,obj,p=>{if(drawn)return;const x=clamp(p.x,60,290),y=clamp(p.y,50,270);if(okPos(x,y,-1)){ob={x,y};upd();}});
+  drag(svg,eye,p=>{if(drawn)return;const x=clamp(p.x,310,560),y=clamp(p.y,50,270);if(okPos(x,y,1)){ey={x,y};upd();}});
+  bDraw.onclick=()=>{
+    drawn=true;gLines.innerHTML='';
+    const R=120;
+    E('path',{d:`M ${O[0]-R} ${O[1]} A ${R} ${R} 0 0 1 ${O[0]+R} ${O[1]}`,fill:'rgba(37,99,235,.05)',stroke:'#93c5fd'},gLines);
+    for(let a=0;a<=90;a+=5){for(const s of[-1,1]){if(a===0&&s===1)continue;const r=a*Math.PI/180,len=a%10?5:11;
+      E('line',{x1:O[0]+s*R*Math.sin(r),y1:O[1]-R*Math.cos(r),x2:O[0]+s*(R-len)*Math.sin(r),y2:O[1]-(R-len)*Math.cos(r),stroke:'#60a5fa'},gLines);
+      if(a%10===0)T(gLines,O[0]+s*(R+12)*Math.sin(r),O[1]-(R+12)*Math.cos(r)+4,a,{'font-size':10,fill:'#2563eb'});}}
+    E('line',{x1:300,y1:300,x2:300,y2:40,stroke:'#64748b','stroke-dasharray':'6 5'},gLines);T(gLines,300,34,'法線',{fill:'#475569'});
+    rayLine(gLines,[ob.x,ob.y],O,{mk:'m0'});rayLine(gLines,O,[ey.x,ey.y],{mk:'m0'});
+    T(gLines,(ob.x+300)/2-24,(ob.y+300)/2,'入射線',{'font-size':12,fill:'#b91c1c'});
+    T(gLines,(ey.x+300)/2+24,(ey.y+300)/2,'反射線',{'font-size':12,fill:'#b91c1c'});
+    meas.hidden=false;ni.value='';nr.value='';ni.focus();
+    out.innerHTML='光線畫好了！從觀測物到縫隙是<b>入射線</b>，從縫隙到眼睛是<b>反射線</b>。<br><span style="font-weight:400">用量角器讀出兩個角度，填在下面。</span>';
+    upd();
+  };
+  box.querySelector('.again').onclick=()=>{drawn=false;gLines.innerHTML='';meas.hidden=true;upd();};
+  box.querySelector('.rec').onclick=()=>{
+    const ai=ang(ob.x,ob.y,-1),ar=ang(ey.x,ey.y,1),vi=+ni.value,vr=+nr.value;
+    if(ni.value===''||nr.value===''){toast('兩個角度都要填喔');return;}
+    if(Math.abs(vi-ai)>3||Math.abs(vr-ar)>3){toast('再讀一次量角器：0° 要對準法線（虛線），不是鏡面');return;}
+    api.add({c:['縫隙觀察',vi+'°',vr+'°'],k:'o'+Math.round(ai),m:{th:ai,exp:'slit'}});
+  };
+  upd();
+}
+function sim1(box,api){
+  box.innerHTML='<div class="part1"></div><hr class="sep"><div class="part2"></div>';
+  simSlit(box.querySelector('.part1'),api);
+  simLaser(box.querySelector('.part2'),api);
 }
 
 /* ========== 第 2 站：平面鏡成像 ========== */
@@ -369,14 +448,17 @@ function sim4(box,api){
 /* ========== 四站設定 ========== */
 const STATIONS=[
  {title:'光的反射定律',short:'反射定律',icon:'🔦',
-  intro:'課本實驗：用光源斜射平面鏡，用量角器量出<b>入射角</b>和<b>反射角</b>。改變光源角度，多量幾次，找出兩者的關係。',
-  pred:{q:'把光源慢慢壓低、靠近鏡面（入射角變大），反射光會怎樣？',opts:['反射光也跟著壓低，而且兩邊角度一樣','反射光反而往上抬（反射角變小）','反射光不會動','反射光會壓低，但角度不一定一樣'],ans:0,result:'入射角變大，反射角也跟著變大，而且兩者永遠相等。'},
-  sim:sim1,cols:['入射角','反射角'],
-  tasks:r=>[{t:'至少記錄 3 筆',ok:r.length>=3},{t:'其中 3 筆的入射角，彼此至少相差 10°',ok:greedyGap(r.map(x=>x.m.th),10)>=3}],
+  intro:'課本實驗：把平面鏡用白紙遮住，只留一條<b>縫隙</b>。在一側放觀測物，移動眼睛找到能從縫隙看到觀測物的位置，畫出光線、量出<b>入射角</b>和<b>反射角</b>。換觀測物位置多做幾次，看看能發現什麼規律。',
+  pred:{q:'觀測物放在縫隙左前方，眼睛要在右邊哪裡，才能從縫隙看到觀測物？',opts:['右邊任何位置都看得到','和觀測物「對稱」的位置（兩邊角度一樣）','正對縫隙的上方（法線上）','越靠近鏡面越容易看到'],ans:1,result:'眼睛一定要移到「反射角＝入射角」的位置，才能從縫隙看到觀測物。'},
+  sim:sim1,cols:['實驗','入射角','反射角'],
+  tasks:r=>{const sl=r.filter(x=>x.m.exp==='slit'),la=r.filter(x=>x.m.exp==='laser');return[
+    {t:'實驗一：至少記錄 3 筆',ok:sl.length>=3},
+    {t:'實驗一：換 3 個不同的觀測物位置（入射角彼此至少差 10°）',ok:greedyGap(sl.map(x=>x.m.th),10)>=3},
+    {t:'實驗二：用光源再驗證，記錄 1 筆',ok:la.length>=1}];},
   concl:[
    {q:'從你的數據看，反射角和入射角的關係是？',opts:['反射角比入射角大','反射角＝入射角','反射角比入射角小','沒有固定關係'],ans:1,hint:'看看表格裡每一列的兩個數字。',ex:'反射角＝入射角，這就是「反射定律」。'},
-   {q:'入射角是「入射線」和哪一條線的夾角？',opts:['鏡面','法線','反射線'],ans:1,hint:'量角器的 0° 對準哪一條線？',ex:'入射角、反射角都要從「法線」量起，不是從鏡面量起。'},
-   {q:'如果光垂直照向鏡面（沿著法線入射），反射光會往哪裡走？',opts:['沿原路徑反射回來','沿鏡面滑走','穿過鏡子'],ans:0,hint:'這時入射角是幾度？反射角呢？',ex:'入射角 0°，反射角也是 0°，光沿原路徑反射回來。'}]},
+   {q:'為什麼眼睛一定要移到特定位置，才能從縫隙看到觀測物？',opts:['觀測物的光照到鏡面後，只會往「反射角＝入射角」的方向反射，眼睛要在這條反射光上才看得到','因為縫隙太小','因為觀測物離鏡子太遠'],ans:0,hint:'我們要看到東西，必須有光進到眼睛。',ex:'光只沿著反射角＝入射角的方向反射，眼睛剛好在那條反射線上才看得到。'},
+   {q:'入射角是「入射線」和哪一條線的夾角？',opts:['鏡面','法線','反射線'],ans:1,hint:'量角器的 0° 對準哪一條線？',ex:'入射角、反射角都要從「法線」量起，不是從鏡面量起。'}]},
  {title:'平面鏡成像',short:'平面鏡成像',icon:'🕯️',
   intro:'課本實驗：在白紙上立一片<b>玻璃板</b>當平面鏡，前面放點燃的蠟燭，後面拿一支<b>沒點燃</b>的蠟燭去找像的位置，量出<b>物距</b>和<b>像距</b>。',
   pred:{q:'把點燃的蠟燭往遠離玻璃板的方向移，玻璃板後面的像會？',opts:['也往後退，而且和玻璃板的距離跟蠟燭一樣','往玻璃板靠近','位置不變','像會跑到玻璃板前面'],ans:0,result:'蠟燭後退，像也後退；像距永遠等於物距。'},
@@ -410,7 +492,7 @@ const STATIONS=[
 const ONLY=0;
 const DEMO=new URLSearchParams(location.search).has('demo');
 const st=STATIONS[ONLY];
-const KEY='sciquest-g8-ch4-'+['reflection','plane-mirror','curved-mirror','convex-lens'][ONLY]+'-v1';
+const KEY='sciquest-g8-ch4-'+['reflection','plane-mirror','curved-mirror','convex-lens'][ONLY]+'-v2';
 function fresh(){return{pred:null,rows:[],ans:{},done:false};}
 let ss=null;try{ss=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!ss||!Array.isArray(ss.rows))ss=fresh();
