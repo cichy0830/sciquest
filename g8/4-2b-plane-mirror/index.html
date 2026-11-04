@@ -67,6 +67,11 @@ th{background:#f1f5f9}
 #toast.show{opacity:.92}
 body.demo .rec{display:none}
 body.demo main{max-width:1200px}
+pre.prompt{white-space:pre-wrap;word-break:break-word;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:.88rem;max-height:220px;overflow:auto;margin:6px 0 0}
+.edurow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+.btn.alt{background:#fff;color:var(--acc);border:2px solid var(--acc)}
+.btn.done{background:var(--ok)}
+.mypred{background:#f1f5f9;border-radius:8px;padding:8px 12px;margin:8px 0}
 footer{text-align:center;padding:10px 16px 30px}
 @media print{header,.tabs,.btn,footer{display:none}.card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}}
 </style>
@@ -74,7 +79,7 @@ footer{text-align:center;padding:10px 16px 30px}
 <body>
 <header><div class="in">
 <h1>🕯️ 平面鏡成像</h1>
-<p id="sub">八年級自然　第 4 章　光、影像與顏色｜先預測 → 動手做 → 從數據找規律</p>
+<p id="sub">八年級自然　第 4 章　光、影像與顏色｜先預測 → 動手做 → 帶著數據問 e度 → 確認規律</p>
 </div></header>
 <main>
 <div id="stage"></div>
@@ -411,7 +416,7 @@ const ONLY=1;
 const DEMO=new URLSearchParams(location.search).has('demo');
 const st=STATIONS[ONLY];
 const KEY='sciquest-g8-ch4-'+['reflection','plane-mirror','curved-mirror','convex-lens'][ONLY]+'-v1';
-function fresh(){return{pred:null,rows:[],ans:{},done:false};}
+function fresh(){return{pred:null,rows:[],ans:{},done:false,edu:false};}
 let ss=null;try{ss=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!ss||!Array.isArray(ss.rows))ss=fresh();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(ss));}catch(e){}}
@@ -431,7 +436,15 @@ function renderStation(){
   <div class="card" id="c1"><h3><span class="step-no">步驟 1</span>先預測</h3><p class="q">${st.pred.q}</p><div class="opts" id="pOpts"></div><div class="fb" id="pFb"></div></div>
   <div class="card" id="c2"><h3><span class="step-no">步驟 2</span>動手做實驗</h3><p class="lockmsg">🔒 先完成步驟 1 的預測，才能開始實驗。</p>
     <div id="sim"></div><h4>🎯 任務</h4><ul class="tasks" id="tasks"></ul><h4>📊 我的數據</h4><div id="tbl"></div><button class="btn ghost" id="undo">↩ 刪除最後一筆</button></div>
-  <div class="card" id="c3"><h3><span class="step-no">步驟 3</span>從數據找規律</h3><p class="lockmsg">🔒 完成所有任務後解鎖。</p><div id="qs"></div><div id="cmp"></div></div>`;
+  <div class="card" id="cE"><h3><span class="step-no">步驟 3</span>帶著數據問 e度</h3><p class="lockmsg">🔒 完成所有任務後解鎖。</p>
+    <p>按「複製給 e度 的話」，到<b>因材網 e度</b> 貼上。e度 會一題一題問你，<b>不會直接給答案</b>；回答時看下面的數據。</p>
+    <div class="edurow"><button class="btn" id="eCopy">📋 複製給 e度 的話</button><a class="btn alt" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
+    <div class="fb" id="eFb"></div>
+    <div class="mypred" id="eMine"></div>
+    <h4>📊 我的數據（e度 問你時看這裡）</h4><div id="eTbl"></div>
+    <details><summary class="hint">看看要貼給 e度 的內容</summary><pre class="prompt" id="ePrompt"></pre></details>
+    <div class="edurow"><button class="btn" id="eDone">✓ 跟 e度 討論完了</button></div></div>
+  <div class="card" id="c3"><h3><span class="step-no">步驟 4</span>確認規律</h3><p class="lockmsg">🔒 先完成步驟 3：跟 e度 討論完再解鎖。</p><div id="qs"></div><div id="cmp"></div></div>`;
   const po=stage.querySelector('#pOpts');
   st.pred.opts.forEach((o,k)=>{const b=document.createElement('button');b.className='opt'+(ss.pred===k?' sel':'');b.textContent=o;b.disabled=ss.pred!==null;b.onclick=()=>{ss.pred=k;save();renderStation();toast('已記下你的預測！開始做實驗吧');};po.appendChild(b);});
   stage.querySelector('#pFb').textContent=ss.pred!==null?'✍️ 已記下你的預測，做完實驗後在步驟 3 對照看看。':'選一個你覺得對的（先別擔心對錯）。';
@@ -439,6 +452,38 @@ function renderStation(){
     if(ss.rows.some(r=>r.k===row.k)){toast('這一筆記錄過了，換個角度或位置試試！');return;}
     ss.rows.push(row);save();refresh();toast('已記錄 ✔');}});
   stage.querySelector('#undo').onclick=()=>{if(!ss.rows.length)return;ss.rows.pop();save();refresh();};
+  const GUIDE=`1. 先問我：表格裡每一筆的物距和像距，有什麼關係？請我挑兩筆數據來說明。
+2. 再問我：物體和像的連線，跟鏡面（玻璃板）是什麼關係？像在鏡子的哪一邊？
+3. 再問我：玻璃板後面沒點燃的蠟燭，為什麼看起來像被點燃？光真的有跑到玻璃板後面嗎？這種像叫什麼像？
+4. 最後請我用一句話說出平面鏡成像的特性（大小、正倒立、實像或虛像、位置）。`;
+  function promptText(){
+    const rows=ss.rows.map((r,k)=>`第${k+1}筆：${st.cols.map((c,j)=>c+' '+r.c[j]).join('，')}`).join('\n')||'（還沒有數據）';
+    return `我是國中八年級學生，正在學「${st.title}」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據找出規律。
+
+【我做實驗前的預測】
+問題：${st.pred.q}
+我預測：${ss.pred!==null?st.pred.opts[ss.pred]:'（還沒預測）'}
+
+【我在模擬實驗中記錄的數據】
+${rows}
+
+【請你這樣帶我】
+${GUIDE}
+另外：
+・一次只問我一個問題，用國中生聽得懂的話，回答簡短。
+・每個問題都先請我說出要看第幾筆數據，再讓我自己判斷；就算我答對了，也要我用數據說出為什麼。
+・最後請我對照實驗前的預測，說說我的想法有沒有改變。`;
+  }
+  function eduRefresh(){
+    stage.querySelector('#eTbl').innerHTML=tableHTML(ss.rows);
+    stage.querySelector('#eMine').innerHTML=`<b>我的預測：</b>${ss.pred!==null?st.pred.opts[ss.pred]:'—'}`;
+    stage.querySelector('#ePrompt').textContent=promptText();
+    const d=stage.querySelector('#eDone');d.textContent=ss.edu?'✅ 已跟 e度 討論完':'✓ 跟 e度 討論完了';d.classList.toggle('done',!!ss.edu);
+  }
+  stage.querySelector('#eCopy').onclick=()=>{const txt=promptText(),fb=stage.querySelector('#eFb');
+    const sel=()=>{stage.querySelector('details').open=true;const rg=document.createRange();rg.selectNodeContents(stage.querySelector('#ePrompt'));const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);fb.className='fb bad';fb.textContent='已幫你選取文字，請長按後選「拷貝」。';};
+    try{navigator.clipboard.writeText(txt).then(()=>{fb.className='fb ok';fb.textContent='✔ 已複製！到 e度 對話框貼上就可以開始。';},sel);}catch(e){sel();}};
+  stage.querySelector('#eDone').onclick=()=>{ss.edu=true;save();refresh();toast('往下到步驟 4，確認規律');};
   let wasOk=null;
   function refresh(){
     stage.querySelector('#tbl').innerHTML=tableHTML(ss.rows);
@@ -446,8 +491,10 @@ function renderStation(){
     stage.querySelector('#tasks').innerHTML=ts.map(t=>`<li class="${t.ok?'ok':''}">${t.t}</li>`).join('');
     const allOk=ts.every(t=>t.ok)||ss.done;
     stage.querySelector('#c2').classList.toggle('locked',ss.pred===null);
-    stage.querySelector('#c3').classList.toggle('locked',!allOk);
-    if(wasOk===false&&allOk)toast('🎉 任務完成！往下到步驟 3');
+    stage.querySelector('#cE').classList.toggle('locked',!allOk);
+    stage.querySelector('#c3').classList.toggle('locked',!(allOk&&(ss.edu||ss.done)));
+    eduRefresh();
+    if(wasOk===false&&allOk)toast('🎉 任務完成！往下到步驟 3，帶著數據問 e度');
     wasOk=allOk;
   }
   function renderQs(){

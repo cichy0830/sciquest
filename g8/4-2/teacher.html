@@ -1,0 +1,273 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>面鏡單元控場</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* 投影控場：上方流程帶（整堂課在哪裡）、中間大字「現在做什麼」、右側倒數計時。為投影刻意採單一亮色系。 */
+:root{
+  --paper:#F6F7F9; --card:#FFFFFF; --ink:#141B26; --muted:#5A6676; --rule:#D3D9E1;
+  --beam:#C0761A; --beam-soft:#FBEBD3; --water:#1F5D8C; --water-soft:#DCEAF5;
+  --done:#9AA5B3; --alarm:#B3261E;
+  --t-self:#1F5D8C; --t-co:#2F7A4A; --t-peer:#7A4FA0; --t-guide:#C0761A; --t-ai:#141B26;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:clamp(14px,1.25vw,22px);line-height:1.5}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-block:clamp(10px,1.4vw,22px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));gap:clamp(10px,1.2vw,20px)}
+
+/* ── 流程帶 ── */
+.flow{display:grid;gap:6px}
+.phases{display:grid;grid-template-columns:5fr 25fr 10fr;gap:10px;font-size:.8em;font-weight:700;color:var(--muted)}
+.phase{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.phase::after{content:"";flex:1;height:2px;background:var(--rule)}
+.phase.now{color:var(--ink)}
+.phase.now::after{background:var(--ink)}
+.track{display:grid;grid-template-columns:var(--cols);gap:6px}
+.node{all:unset;cursor:pointer;position:relative;min-width:0;border:2px solid var(--rule);background:var(--card);border-radius:10px;padding:6px 8px 8px;display:grid;gap:2px;align-content:start}
+.node .nm{font-weight:900;font-size:.82em;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.node .mn{font-family:var(--num);font-size:.7em;color:var(--muted)}
+.node .bar{position:absolute;left:0;bottom:0;height:4px;border-radius:0 0 8px 8px;background:var(--beam);width:0}
+.node.done{border-color:transparent;background:transparent;color:var(--done)}
+.node.done .nm::before{content:"✓ "}
+.node.now{border-color:var(--ink);background:var(--ink);color:#fff;box-shadow:0 6px 18px rgba(20,27,38,.22)}
+.node.now .mn{color:#C9D3DF}
+.node:focus-visible{outline:3px solid var(--beam);outline-offset:2px}
+
+/* ── 主畫面 ── */
+.main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,27vw,440px);gap:clamp(12px,1.6vw,28px)}
+.stage{min-width:0;min-height:0;overflow:auto;background:var(--card);border-radius:18px;padding:clamp(16px,2.2vw,40px);display:grid;align-content:start;gap:clamp(10px,1.2vw,20px);border:1px solid var(--rule)}
+.eyebrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:700;font-size:.9em;color:var(--muted)}
+.chip{color:#fff;border-radius:999px;padding:2px 12px;font-size:.9em;letter-spacing:.06em}
+.stage h1{font-family:var(--display);font-weight:900;font-size:clamp(26px,3vw,56px);line-height:1.2;margin:0;text-wrap:balance}
+.todo{list-style:none;margin:0;padding:0;display:grid;gap:clamp(8px,1vw,16px);counter-reset:s}
+.todo li{counter-increment:s;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;font-size:clamp(17px,1.75vw,32px);font-weight:500;line-height:1.4}
+.todo li::before{content:counter(s);font-family:var(--num);font-weight:600;font-size:.8em;color:var(--card);background:var(--water);border-radius:8px;min-width:1.6em;text-align:center;padding:0 .2em}
+.todo b{color:var(--water)}
+.extra{display:grid;gap:10px}
+.box{border-radius:14px;padding:clamp(10px,1.2vw,20px);background:var(--beam-soft);font-size:clamp(16px,1.6vw,28px);line-height:1.5}
+.box.water{background:var(--water-soft)}
+.box .k{display:block;font-size:.62em;font-weight:900;letter-spacing:.12em;color:var(--beam)}
+.box.water .k{color:var(--water)}
+.stmt{display:grid;grid-template-columns:auto 1fr;gap:10px}
+.stmt span:first-child{font-family:var(--num);font-weight:600}
+.code{font-family:var(--num);font-weight:600;font-size:clamp(48px,6vw,120px);line-height:1;color:var(--beam);letter-spacing:.06em}
+.reveal{all:unset;cursor:pointer;border:2px dashed var(--beam);border-radius:12px;padding:8px 18px;font-weight:700;color:var(--beam);justify-self:start}
+.reveal:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+.frame{font-size:clamp(16px,1.6vw,30px);font-weight:700;line-height:1.7}
+.frame u{text-decoration:none;border-bottom:3px solid var(--beam);padding:0 .6em}
+.qr{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.qr .q{background:#fff;padding:10px;border-radius:12px;border:1px solid var(--rule);line-height:0}
+.qr .u{font-family:var(--num);font-size:clamp(14px,1.5vw,26px);word-break:break-all;min-width:0}
+video{width:100%;max-height:46vh;border-radius:12px;background:#000}
+.adv{border:3px solid var(--t-peer);border-radius:14px;padding:clamp(10px,1.1vw,18px) clamp(12px,1.3vw,22px);background:#F1EAF8;display:grid;gap:4px}
+.adv[hidden]{display:none}
+.adv .k{font-size:clamp(13px,1vw,18px);font-weight:900;letter-spacing:.12em;color:var(--t-peer)}
+.adv ul{margin:0;padding-left:1.2em;display:grid;gap:4px;font-size:clamp(14px,1.15vw,22px);font-weight:500;line-height:1.45}
+.adv b{color:var(--t-peer)}
+.watch{font-size:.85em;color:var(--muted);border-top:1px solid var(--rule);padding-top:10px}
+.watch b{color:var(--ink)}
+
+/* ── 計時器 ── */
+.rcol{min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(10px,1.2vw,18px)}
+.timer{background:var(--ink);color:#fff;border-radius:18px;padding:clamp(14px,1.8vw,30px);display:grid;align-content:space-between;gap:14px;min-height:0}
+.timer .lab{font-size:.85em;color:#B9C4D2;font-weight:700;letter-spacing:.1em}
+.clock{font-family:var(--num);font-weight:600;font-size:clamp(56px,7vw,140px);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ring{height:12px;background:#2C3646;border-radius:99px;overflow:hidden}
+.ring i{display:block;height:100%;width:100%;background:var(--beam);transform-origin:left}
+.timer.warn .clock{color:#F6C15A}
+.timer.over{background:var(--alarm)}
+.timer.over .ring i{background:#fff}
+.ctrls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ctrls button{all:unset;cursor:pointer;text-align:center;border-radius:10px;padding:10px 4px;font-weight:700;background:#2C3646;color:#fff;font-size:.9em}
+.ctrls button.go{background:var(--beam);color:var(--ink);grid-column:span 3;font-size:1.1em;padding:14px 4px}
+.ctrls button:focus-visible{outline:3px solid #F6C15A;outline-offset:2px}
+.total{font-size:.8em;color:#B9C4D2;font-family:var(--num)}
+
+/* ── 底列 ── */
+.foot{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;font-size:.78em;color:var(--muted)}
+.foot .nav{display:flex;gap:8px}
+.foot button{all:unset;cursor:pointer;border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:6px 14px;font-weight:700;color:var(--ink)}
+.foot button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.foot button:focus-visible{outline:3px solid var(--beam);outline-offset:2px}
+kbd{font-family:var(--num);border:1px solid var(--rule);border-radius:4px;padding:0 5px;background:var(--card)}
+
+@media (max-width:900px){
+  .main{grid-template-columns:1fr}
+  .track{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .phases{display:none}
+  .stage{overflow:visible}
+  html,body{height:auto}.app{height:auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.flash{animation:fl 1s steps(2) 3}
+@keyframes fl{50%{background:#fff;color:var(--alarm)}}
+</style>
+
+</head><body>
+<div class="app">
+  <div class="flow" aria-label="課程流程">
+    <div class="phases" id="phases"></div>
+    <div class="track" id="track"></div>
+  </div>
+
+  <div class="main">
+    <section class="stage" id="stage" aria-live="polite"></section>
+    <div class="rcol">
+    <aside class="timer" id="timer" aria-label="倒數計時">
+      <div>
+        <div class="lab" id="tLab">倒數</div>
+        <div class="clock" id="clock" role="timer">0:00</div>
+      </div>
+      <div class="ring"><i id="ring"></i></div>
+      <div class="ctrls">
+        <button type="button" class="go" id="go">開始倒數</button>
+        <button type="button" id="minus">−30 秒</button>
+        <button type="button" id="plus">+30 秒</button>
+        <button type="button" id="reset">重設</button>
+      </div>
+      <div class="total" id="total">本節已進行 0:00／45:00</div>
+    </aside>
+    <div class="adv" id="adv" hidden></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span><b id="pname"></b>｜八年級自然 4-2 光的反射與面鏡成像</span>
+    <span><kbd>←</kbd><kbd>→</kbd> 換活動　<kbd>空白鍵</kbd> 開始／暫停　<kbd>F</kbd> 全螢幕　<kbd>1</kbd><kbd>2</kbd> 切換節次</span>
+    <span class="nav"><button type="button" id="p1">第一節</button><button type="button" id="p2">第二節</button><button type="button" id="prev">← 上一個</button><button type="button" id="next">下一個 →</button><button type="button" id="fs">全螢幕</button></span>
+  </div>
+</div>
+
+<script>
+const BASE="https://cichy0830.github.io/sciquest/g8/";
+const TAG={自學:"--t-self",共學:"--t-co",互學:"--t-peer",導學:"--t-guide","AI 協作":"--t-ai"};
+const EDU_TODO=["實驗任務都打勾後，往下到<b>步驟 3</b>","按「<b>複製給 e度 的話</b>」，到因材網 e度 貼上","e度 問「看第幾筆數據」時，<b>看網頁上的「我的數據」</b>回答","討論完按「<b>跟 e度 討論完了</b>」"];
+const EDU_ADV=["已完成的同學，協助同組的人複製、貼上、開分割畫面","同學答不出 e度 時，只提示「看第幾筆數據」，不說答案"];
+const PERIODS=[
+ {name:"第一節：光的反射定律與平面鏡成像",
+  PH:[{nm:"開場"},{nm:"反射定律"},{nm:"平面鏡成像"},{nm:"統整"}],
+  S:[
+  {nm:"開場",ph:0,min:3,tags:["導學"],h:"今天的上課方式",
+   todo:["看大螢幕：<b>上方是今天的流程</b>，亮起來的是現在要做的事","右邊是<b>倒數時間</b>，時間到就換下一個活動","掃 QR code 打開 <b>4-2a 光的反射定律</b>"],
+   extra:{qr:"4-2a-reflection/"},watch:"讓學生習慣看投影片的流程與倒數，知道自己在整堂課的哪裡。"},
+  {nm:"預測",ph:1,min:2,tags:["自學"],h:"反射定律：先預測",
+   todo:["讀步驟 1 的問題","選一個你覺得對的答案（先別擔心對錯）"],extra:null,watch:"先寫下預測，最後再和實驗結果對照。"},
+  {nm:"實驗",ph:1,min:9,tags:["自學","共學"],h:"反射定律：動手做實驗",
+   todo:["<b>實驗一</b>：放觀測物、移動眼睛，直到從縫隙看到它，再畫出光線","量角器的 <b>0° 對準法線</b>，讀入射角和反射角，記錄","換 <b>3 個不同位置</b>（角度差 10° 以上），再做<b>實驗二</b>用光源驗證 1 筆"],
+   extra:{box:"任務全部打勾，步驟 3 才會解鎖"},watch:"網頁會檢查角度讀數，從鏡面量錯會提醒「0° 要對準法線」。"},
+  {nm:"問 e度",ph:1,min:5,tags:["AI 協作"],h:"反射定律：帶著數據問 e度",todo:EDU_TODO,adv:EDU_ADV,
+   extra:{box:"iPad 分割畫面：左邊放實驗網頁，右邊放因材網 e度"},watch:"學生帶著自己的預測和數據去問，e度 一次只問一題、不給答案。"},
+  {nm:"確認規律",ph:1,min:3,tags:["自學"],h:"反射定律：確認規律",
+   todo:["回答步驟 4 的 3 題","答錯會出現提示，再想一次","最後對照自己的預測"],extra:null,watch:"跟 e度 討論過後再作答，看看理解是否到位。"},
+  {nm:"預測",ph:2,min:2,tags:["自學"],h:"平面鏡成像：先預測",
+   todo:["掃 QR code 打開 <b>4-2b 平面鏡成像</b>","讀步驟 1 的問題，選一個答案"],extra:{qr:"4-2b-plane-mirror/"},watch:"換到第二站，一樣先預測。"},
+  {nm:"實驗",ph:2,min:7,tags:["自學","共學"],h:"平面鏡成像：動手做實驗",
+   todo:["拖曳<b>點燃的蠟燭</b>放到想要的位置","拖曳<b>沒點燃的蠟燭</b>，讓它和像完全重疊，再記錄","至少記錄 <b>3 筆</b>，物距彼此相差 2 cm 以上"],extra:null,watch:"用玻璃板與兩支蠟燭找像的位置，數據直接比較物距與像距。"},
+  {nm:"問 e度",ph:2,min:5,tags:["AI 協作"],h:"平面鏡成像：帶著數據問 e度",todo:EDU_TODO,adv:EDU_ADV,
+   extra:{box:"iPad 分割畫面：左邊放實驗網頁，右邊放因材網 e度"},watch:"e度 會追問物距與像距、虛像的意義。"},
+  {nm:"確認規律",ph:2,min:3,tags:["自學"],h:"平面鏡成像：確認規律",
+   todo:["回答步驟 4 的 3 題","最後對照自己的預測"],extra:null,watch:""},
+  {nm:"統整",ph:3,min:6,tags:["導學"],h:"統整：反射定律與平面鏡成像",
+   todo:["反射角 ＝ 入射角，角度都從<b>法線</b>量起","平面鏡成<b>正立、等大的虛像</b>，像距 ＝ 物距","下課後：第二節看<b>凹面鏡與凸面鏡</b>"],extra:null,watch:"教師挑選與預測不同的學生分享改變。"}
+  ]},
+ {name:"第二節：凹面鏡與凸面鏡",
+  PH:[{nm:"開場"},{nm:"凹面鏡與凸面鏡"},{nm:"統整"}],
+  S:[
+  {nm:"回顧＋開場",ph:0,min:3,tags:["導學"],h:"第二節：凹面鏡與凸面鏡",
+   todo:["回想：平面鏡成什麼像？","掃 QR code 打開 <b>4-2c 凹面鏡與凸面鏡</b>"],extra:{qr:"4-2c-curved-mirror/"},watch:"一樣的流程：預測 → 實驗 → 問 e度 → 確認規律。"},
+  {nm:"預測",ph:1,min:2,tags:["自學"],h:"先預測",
+   todo:["讀步驟 1 的問題：便利商店轉角的凸面鏡，看到的像是？","選一個答案"],extra:null,watch:""},
+  {nm:"凹面鏡",ph:1,min:10,tags:["自學","共學"],h:"凹面鏡：移動物體，看像怎麼變",
+   todo:["拖曳綠色箭頭（物體），從遠處慢慢靠近鏡子","<b>實線</b>交會是<b>實像</b>，只有<b>虛線</b>交會是<b>虛像</b>","記錄 <b>1 筆實像</b>和 <b>1 筆虛像</b>"],extra:{box:"焦距 10 cm：注意物體在 C 點外、C 與 F 之間、F 與鏡子之間的差別"},watch:"光路模擬直接呈現實像與虛像的差別。"},
+  {nm:"凸面鏡",ph:1,min:5,tags:["自學","共學"],h:"凸面鏡：不管物體在哪裡？",
+   todo:["上方切換到<b>凸面鏡</b>","移動物體，至少記錄 <b>2 筆</b>","總共至少 <b>5 筆</b>"],extra:null,watch:""},
+  {nm:"問 e度",ph:1,min:8,tags:["AI 協作"],h:"帶著數據問 e度",todo:EDU_TODO,adv:EDU_ADV,
+   extra:{box:"iPad 分割畫面：左邊放實驗網頁，右邊放因材網 e度"},watch:"e度 依每個人的數據追問實像／虛像、正倒立、放大縮小，以及生活應用。"},
+  {nm:"確認規律",ph:1,min:4,tags:["自學"],h:"確認規律",
+   todo:["回答步驟 4 的 3 題","最後對照自己的預測"],extra:null,watch:""},
+  {nm:"統整",ph:2,min:8,tags:["導學"],h:"統整：生活中的面鏡",
+   todo:["<b>凹面鏡</b>：物體在焦點內成正立、放大的虛像 → 化妝鏡","<b>凹面鏡</b>：燈泡放在焦點，反射成平行光 → 手電筒","<b>凸面鏡</b>：都成正立、縮小的虛像，視野廣 → 轉角鏡、後照鏡"],extra:null,watch:""},
+  {nm:"收尾",ph:2,min:5,tags:["導學"],h:"收尾與預告",
+   todo:["寫下今天最重要的一句話","下一節：<b>4-3 光的折射</b>"],extra:null,watch:""}
+  ]}
+];
+const $=id=>document.getElementById(id);
+let P=0,S,PH,cur=0,left=0,running=false,last=0,elapsed=0,beeped=false;
+try{const v=JSON.parse(localStorage.getItem("ctrl42")||"null");if(v){P=v.P||0;cur=v.cur||0;elapsed=v.elapsed||0;}}catch(e){}
+const save=()=>{try{localStorage.setItem("ctrl42",JSON.stringify({P,cur,elapsed}));}catch(e){}};
+const mmss=s=>{const neg=s<0;s=Math.abs(Math.round(s));return (neg?"−":"")+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
+function setPeriod(k,keep){P=k;S=PERIODS[P].S;PH=PERIODS[P].PH.map((p,i)=>({nm:p.nm,min:S.filter(s=>s.ph===i).reduce((a,s)=>a+s.min,0)}));
+  if(!keep){cur=0;elapsed=0;}cur=Math.min(cur,S.length-1);left=S[cur].min*60;running=false;
+  $("pname").textContent=PERIODS[P].name;$("p1").classList.toggle("on",P===0);$("p2").classList.toggle("on",P===1);
+  buildFlow();setGo();save();render();}
+function buildFlow(){
+  $("phases").innerHTML=PH.map((p,i)=>`<div class="phase" data-ph="${i}">${p.nm} ${p.min} 分</div>`).join("");
+  const w=s=>Math.max(s.min,2.6);
+  $("phases").style.gridTemplateColumns=PH.map((p,i)=>`${S.filter(s=>s.ph===i).reduce((a,s)=>a+w(s),0)}fr`).join(" ");
+  $("track").style.setProperty("--cols",S.map(s=>`${w(s)}fr`).join(" "));
+  $("track").innerHTML=S.map((s,i)=>`<button type="button" class="node" data-i="${i}" aria-label="${s.nm}，${s.min} 分鐘"><span class="nm">${s.nm}</span><span class="mn">${s.min} 分</span><span class="bar"></span></button>`).join("");
+  $("track").querySelectorAll(".node").forEach(b=>b.addEventListener("click",()=>goTo(+b.dataset.i)));
+}
+function extra(x){
+  if(!x)return "";
+  if(x.qr)return `<div class="qr"><div class="q" id="qr"></div><div class="u">${BASE+x.qr}</div></div>`;
+  if(x.box)return `<div class="box water">${x.box}</div>`;
+  return "";
+}
+function render(){
+  const s=S[cur];
+  $("track").querySelectorAll(".node").forEach((b,i)=>{b.classList.toggle("done",i<cur);b.classList.toggle("now",i===cur);b.setAttribute("aria-current",i===cur?"step":"false");});
+  $("phases").querySelectorAll(".phase").forEach((p,i)=>p.classList.toggle("now",i===s.ph));
+  $("stage").innerHTML=`<div class="eyebrow">${PERIODS[P].name.split("：")[0]}・${PH[s.ph].nm}・${s.nm}${s.tags.map(t=>`<span class="chip" style="background:var(${TAG[t]})">${t}</span>`).join("")}</div>
+    <h1>${s.h}</h1>
+    <ol class="todo">${s.todo.map(t=>`<li><span>${t}</span></li>`).join("")}</ol>
+    ${extra(s.extra)}
+    ${s.watch?`<div class="watch"><b>老師提醒：</b>${s.watch}</div>`:""}`;
+  if(s.extra&&s.extra.qr&&window.QRCode){const z=Math.min(220,Math.round(innerWidth*.12));new QRCode($("qr"),{text:BASE+s.extra.qr,width:z,height:z,correctLevel:QRCode.CorrectLevel.M});}
+  $("tLab").textContent=`${s.nm}・${s.min} 分鐘`;
+  $("adv").hidden=!s.adv;$("adv").innerHTML=s.adv?`<span class="k">先完成的同學</span><ul>${s.adv.map(t=>`<li>${t}</li>`).join("")}</ul>`:"";
+  tick(0);
+}
+function goTo(i){cur=Math.max(0,Math.min(S.length-1,i));left=S[cur].min*60;running=false;beeped=false;$("timer").classList.remove("over","warn");setGo();save();render();}
+function setGo(){$("go").textContent=running?"暫停":(left<S[cur].min*60?"繼續":"開始倒數");}
+function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1.2);o.start();o.stop(a.currentTime+1.2);}catch(e){}}
+function tick(dt){
+  if(running){left-=dt;elapsed+=dt;}
+  const full=S[cur].min*60;
+  $("clock").textContent=mmss(left);
+  $("ring").style.transform=`scaleX(${Math.max(0,left/full)})`;
+  const node=$("track").querySelectorAll(".node")[cur];if(node)node.querySelector(".bar").style.width=`${Math.min(100,100*(1-left/full))}%`;
+  $("timer").classList.toggle("warn",left<=60&&left>0);
+  if(left<=0){$("timer").classList.add("over");if(!beeped&&running){beeped=true;beep();$("timer").classList.add("flash");setTimeout(()=>$("timer").classList.remove("flash"),3200);}}
+  $("total").textContent=`本節已進行 ${mmss(elapsed)}／45:00`;
+}
+function loop(t){const dt=last?(t-last)/1000:0;last=t;if(running)tick(dt);if(running&&Math.floor(elapsed)%5===0)save();requestAnimationFrame(loop);}
+$("go").addEventListener("click",()=>{running=!running;setGo();});
+$("plus").addEventListener("click",()=>{left+=30;if(left>0)$("timer").classList.remove("over");tick(0);});
+$("minus").addEventListener("click",()=>{left-=30;tick(0);});
+$("reset").addEventListener("click",()=>goTo(cur));
+$("prev").addEventListener("click",()=>goTo(cur-1));
+$("next").addEventListener("click",()=>goTo(cur+1));
+$("p1").addEventListener("click",()=>setPeriod(0));
+$("p2").addEventListener("click",()=>setPeriod(1));
+function fs(){const d=document.documentElement;try{document.fullscreenElement?document.exitFullscreen():d.requestFullscreen().catch(()=>{});}catch(e){}}
+$("fs").addEventListener("click",fs);
+addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="PageDown"){goTo(cur+1);e.preventDefault();}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){goTo(cur-1);e.preventDefault();}
+  else if(e.key===" "){running=!running;setGo();e.preventDefault();}
+  else if(e.key==="f"||e.key==="F")fs();
+  else if(e.key==="1")setPeriod(0);else if(e.key==="2")setPeriod(1);
+  else if(e.key==="r"||e.key==="R")goTo(cur);});
+try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{});}catch(e){}
+setPeriod(P,true);requestAnimationFrame(loop);
+</script>
+
+</body></html>
