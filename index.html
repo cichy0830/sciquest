@@ -30,6 +30,12 @@ h3{font-size:14px;color:var(--muted);margin:6px 0 0;font-weight:600}
 .unit a.main::after{content:"";position:absolute;inset:0;border-radius:12px}
 .unit span.desc{font-size:14px;color:var(--muted)}
 .unit a.demo{position:relative;z-index:1;justify-self:start;font-size:13px;color:var(--muted)}
+.teach{margin-top:24px;display:grid;gap:8px;justify-items:start}
+.teach button,.teach input{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:4px 14px}
+.teach input{border-radius:8px;width:160px}
+.teach .links{display:grid;gap:8px;width:100%}
+.teach .links a{display:block;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--wave);border-radius:12px;color:inherit;text-decoration:none;font-weight:700}
+.teach .msg{font-size:13px;color:#B91C1C}
 .hide{display:none}
 </style>
 </head>
@@ -82,6 +88,15 @@ h3{font-size:14px;color:var(--muted);margin:6px 0 0;font-weight:600}
     <span class="desc">蠟燭、凸透鏡、紙屏・物距、像距、焦點與 2F</span>
     <a class="demo" href="g8/4-4-convex-lens/?demo">🧑‍🏫 老師示範模式</a>
   </div>
+  <div class="teach" id="teach">
+    <button type="button" id="tBtn">🧑‍🏫 教師專區</button>
+    <div id="tForm" class="hide"><input type="password" id="tCode" placeholder="輸入教師密碼" autocomplete="off"> <button type="button" id="tGo">進入</button> <span class="msg" id="tMsg"></span></div>
+    <div class="links hide" id="tLinks">
+      <a href="g8/4-2/teacher.html">📽️ 場控：4-2 光的反射與面鏡成像（兩節課）</a>
+      <a href="g8/4-3/teacher.html">📽️ 場控：4-3 光的折射（11/14 智慧教室）</a>
+      <button type="button" id="tOut" style="justify-self:start">鎖上教師專區</button>
+    </div>
+  </div>
 </div>
 <script>
 document.querySelectorAll('.filter button').forEach(b=>b.onclick=()=>{
@@ -90,6 +105,16 @@ document.querySelectorAll('.filter button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.unit').forEach(u=>u.classList.toggle('hide',f!=='all'&&!u.classList.contains(f)));
   document.querySelectorAll('h3').forEach(h=>{let n=h.nextElementSibling,any=false;while(n&&n.classList.contains('unit')){if(!n.classList.contains('hide'))any=true;n=n.nextElementSibling;}h.classList.toggle('hide',!any);});
 });
+const SQ_H=s=>{let x=5381;for(const c of s)x=(Math.imul(x,33)^c.charCodeAt(0))>>>0;return x;};
+(function(){const K="sq_teacher",OK=156339108;
+  const show=()=>{tBtn.classList.add("hide");tForm.classList.add("hide");tLinks.classList.remove("hide");};
+  let on=false;try{on=localStorage.getItem(K)==="1";}catch(e){}
+  if(on)show();
+  tBtn.onclick=()=>{tForm.classList.toggle("hide");tCode.focus();};
+  const go=()=>{if(SQ_H(tCode.value.trim())===OK){try{localStorage.setItem(K,"1");}catch(e){}show();}else{tMsg.textContent="密碼不對";}};
+  tGo.onclick=go;tCode.onkeydown=e=>{if(e.key==="Enter")go();};
+  tOut.onclick=()=>{try{localStorage.removeItem(K);}catch(e){}tLinks.classList.add("hide");tBtn.classList.remove("hide");tCode.value="";tMsg.textContent="";};
+})();
 </script>
 </body>
 </html>

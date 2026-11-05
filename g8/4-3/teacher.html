@@ -110,6 +110,15 @@ kbd{font-family:var(--num);border:1px solid var(--rule);border-radius:4px;paddin
 </style>
 
 </head><body>
+<div id="sqGate" style="position:fixed;inset:0;z-index:9999;background:#EFF2F5;display:flex;align-items:center;justify-content:center;font-family:'PingFang TC','Noto Sans TC',sans-serif">
+<div style="background:#fff;border:1px solid #CBD3DD;border-radius:16px;padding:28px 32px;display:grid;gap:12px;text-align:center">
+<b style="font-size:20px">🧑‍🏫 教師場控頁</b><input id="sqCode" type="password" placeholder="輸入教師密碼" autocomplete="off" style="font:inherit;font-size:18px;padding:8px 12px;border:1px solid #CBD3DD;border-radius:8px">
+<button id="sqGo" type="button" style="font:inherit;font-size:18px;padding:8px;border:0;border-radius:8px;background:#2C5D8A;color:#fff">進入</button><span id="sqMsg" style="color:#B91C1C;font-size:14px"></span></div></div>
+<script>const SQ_H=s=>{let x=5381;for(const c of s)x=(Math.imul(x,33)^c.charCodeAt(0))>>>0;return x;};(function(){const K="sq_teacher",g=document.getElementById("sqGate"),c=document.getElementById("sqCode");
+let on=false;try{on=localStorage.getItem(K)==="1";}catch(e){}if(on){g.remove();return;}
+const go=()=>{if(SQ_H(c.value.trim())===156339108){try{localStorage.setItem(K,"1");}catch(e){}g.remove();}else document.getElementById("sqMsg").textContent="密碼不對";};
+document.getElementById("sqGo").onclick=go;c.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")go();});setTimeout(()=>c.focus(),50);})();</script>
+
 <div class="app">
   <div class="flow" aria-label="課程流程">
     <div class="phases" id="phases"></div>
