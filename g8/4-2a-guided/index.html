@@ -205,6 +205,7 @@ add({k:"第 1 組・找大頭針",left:"slit",render:()=>`
   ok:()=>!!st.obs.see1});
 add({k:"第 1 組・畫出光線",left:"top",render:()=>`
   <h2>換成從上往下看：光是怎麼走的？</h2>
+  <p>想像你飛到實驗桌<b>正上方</b>往下看：鏡子還是在<b>上面</b>，大頭針和眼睛在鏡子前面。</p>
   <p>從<b>大頭針</b>到縫隙的是<b>入射線</b>，從縫隙到<b>眼睛</b>的是<b>反射線</b>。中間的虛線是<b>法線</b>。</p>
   <div class="tip"><span>量角器 <b>0°</b> 對準<b>法線</b></span><span><b>90°</b> 對齊<b>鏡面</b></span></div>`,check:"看懂光線和量角器了"});
 add({k:"第 1 組・量角度",left:"top",render:()=>angleStep("s1",`用量角器讀出第 1 組的<b>入射角</b>和<b>反射角</b>。`),
@@ -214,7 +215,7 @@ add({k:"第 2 組・換位置再找",left:"slit",render:()=>`
   <p>大頭針移到更靠近鏡面的地方。拉滑桿移動眼睛，再從縫隙找到它。</p>
   <p class="fb${st.obs.see2?" good":""}" id="fb" role="status">${st.obs.see2?"看到了！按下一步。":""}</p>`,
   ok:()=>!!st.obs.see2});
-add({k:"第 2 組・量角度",left:"top",render:()=>angleStep("s2",`用量角器讀出第 2 組的<b>入射角</b>和<b>反射角</b>。`),
+add({k:"第 2 組・量角度",left:"top",render:()=>angleStep("s2",`注意！鏡子換到<b>下面</b>了。先找<b>鏡面</b>和<b>法線</b>，再讀出第 2 組的<b>入射角</b>和<b>反射角</b>。`),
   bind:()=>bindAngles("s2",null,0,()=>slitAct(1)),ok:()=>passed("s2")});
 add({k:"比一比",left:"top",render:()=>`
   <h2>比一比：第 1 組和第 2 組</h2>
@@ -524,24 +525,28 @@ const TOP=(function(){
   const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
   const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
   function draw(){
-    const t=curTrial(),pin=pinPos(t),eye=eyePos(+(st.d["eye"+t]??70)),O=[300,300],R=120;
+    /* 第 1 組：鏡子在上方（跟 2.5D 實驗桌同方向）；第 2 組：鏡子在下方（原本角度，多一次視角轉換） */
+    const t=curTrial(),F=t===0,Y=y=>F?360-y:y;
+    const pin0=pinPos(t),eye0=eyePos(+(st.d["eye"+t]??70));
+    const pin={x:pin0.x,y:Y(pin0.y)},eye={x:eye0.x,y:Y(eye0.y)},O=[300,Y(300)],R=120,up=F?1:-1;
     svg.innerHTML="";
     const m=E("marker",{id:"ah2",viewBox:"0 0 10 10",refX:5,refY:5,markerWidth:7,markerHeight:7,orient:"auto"},E("defs",{}));E("path",{d:"M0 0 L10 5 L0 10 z",fill:"#DC2626"},m);
-    E("rect",{x:60,y:300,width:480,height:8,fill:"#94A3B8"});
-    for(let x=70;x<545;x+=14)E("line",{x1:x,y1:308,x2:x-10,y2:320,stroke:"#CBD5E1"});
-    E("rect",{x:60,y:292,width:233,height:9,fill:"#fff",stroke:"#9CA3AF"});E("rect",{x:307,y:292,width:233,height:9,fill:"#fff",stroke:"#9CA3AF"});
-    T(svg,300,338,"▲ 縫隙",{"font-size":12,fill:"#0F172A"});T(svg,470,340,"平面鏡（從上往下看）",{"font-size":12,fill:"#475569"});
-    E("path",{d:`M ${O[0]-R} ${O[1]} A ${R} ${R} 0 0 1 ${O[0]+R} ${O[1]}`,fill:"rgba(44,93,138,.05)",stroke:"#93C5FD"});
+    E("rect",{x:60,y:F?52:300,width:480,height:8,fill:"#94A3B8"});
+    for(let x=70;x<545;x+=14)E("line",{x1:x,y1:Y(308),x2:x-10,y2:Y(320),stroke:"#CBD5E1"});
+    const py=F?59:292;
+    E("rect",{x:60,y:py,width:233,height:9,fill:"#fff",stroke:"#9CA3AF"});E("rect",{x:307,y:py,width:233,height:9,fill:"#fff",stroke:"#9CA3AF"});
+    T(svg,300,F?30:338,F?"▼ 縫隙":"▲ 縫隙",{"font-size":12,fill:"#0F172A"});T(svg,470,F?28:340,"平面鏡（從上往下看）",{"font-size":12,fill:"#475569"});
+    E("path",{d:`M ${O[0]-R} ${O[1]} A ${R} ${R} 0 0 ${F?0:1} ${O[0]+R} ${O[1]}`,fill:"rgba(44,93,138,.05)",stroke:"#93C5FD"});
     for(let deg=0;deg<=90;deg+=5){for(const sg of[-1,1]){if(deg===0&&sg===1)continue;const r=deg*Math.PI/180,len=deg%10?5:11;
-      E("line",{x1:O[0]+sg*R*Math.sin(r),y1:O[1]-R*Math.cos(r),x2:O[0]+sg*(R-len)*Math.sin(r),y2:O[1]-(R-len)*Math.cos(r),stroke:"#3B82F6"});
-      if(deg%10===0)T(svg,O[0]+sg*(R+13)*Math.sin(r),O[1]-(R+13)*Math.cos(r)+4,deg,{"font-size":10,fill:"#1D4ED8"});}}
-    E("line",{x1:300,y1:300,x2:300,y2:40,stroke:"#475569","stroke-dasharray":"6 5"});T(svg,300,32,"法線",{fill:"#475569"});
+      E("line",{x1:O[0]+sg*R*Math.sin(r),y1:O[1]+up*R*Math.cos(r),x2:O[0]+sg*(R-len)*Math.sin(r),y2:O[1]+up*(R-len)*Math.cos(r),stroke:"#3B82F6"});
+      if(deg%10===0)T(svg,O[0]+sg*(R+13)*Math.sin(r),O[1]+up*(R+13)*Math.cos(r)+4,deg,{"font-size":10,fill:"#1D4ED8"});}}
+    E("line",{x1:300,y1:O[1],x2:300,y2:Y(40),stroke:"#475569","stroke-dasharray":"6 5"});T(svg,300,F?Y(40)+16:32,"法線",{fill:"#475569"});
     const ray=(a,b)=>{const mx=a[0]+(b[0]-a[0])*.55,my=a[1]+(b[1]-a[1])*.55;E("polyline",{points:`${a[0]},${a[1]} ${mx},${my} ${b[0]},${b[1]}`,fill:"none",stroke:"#DC2626","stroke-width":2.6,"marker-mid":"url(#ah2)"});};
     ray([pin.x,pin.y],O);ray(O,[eye.x,eye.y]);
-    E("circle",{cx:pin.x,cy:pin.y,r:8,fill:"#DC2626",stroke:"#7F1D1D","stroke-width":2});T(svg,pin.x,pin.y-14,"大頭針",{"font-size":12,fill:"#B91C1C"});
+    E("circle",{cx:pin.x,cy:pin.y,r:8,fill:"#DC2626",stroke:"#7F1D1D","stroke-width":2});T(svg,pin.x,pin.y+(F?24:-14),"大頭針",{"font-size":12,fill:"#B91C1C"});
     const g=E("g",{transform:`translate(${eye.x},${eye.y})`});E("path",{d:"M-16,0 Q0,-12 16,0 Q0,12 -16,0Z",fill:"#fff",stroke:"#1B2430","stroke-width":2},g);E("circle",{cx:-3,cy:0,r:5,fill:"#1B2430"},g);
-    T(svg,eye.x,eye.y-16,"眼睛",{"font-size":12,fill:"#2C5D8A"});
-    T(svg,(pin.x+300)/2-26,(pin.y+300)/2,"入射線",{"font-size":12,fill:"#B91C1C"});T(svg,(eye.x+300)/2+26,(eye.y+300)/2,"反射線",{"font-size":12,fill:"#B91C1C"});
+    T(svg,eye.x,eye.y+(F?26:-16),"眼睛",{"font-size":12,fill:"#2C5D8A"});
+    T(svg,(pin.x+300)/2-26,(pin.y+O[1])/2,"入射線",{"font-size":12,fill:"#B91C1C"});T(svg,(eye.x+300)/2+26,(eye.y+O[1])/2,"反射線",{"font-size":12,fill:"#B91C1C"});
   }
   return{draw};
 })();
