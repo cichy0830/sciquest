@@ -430,6 +430,44 @@ function renderDemo(){
   stage.innerHTML=`<div class="card"><h2>${st.icon} ${st.title}　<span class="step-no">🧑‍🏫 老師示範模式</span></h2><p>${st.intro}</p><div id="sim"></div></div>`;
   st.sim(stage.querySelector('#sim'),{add:()=>{}});
 }
+
+/* ===== 證據卡：一鍵存成圖片（上傳 Padlet） ===== */
+function wrapT(g,text,maxW){const out=[];let line="";for(const ch of String(text)){if(ch==="\n"){out.push(line);line="";continue;}if(g.measureText(line+ch).width>maxW){out.push(line);line=ch;}else line+=ch;}if(line)out.push(line);return out;}
+function stationCard(st,ss){
+  const W=1080,F='"Noto Sans TC","PingFang TC",sans-serif',cv=document.createElement("canvas"),g=cv.getContext("2d");
+  g.font=`30px ${F}`;
+  const pred=ss.pred!==null?st.pred.opts[ss.pred]:"—";
+  const predL=wrapT(g,"我預測："+pred,W-180);
+  const rows=ss.rows.map((r,k)=>`第 ${k+1} 筆　`+st.cols.map((c,j)=>c+" "+r.c[j]).join("、"));
+  g.font=`27px ${F}`;const rowL=rows.flatMap(r=>wrapT(g,r,W-200));
+  g.font=`30px ${F}`;const conL=wrapT(g,ss.concl||"（還沒填）",W-180);
+  const nQ=st.concl.length,nOk=st.concl.filter((_,j)=>ss.ans[j]).length;
+  const H=250+predL.length*44+70+Math.max(1,rowL.length)*40+90+conL.length*44+150;
+  cv.width=W;cv.height=H;
+  g.fillStyle="#F1F5F9";g.fillRect(0,0,W,H);
+  g.fillStyle="#fff";g.strokeStyle="#2563EB";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
+  g.fillStyle="#2563EB";g.font=`700 26px ${F}`;g.fillText("八年級自然・"+st.title,80,100);
+  g.fillStyle="#0F172A";g.font=`900 52px ${F}`;g.fillText("我的證據卡",80,168);
+  const who=`第 ${ss.grp||"＿"} 組　座號 ${ss.seat||"＿"}`;g.font=`700 32px ${F}`;g.fillText(who,W-80-g.measureText(who).width,168);
+  let y=240;g.font=`30px ${F}`;g.fillStyle="#334155";predL.forEach((l,k)=>g.fillText(l,90,y+k*44));y+=predL.length*44+30;
+  g.fillStyle="#E0E7FF";g.beginPath();g.roundRect(80,y-10,W-160,Math.max(1,rowL.length)*40+40,16);g.fill();
+  g.fillStyle="#0F172A";g.font=`27px ${F}`;(rowL.length?rowL:["（還沒有數據）"]).forEach((l,k)=>g.fillText(l,104,y+30+k*40));
+  y+=Math.max(1,rowL.length)*40+90;
+  g.fillStyle="#0F172A";g.font=`700 30px ${F}`;g.fillText("📌 e度 結論：",80,y);
+  g.font=`30px ${F}`;conL.forEach((l,k)=>g.fillText(l,90,y+48+k*44));y+=conL.length*44+90;
+  g.fillStyle=nOk===nQ?"#15803D":"#B45309";g.font=`700 30px ${F}`;g.fillText(`確認規律：答對 ${nOk}／${nQ} 題`,80,y);
+  return cv;
+}
+function saveStationCard(st,ss,fb){
+  const cv=stationCard(st,ss),name=`${st.title}證據卡_第${ss.grp||""}組_${ss.seat||""}.png`;
+  cv.toBlob(async blob=>{
+    const file=new File([blob],name,{type:"image/png"});
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:st.title+" 證據卡"});fb.className="fb ok";fb.textContent="✔ 完成！";return;}}catch(e){if(e&&e.name==="AbortError")return;}
+    const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    fb.className="fb ok";fb.innerHTML=`已下載圖片。如果沒看到，<a href="${url}" target="_blank" rel="noopener">點這裡打開圖片</a>，長按存到相簿。`;
+  },"image/png");
+}
+
 function renderStation(){
   stage.innerHTML=`
   <div class="card"><h2>${st.icon} ${st.title}</h2><p>${st.intro}</p></div>
@@ -443,8 +481,16 @@ function renderStation(){
     <div class="mypred" id="eMine"></div>
     <h4>📊 我的數據（e度 問你時看這裡）</h4><div id="eTbl"></div>
     <details><summary class="hint">看看要貼給 e度 的內容</summary><pre class="prompt" id="ePrompt"></pre></details>
+    <h4>📌 e度 最後給你的結論（複製貼上）</h4>
+    <textarea id="eConcl" rows="3" style="width:100%;font:inherit;padding:8px;border:2px solid var(--line);border-radius:8px" placeholder="在 e度 長按「請寫下這句結論」後面那一句 → 拷貝 → 貼在這裡"></textarea>
     <div class="edurow"><button class="btn" id="eDone">✓ 跟 e度 討論完了</button></div></div>
-  <div class="card" id="c3"><h3><span class="step-no">步驟 4</span>確認規律</h3><p class="lockmsg">🔒 先完成步驟 3：跟 e度 討論完再解鎖。</p><div id="qs"></div><div id="cmp"></div></div>`;
+  <div class="card" id="c3"><h3><span class="step-no">步驟 4</span>確認規律</h3><p class="lockmsg">🔒 先完成步驟 3：跟 e度 討論完再解鎖。</p><div id="qs"></div><div id="cmp"></div></div>
+  <div class="card" id="cS"><h3><span class="step-no">步驟 5</span>存證據卡，上傳 Padlet</h3><p class="lockmsg">🔒 先完成步驟 3：跟 e度 討論完再解鎖。</p>
+    <div class="edurow"><label>組別 <input id="sGrp" inputmode="numeric" style="width:70px;font:inherit;font-size:1.2rem;padding:6px;border:2px solid var(--line);border-radius:8px;text-align:center"></label>
+    <label>座號 <input id="sSeat" inputmode="numeric" style="width:70px;font:inherit;font-size:1.2rem;padding:6px;border:2px solid var(--line);border-radius:8px;text-align:center"></label></div>
+    <div class="edurow"><button class="btn" id="sShot">📷 一鍵存成圖片</button></div>
+    <div class="fb" id="sFb"></div>
+    <p class="hint">按下後選 <b>Padlet</b> 直接上傳；或選「儲存影像」存到相簿，再到 Padlet 按「＋」上傳。貼到自己組別的那一欄。</p></div>`;
   const po=stage.querySelector('#pOpts');
   st.pred.opts.forEach((o,k)=>{const b=document.createElement('button');b.className='opt'+(ss.pred===k?' sel':'');b.textContent=o;b.disabled=ss.pred!==null;b.onclick=()=>{ss.pred=k;save();renderStation();toast('已記下你的預測！開始做實驗吧');};po.appendChild(b);});
   stage.querySelector('#pFb').textContent=ss.pred!==null?'✍️ 已記下你的預測，做完實驗後在步驟 3 對照看看。':'選一個你覺得對的（先別擔心對錯）。';
@@ -473,7 +519,10 @@ ${GUIDE}
 另外：
 ・一次只問我一個問題，用國中生聽得懂的話，回答簡短。
 ・每個問題都先請我說出要看第幾筆數據，再讓我自己判斷；就算我答對了，也要我用數據說出為什麼。
-・最後請我對照實驗前的預測，說說我的想法有沒有改變。`;
+・最後請我對照實驗前的預測，說說我的想法有沒有改變。
+最後一步（很重要）：全部討論完，先請我自己試著說出結論；再用下面的格式，給我一句完整、正確、國中生看得懂的結論（40 字以內），讓我清楚知道要記下哪一句：
+📌 請寫下這句結論：……
+這個格式只在對話最後出現一次。`;
   }
   function eduRefresh(){
     stage.querySelector('#eTbl').innerHTML=tableHTML(ss.rows);
@@ -484,7 +533,13 @@ ${GUIDE}
   stage.querySelector('#eCopy').onclick=()=>{const txt=promptText(),fb=stage.querySelector('#eFb');
     const sel=()=>{stage.querySelector('details').open=true;const rg=document.createRange();rg.selectNodeContents(stage.querySelector('#ePrompt'));const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);fb.className='fb bad';fb.textContent='已幫你選取文字，請長按後選「拷貝」。';};
     try{navigator.clipboard.writeText(txt).then(()=>{fb.className='fb ok';fb.textContent='✔ 已複製！到 e度 對話框貼上就可以開始。';},sel);}catch(e){sel();}};
-  stage.querySelector('#eDone').onclick=()=>{ss.edu=true;save();refresh();toast('往下到步驟 4，確認規律');};
+  const gI=stage.querySelector('#sGrp'),sI=stage.querySelector('#sSeat');gI.value=ss.grp||'';sI.value=ss.seat||'';
+  gI.oninput=()=>{ss.grp=gI.value.trim();save();};sI.oninput=()=>{ss.seat=sI.value.trim();save();};
+  stage.querySelector('#sShot').onclick=()=>{const fb=stage.querySelector('#sFb');if(!ss.grp||!ss.seat){fb.className='fb bad';fb.textContent='先填組別和座號喔。';return;}saveStationCard(st,ss,fb);};
+  const cCard=()=>stage.querySelector('#cS').classList.toggle('locked',!(ss.edu||ss.done));
+  const cBox=stage.querySelector('#eConcl');cBox.value=ss.concl||'';
+  cBox.oninput=()=>{ss.concl=cBox.value;save();};
+  stage.querySelector('#eDone').onclick=()=>{if((ss.concl||'').trim().length<8){toast('先把 e度 給的結論貼上來喔');cBox.focus();return;}ss.edu=true;save();refresh();toast('往下到步驟 4，確認規律');};
   let wasOk=null;
   function refresh(){
     stage.querySelector('#tbl').innerHTML=tableHTML(ss.rows);
@@ -494,7 +549,7 @@ ${GUIDE}
     stage.querySelector('#c2').classList.toggle('locked',ss.pred===null);
     stage.querySelector('#cE').classList.toggle('locked',!allOk);
     stage.querySelector('#c3').classList.toggle('locked',!(allOk&&(ss.edu||ss.done)));
-    eduRefresh();
+    eduRefresh();cCard();
     if(wasOk===false&&allOk)toast('🎉 任務完成！往下到步驟 3，帶著數據問 e度');
     wasOk=allOk;
   }

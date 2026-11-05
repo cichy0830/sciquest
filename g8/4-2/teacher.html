@@ -155,17 +155,21 @@ const PERIODS=[
   PH:[{nm:"開場"},{nm:"反射定律"},{nm:"平面鏡成像"},{nm:"統整"}],
   S:[
   {nm:"開場",ph:0,min:3,tags:["導學"],h:"今天的上課方式",
-   todo:["看大螢幕：<b>上方是今天的流程</b>，亮起來的是現在要做的事","右邊是<b>倒數時間</b>，時間到就換下一個活動","掃 QR code 打開 <b>4-2a 光的反射定律</b>"],
-   extra:{qr:"4-2a-reflection/"},watch:"讓學生習慣看投影片的流程與倒數，知道自己在整堂課的哪裡。"},
-  {nm:"預測",ph:1,min:2,tags:["自學"],h:"反射定律：先預測",
-   todo:["讀步驟 1 的問題","選一個你覺得對的答案（先別擔心對錯）"],extra:null,watch:"先寫下預測，最後再和實驗結果對照。"},
-  {nm:"實驗",ph:1,min:9,tags:["自學","共學"],h:"反射定律：動手做實驗",
-   todo:["<b>實驗一</b>：放觀測物、移動眼睛，直到從縫隙看到它，再畫出光線","量角器的 <b>0° 對準法線</b>，讀入射角和反射角，記錄","換 <b>3 個不同位置</b>（角度差 10° 以上），再做<b>實驗二</b>用光源驗證 1 筆"],
-   extra:{box:"任務全部打勾，步驟 3 才會解鎖"},watch:"網頁會檢查角度讀數，從鏡面量錯會提醒「0° 要對準法線」。"},
-  {nm:"問 e度",ph:1,min:5,tags:["AI 協作"],h:"反射定律：帶著數據問 e度",todo:EDU_TODO,adv:EDU_ADV,
-   extra:{box:"iPad 分割畫面：左邊放實驗網頁，右邊放因材網 e度"},watch:"學生帶著自己的預測和數據去問，e度 一次只問一題、不給答案。"},
-  {nm:"確認規律",ph:1,min:3,tags:["自學"],h:"反射定律：確認規律",
-   todo:["回答步驟 4 的 3 題","答錯會出現提示，再想一次","最後對照自己的預測"],extra:null,watch:"跟 e度 討論過後再作答，看看理解是否到位。"},
+   todo:["看大螢幕：<b>上方是今天的流程</b>，亮起來的是現在要做的事","右邊是<b>倒數時間</b>，時間到就換下一個活動","掃 QR code 打開 <b>反射偵探站</b>，輸入座號"],
+   extra:{qr:"4-2a-guided/"},watch:"讓學生習慣看投影片的流程與倒數，知道自己在整堂課的哪裡。"},
+  {nm:"直覺判斷",ph:1,min:2,tags:["自學"],h:"反射定律：先憑直覺判斷 4 句話",
+   todo:["每一句選 <b>○ 對</b> 或 <b>✗ 錯</b>","再選「<b>有把握</b>」或「<b>用猜的</b>」","不用寫理由，等一下用證據檢查"],
+   extra:{stmts:["入射角越大，反射角就越小。","入射角和反射角，都是光線與鏡面的夾角。","光垂直射向鏡面時，會沿著原路反射回來。","光沿原來的反射線反方向射回去，會沿原來的入射線射出。"]},watch:"跟 11/14 一樣的流程：先判斷，再找證據。"},
+  {nm:"教師示範",ph:1,min:2,tags:["導學"],h:"看大螢幕：怎麼讀量角器",
+   todo:["拖曳紅色<b>光源</b>，看反射光怎麼動","量角器 <b>0° 對準法線</b>、<b>90° 對齊鏡面</b>","讀數時光源不要再動"],extra:{code:"42"},watch:"示範後公布通關數字，全班一起開始。"},
+  {nm:"逐步操作",ph:1,min:7,tags:["自學","共學"],h:"反射定律：照網頁一步一步做",
+   todo:["<b>第 1 組</b> 入射角約 30°、<b>第 2 組</b> 約 60°：讀入射角和反射角","<b>第 3 組</b> 光源拖到正上方，看反射光往哪走","<b>第 4 組</b> 光源移到右邊，放在第 2 組反射光的位置"],extra:{box:"網頁一次只給一個動作；讀錯會提醒「0° 要對準法線」"},watch:"填錯兩次可由老師確認放行。"},
+  {nm:"問 e度",ph:1,min:5,tags:["AI 協作"],h:"反射定律：帶著數據問 e度",
+   todo:["按「<b>複製給 e度 的話</b>」，到因材網 e度 貼上","e度 問「看第幾組數據」時，<b>看左邊的「我的數據」</b>回答","討論完，回網頁完成<b>最後判斷</b>"],adv:EDU_ADV,
+   extra:{box:"iPad 分割畫面：左邊放反射偵探站，右邊放因材網 e度"},watch:"e度 一次只問一題、不給答案。"},
+  {nm:"組內一句話",ph:1,min:3,tags:["共學"],h:"組內每人說一句：光碰到鏡子後往哪裡走？",
+   todo:["挑一組自己的數據，<b>照句型說出來</b>","組長點名，每個人都要說","全組把句子修好，寫進網頁，存成證據卡"],
+   extra:{box:"我看第＿組：入射角＿°、反射角＿°，所以反射角＿＿入射角；角度都要從＿＿量起。"},watch:"練習 11/14 的組內共學：每人只講一件事。"},
   {nm:"預測",ph:2,min:2,tags:["自學"],h:"平面鏡成像：先預測",
    todo:["掃 QR code 打開 <b>4-2b 平面鏡成像</b>","讀步驟 1 的問題，選一個答案"],extra:{qr:"4-2b-plane-mirror/"},watch:"換到第二站，一樣先預測。"},
   {nm:"實驗",ph:2,min:7,tags:["自學","共學"],h:"平面鏡成像：動手做實驗",
@@ -199,7 +203,7 @@ const PERIODS=[
   ]}
 ];
 const $=id=>document.getElementById(id);
-let P=0,S,PH,cur=0,left=0,running=false,last=0,elapsed=0,beeped=false;
+let revealed=false,P=0,S,PH,cur=0,left=0,running=false,last=0,elapsed=0,beeped=false;
 try{const v=JSON.parse(localStorage.getItem("ctrl42")||"null");if(v){P=v.P||0;cur=v.cur||0;elapsed=v.elapsed||0;}}catch(e){}
 const save=()=>{try{localStorage.setItem("ctrl42",JSON.stringify({P,cur,elapsed}));}catch(e){}};
 const mmss=s=>{const neg=s<0;s=Math.abs(Math.round(s));return (neg?"−":"")+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
@@ -209,7 +213,7 @@ function setPeriod(k,keep){P=k;S=PERIODS[P].S;PH=PERIODS[P].PH.map((p,i)=>({nm:p
   buildFlow();setGo();save();render();}
 function buildFlow(){
   $("phases").innerHTML=PH.map((p,i)=>`<div class="phase" data-ph="${i}">${p.nm} ${p.min} 分</div>`).join("");
-  const w=s=>Math.max(s.min,2.6);
+  const w=s=>Math.max(s.min,3.8);
   $("phases").style.gridTemplateColumns=PH.map((p,i)=>`${S.filter(s=>s.ph===i).reduce((a,s)=>a+w(s),0)}fr`).join(" ");
   $("track").style.setProperty("--cols",S.map(s=>`${w(s)}fr`).join(" "));
   $("track").innerHTML=S.map((s,i)=>`<button type="button" class="node" data-i="${i}" aria-label="${s.nm}，${s.min} 分鐘"><span class="nm">${s.nm}</span><span class="mn">${s.min} 分</span><span class="bar"></span></button>`).join("");
@@ -219,6 +223,8 @@ function extra(x){
   if(!x)return "";
   if(x.qr)return `<div class="qr"><div class="q" id="qr"></div><div class="u">${BASE+x.qr}</div></div>`;
   if(x.box)return `<div class="box water">${x.box}</div>`;
+  if(x.stmts)return `<div class="box water">${x.stmts.map((t,i)=>`<div class="stmt"><span>${i+1}.</span><span>${t}</span></div>`).join("")}</div>`;
+  if(x.code)return `<div class="extra"><button type="button" class="reveal" id="rv">${revealed?"通關數字":"示範完，按這裡公布通關數字"}</button>${revealed?`<div class="code">${x.code}</div>`:""}</div>`;
   return "";
 }
 function render(){
@@ -231,6 +237,7 @@ function render(){
     ${extra(s.extra)}
     ${s.watch?`<div class="watch"><b>老師提醒：</b>${s.watch}</div>`:""}`;
   if(s.extra&&s.extra.qr&&window.QRCode){const z=Math.min(220,Math.round(innerWidth*.12));new QRCode($("qr"),{text:BASE+s.extra.qr,width:z,height:z,correctLevel:QRCode.CorrectLevel.M});}
+  if($("rv"))$("rv").addEventListener("click",()=>{revealed=true;render();});
   $("tLab").textContent=`${s.nm}・${s.min} 分鐘`;
   $("adv").hidden=!s.adv;$("adv").innerHTML=s.adv?`<span class="k">先完成的同學</span><ul>${s.adv.map(t=>`<li>${t}</li>`).join("")}</ul>`:"";
   tick(0);

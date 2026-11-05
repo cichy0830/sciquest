@@ -98,7 +98,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:14px}
 <div class="app">
   <div class="top">
     <span class="eyebrow">八年級自然・4-3 光的折射</span>
-    <h1>折射偵探站：杯底的硬幣去哪了？</h1>
+    <h1>帶著數據問 e度：杯底硬幣現身的折射祕密</h1>
     <div class="prog" aria-label="進度"><span id="progTxt"></span><span class="bar"><i id="progBar"></i></span></div>
   </div>
 
@@ -241,9 +241,13 @@ add({k:"問 e度",left:"data",render:()=>`
   <a class="btn" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
   <p class="fb" id="fb" role="status"></p>
   <div class="tip"><b>e度 問「看第幾組數據」時</b><span>${dataSmall()}</span></div>
-  <p class="note">iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看左邊「我的數據」，一邊回答 e度。討論完回到這裡按「下一步」。</p>
-  <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>`,
-  bind:()=>{$("prompt").textContent=promptText();$("copy").addEventListener("click",copyPrompt);},check:"跟 e度 討論完了"});
+  <p class="note">iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看左邊「我的數據」，一邊回答 e度。討論完，把 e度 給的結論複製、貼在下面，再按「下一步」。</p>
+  <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>
+  <div class="tip"><b>📌 討論到最後，e度 會給你一句結論</b><span>在 e度 長按「請寫下這句結論」後面那一句，選「拷貝」，回來貼在這裡，才能按下一步。</span></div>
+  <textarea id="concl" aria-label="e度 給的結論">${esc(st.concl||"")}</textarea>`,
+  bind:()=>{$("prompt").textContent=promptText();$("copy").addEventListener("click",copyPrompt);
+    $("concl").addEventListener("input",e=>{st.concl=e.target.value;save();navState();});},
+  ok:()=>(st.concl||"").trim().length>=8});
 
 add({k:"最後判斷",left:"data",render:()=>`
   <h2>跟 e度 討論後，再判斷一次</h2>
@@ -366,7 +370,10 @@ ${STMTS.map((t,ix)=>`${ix+1}.「${t}」我覺得：${mark(st.pre[ix+1])}${st.con
 4. 第2句：請我看第3組的入射角和折射角。第3句：請我比較第2組和第3組在空氣中的角度。
 5. 第4句：先問我「我們看得到硬幣，光是從哪裡出發、往哪裡走？」再請我用第3組的數據，說明光從水射入空氣時怎麼偏折、為什麼會越過杯緣進入眼睛。
 6. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
-7. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」。`;
+7. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」。
+最後一步（很重要）：全部討論完，先請我自己試著說出結論；再用下面的格式，給我一句完整、正確、國中生看得懂的結論（40 字以內），讓我清楚知道要記下哪一句：
+📌 請寫下這句結論：……
+這個格式只在對話最後出現一次。`;
 }
 function copyPrompt(){
   const txt=promptText(),f=$("fb");
@@ -381,7 +388,8 @@ function cardCanvas(){
   g.font=`30px ${F}`;
   const stLines=STMTS.map(t=>wrap(g,t,600));
   const whyLines=wrap(g,st.why,W-160);
-  const H=426+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+150+whyLines.length*44+90;
+  const conLines=wrap(g,st.concl||"",W-160);
+  const H=426+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+150+whyLines.length*44+90+(conLines.length?conLines.length*44+70:0);
   cv.width=W;cv.height=H;
   g.fillStyle="#EFF2F5";g.fillRect(0,0,W,H);
   g.fillStyle="#fff";g.strokeStyle="#2C5D8A";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
@@ -401,7 +409,8 @@ function cardCanvas(){
     y+=Math.max(1,ls.length)*42+30;});
   const chg=changed();
   g.fillStyle="#8A4B22";g.font=`700 30px ${F}`;g.fillText(chg.length?`改變判斷：第 ${chg.join("、")} 題`:"判斷都沒有改變",80,y+50);
-  y+=110;g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("我們組修好的一句話：",80,y);
+  y+=110;if(conLines.length){g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("📌 e度 結論：",80,y);g.font=`30px ${F}`;conLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));y+=conLines.length*44+70;}
+  g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("我們組修好的一句話：",80,y);
   g.font=`30px ${F}`;whyLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));
   return cv;
 }

@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>反射偵探站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* 版面：左（直向時為上）依步驟切換「影片 → 模擬器 → 我的數據」；右（下）一次只顯示一個步驟 */
+:root{
+  --bg:#EFF2F5; --panel:#FFFFFF; --ink:#1B2430; --muted:#566273; --line:#CBD3DD;
+  --wave:#2C5D8A; --wave-soft:#DCE7F2; --rope:#8A4B22; --rope-soft:#F4E6DA;
+  --ok:#2F6B3A; --ok-soft:#E1EFE3;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:8px max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));padding-top:max(8px,env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.top .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--wave);font-weight:700}
+.top h1{font-family:var(--display);font-size:clamp(19px,2.6vw,24px);margin:0;line-height:1.3}
+.prog{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.prog .bar{width:120px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--wave);width:0}
+.split{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,1fr);min-height:0}
+@media (max-width:900px), (orientation:portrait){.split{grid-template-columns:1fr;grid-template-rows:minmax(0,52fr) minmax(0,48fr)}}
+.left{position:relative;min-height:0;background:var(--panel);border-right:1px solid var(--line);display:grid;grid-template-rows:minmax(0,1fr) auto}
+@media (max-width:900px), (orientation:portrait){.left{border-right:0;border-bottom:3px solid var(--rope)}}
+.pane{min-height:0;display:none}
+.pane.on{display:block}
+#paneVideo{background:#111;display:none;place-items:center}
+#paneVideo.on{display:grid}
+#paneVideo video{width:100%;height:100%;max-height:100%;object-fit:contain;background:#111}
+#paneSim{background:#fff}
+#paneSim.on{display:grid;place-items:center}
+#rsim{width:100%;height:100%;max-height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+#paneSlit,#paneLife{background:#fff;overflow:auto}
+#paneSlit.on{display:grid;grid-template-rows:auto 1fr;align-content:start}
+#paneLife.on{display:grid;align-content:center;justify-items:center;gap:6px;padding:8px}
+#scene{width:100%;max-height:34vh;display:block}
+.eyewrap{display:grid;justify-items:center;align-content:start;gap:6px;padding:6px 12px 12px}
+.eyelab{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.08em}
+#eyeview{width:min(46vh,300px);height:auto;border:4px solid #334155;border-radius:14px;background:#fff;display:block}
+.eyeslide{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--wave);width:min(560px,100%)}
+.eyeslide input{flex:1;height:36px;accent-color:var(--wave)}
+.seen{min-height:1.6em;font-weight:900;font-size:18px}
+#paneTop{background:#fff}
+#paneTop.on{display:grid;place-items:center}
+#topv{width:100%;height:100%;max-height:100%;display:block}
+#life{width:100%;max-height:60vh;display:block;touch-action:none}
+#paneData{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;background:var(--bg)}
+.simbar{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);padding:5px 12px;background:var(--panel);border-top:1px solid var(--line)}
+.simbar button,.simbar a{all:unset;cursor:pointer;color:var(--wave);font-weight:700}
+.simbar button:focus-visible,.simbar a:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.side{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;padding:14px max(14px,env(safe-area-inset-right,0px)) 30px max(14px,env(safe-area-inset-left,0px))}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--rope)}
+.step h2{margin:0;font-size:22px;line-height:1.45;text-wrap:balance}
+.step p{margin:0}
+.note{font-size:14px;color:var(--muted)}
+.ui{font-weight:700;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:0 6px;white-space:nowrap}
+.big{font-size:20px;line-height:1.6;padding:14px;border-radius:12px;background:var(--bg);border:2px solid var(--line)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:52px;min-width:88px;padding:8px 16px;border:2px solid var(--line);border-radius:12px;background:var(--bg);font-weight:700;font-size:18px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.opt[aria-pressed="true"]{border-color:var(--wave);background:var(--wave);color:var(--panel)}
+.opt:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.lab{font-size:14px;color:var(--muted);font-weight:700}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.field{display:grid;gap:4px}
+.field input{font:inherit;font-size:24px;font-weight:700;width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-align:center;font-variant-numeric:tabular-nums}
+.unit{font-size:14px;color:var(--muted)}
+textarea{font:inherit;width:100%;min-height:96px;padding:10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border-radius:12px;font-weight:700;font-size:17px;text-decoration:none;cursor:pointer;border:2px solid var(--wave);font-family:var(--body);background:transparent;color:var(--wave)}
+.btn.primary{background:var(--wave);color:var(--panel)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
+.fb{min-height:1.5em;font-weight:700;border-radius:10px}
+.fb.good{color:var(--ok);background:var(--ok-soft);padding:8px 12px}
+.fb.bad{color:var(--rope);background:var(--rope-soft);padding:8px 12px}
+.gate{border:2px dashed var(--rope);border-radius:12px;padding:14px;display:grid;gap:8px;background:var(--rope-soft)}
+.tip{border-left:5px solid var(--rope);background:var(--rope-soft);border-radius:10px;padding:10px 12px;display:grid;gap:4px}
+.tip b{color:var(--rope)}
+table{border-collapse:collapse;width:100%;font-size:16px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:7px 4px;text-align:center}
+th{color:var(--muted);font-weight:500;font-size:13px}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--body);font-size:14px;line-height:1.6;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:220px;overflow:auto}
+details summary{cursor:pointer;color:var(--muted);font-size:14px}
+.stmt{display:grid;gap:6px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg)}
+.was{font-size:13px;color:var(--muted)}
+.card{border-left:5px solid var(--wave);background:var(--wave-soft);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.chg{font-weight:700;color:var(--rope)}
+.tiny{all:unset;cursor:pointer;font-size:13px;color:var(--muted);text-decoration:underline}
+/* 我的數據面板 */
+.dcard{background:var(--panel);border:2px solid var(--wave);border-radius:16px;padding:16px;display:grid;gap:12px;max-width:760px;margin:0 auto}
+.dcard h2{margin:0;font-size:22px}
+.grp{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;padding:12px;border-radius:12px;background:var(--bg)}
+.grp .tag{grid-row:span 2;font-weight:900;font-size:20px;color:var(--panel);background:var(--wave);border-radius:10px;padding:8px 12px;text-align:center;line-height:1.25}
+.grp .tag small{display:block;font-size:12px;font-weight:700}
+.grp .val{font-size:19px}
+.grp .val b{font-size:24px;font-variant-numeric:tabular-nums}
+.grp .obs{font-size:15px;color:var(--muted)}
+.mine{display:grid;gap:4px;font-size:15px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="eyebrow">八年級自然・4-2 光的反射</span>
+    <h1>反射偵探站：光碰到鏡子後往哪裡走？</h1>
+    <div class="prog" aria-label="進度"><span id="progTxt"></span><span class="bar"><i id="progBar"></i></span></div>
+  </div>
+
+  <div class="split">
+    <div class="left">
+            <div class="pane" id="paneSim"><svg id="rsim" viewBox="0 0 600 360" role="img" aria-label="光的反射模擬：可拖曳的光源、平面鏡與量角器"></svg></div>
+      <div class="pane" id="paneSlit">
+        <svg id="scene" viewBox="0 0 600 260" role="img" aria-label="2.5D 實驗桌：平面鏡、縫隙、大頭針與眼睛的位置"></svg>
+        <div class="eyewrap"><div class="eyelab">眼睛看到的畫面</div><svg id="eyeview" viewBox="0 0 240 240" role="img" aria-label="從眼睛位置看向縫隙的畫面"></svg>
+          <label class="eyeslide"><span>← 眼睛往左</span><input type="range" id="eyeR" min="10" max="80" step="0.5" value="70" aria-label="移動眼睛的位置"><span>眼睛往右 →</span></label>
+          <div class="seen" id="seen" role="status"></div></div>
+      </div>
+      <div class="pane" id="paneTop"><svg id="topv" viewBox="0 0 600 360" role="img" aria-label="上視圖：光線路徑與量角器"></svg></div>
+      <div class="pane" id="paneLife"><svg id="life" viewBox="0 0 600 380" role="img" aria-label="轉角鏡子的上視圖"></svg>
+        <label class="eyeslide"><span>鏡子轉向 ↺</span><input type="range" id="mAng" min="0" max="90" step="1" value="15" aria-label="旋轉轉角的鏡子"><span>↻</span></label>
+        <div class="seen" id="lseen" role="status"></div></div>
+      <div class="pane" id="paneData"></div>
+      <div class="simbar" id="bar"></div>
+    </div>
+    <div class="side" id="side" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+const GATE_CODE="42"; /* 老師示範完公布的通關數字 */
+
+/* ===== 4 句迷思是非題（正解只在教師資料，網頁不顯示） ===== */
+const STMTS=[
+  "入射角越大，反射角就越小。",
+  "入射角和反射角，都是光線與鏡面的夾角。",
+  "光垂直射向鏡面時，會沿著原路反射回來。",
+  "光沿原來的反射線反方向射回去，會沿原來的入射線射出。"
+];
+const TOL=3;
+
+/* ===== 狀態（存在這台 iPad 的瀏覽器裡） ===== */
+const KEY="refl42-v2";
+let st={seat:"",pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=Object.assign(st,s);}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
+const $=id=>document.getElementById(id);
+const num=v=>{const x=parseFloat(String(v??"").replace(/[^\d.\-]/g,""));return isFinite(x)?x:null;};
+const r1=x=>x==null?"—":(Math.round(x*10)/10).toString();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mk=v=>v==="O"?"○":v==="X"?"✗":"—";
+
+/* ===== 每個步驟只做一件事；left 指定左邊要顯示什麼 ===== */
+const STEPS=[];
+const add=o=>STEPS.push(o);
+
+add({k:"開始",left:"sim",render:()=>`
+  <h2>先寫下你的座號</h2>
+  <div class="field" style="max-width:200px"><span class="lab">座號</span><input id="seat" inputmode="numeric" value="${esc(st.seat)}" aria-label="座號"></div>`,
+  bind:()=>$("seat").addEventListener("input",e=>{st.seat=e.target.value.trim();save();navState();}),
+  ok:()=>!!st.seat});
+
+STMTS.forEach((t,ix)=>{const n=ix+1;add({k:`你覺得呢？ ${n}／${STMTS.length}`,left:"sim",render:()=>`
+  <h2>這句話對嗎？</h2>
+  <div class="big"><b>${n}.</b> ${t}</div>
+  <div class="lab">憑直覺選</div>
+  <div class="opts" data-grp="pre">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.pre[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
+  <div class="lab">把握程度</div>
+  <div class="opts" data-grp="conf">${[["sure","有把握"],["guess","用猜的"]].map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.conf[n]===v}">${l}</button>`).join("")}</div>
+  <p class="note">不用寫理由，等一下用左邊的模擬器找證據。</p>`,
+  bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st[g.dataset.grp][n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();
+    if(st.pre[n]&&st.conf[n])setTimeout(()=>go(1),350);})),
+  ok:()=>!!(st.pre[n]&&st.conf[n])});});
+
+add({k:"等一下",left:"sim",render:()=>`
+  <h2>看老師示範，等老師公布通關數字</h2>
+  <div class="gate"><span>老師會在大螢幕示範怎麼用模擬器。示範完會說出一個數字，填進來就能開始。</span>
+  <div class="field" style="max-width:180px"><span class="lab">通關數字</span><input id="code" inputmode="numeric" aria-label="通關數字" value="${st.gate?GATE_CODE:""}"></div></div>
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>$("code").addEventListener("input",e=>{st.gate=e.target.value.trim()===GATE_CODE;save();navState();
+    const f=$("fb");f.className="fb"+(st.gate?" good":"");f.textContent=st.gate?"可以開始了！":"";}),
+  ok:()=>st.gate});
+
+/* --- 實驗一：從縫隙找大頭針（課本實驗） --- */
+add({k:"實驗一・看看實驗桌",left:"slit",render:()=>`
+  <h2>看看實驗桌</h2>
+  <p>平面鏡立在桌上，鏡面用白紙遮住，只留中間一條<b>縫隙</b>。大頭針插在鏡子左前方。</p>
+  <p>左邊下方的方格，就是<b>你的眼睛</b>看向縫隙時看到的畫面。</p>`,check:"我看懂了"});
+add({k:"第 1 組・找大頭針",left:"slit",render:()=>`
+  <h2>移動眼睛，直到從縫隙看到大頭針</h2>
+  <p>拉左邊的滑桿，讓眼睛慢慢往左、往右移動。盯著方格裡的縫隙，看大頭針什麼時候出現。</p>
+  <p class="fb${st.obs.see1?" good":""}" id="fb" role="status">${st.obs.see1?"看到了！按下一步，把光線畫出來。":""}</p>`,
+  ok:()=>!!st.obs.see1});
+add({k:"第 1 組・畫出光線",left:"top",render:()=>`
+  <h2>換成從上往下看：光是怎麼走的？</h2>
+  <p>從<b>大頭針</b>到縫隙的是<b>入射線</b>，從縫隙到<b>眼睛</b>的是<b>反射線</b>。中間的虛線是<b>法線</b>。</p>
+  <div class="tip"><span>量角器 <b>0°</b> 對準<b>法線</b></span><span><b>90°</b> 對齊<b>鏡面</b></span></div>`,check:"看懂光線和量角器了"});
+add({k:"第 1 組・量角度",left:"top",render:()=>angleStep("s1",`用量角器讀出第 1 組的<b>入射角</b>和<b>反射角</b>。`),
+  bind:()=>bindAngles("s1",null,0,()=>slitAct(0)),ok:()=>passed("s1")});
+add({k:"第 2 組・換位置再找",left:"slit",render:()=>`
+  <h2>大頭針換位置了，再找一次</h2>
+  <p>大頭針移到更靠近鏡面的地方。拉滑桿移動眼睛，再從縫隙找到它。</p>
+  <p class="fb${st.obs.see2?" good":""}" id="fb" role="status">${st.obs.see2?"看到了！按下一步。":""}</p>`,
+  ok:()=>!!st.obs.see2});
+add({k:"第 2 組・量角度",left:"top",render:()=>angleStep("s2",`用量角器讀出第 2 組的<b>入射角</b>和<b>反射角</b>。`),
+  bind:()=>bindAngles("s2",null,0,()=>slitAct(1)),ok:()=>passed("s2")});
+add({k:"比一比",left:"top",render:()=>`
+  <h2>比一比：第 1 組和第 2 組</h2>
+  <table><thead><tr><th></th><th>入射角</th><th>反射角</th></tr></thead><tbody>
+  <tr><td>第 1 組</td><td>${a(st.d.s1_i)}°</td><td>${a(st.d.s1_r)}°</td></tr>
+  <tr><td>第 2 組</td><td>${a(st.d.s2_i)}°</td><td>${a(st.d.s2_r)}°</td></tr></tbody></table>
+  <p>入射角變大時，反射角：</p>
+  ${choice("o1",[["same","也變大，而且跟入射角一樣大"],["less","變小"],["nochange","不變"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o1","same","選好了，記下你看到的。","再看一次表格，同一列的兩個數字。"),ok:()=>st.obs.o1==="same"});
+
+/* --- 實驗二：用光源再驗證 --- */
+add({k:"實驗二・移動光源",left:"sim",render:()=>`
+  <h2>換用光源：拖動光源，看反射光怎麼走</h2>
+  <p>按住左邊紅色的<b>光源</b>，從高處慢慢往鏡面壓低，再往上拉回來。看鏡子另一邊的<b>反射光</b>：</p>
+  ${choice("o0",[["sym","光源壓低，反射光也跟著壓低（左右對稱）"],["still","反射光都不動"],["opp","光源壓低，反射光反而抬高"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o0","sym","選好了。","再拖一次光源，仔細看反射光往哪邊動。"),ok:()=>st.obs.o0==="sym"});
+add({k:"第 3 組・垂直射向鏡面",left:"sim",render:()=>`
+  <h2>把光源拖到<b>正上方</b>，讓光垂直射向鏡面（入射角 0°）</h2>
+  <p>反射光往哪裡走？</p>
+  ${choice("o3",[["back","沿著原路反射回來"],["side","往旁邊斜斜射出"],["gone","被鏡子吸收，沒有反射光"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o3","back","選好了。","光源要在正上方，看反射光和入射光有沒有重疊。",()=>Math.abs(SIM.th)<=1,"光源還沒在正上方喔，拖到入射角 0° 再選。"),ok:()=>st.obs.o3==="back"});
+add({k:"第 4 組・反過來",left:"sim",render:()=>angleStep("r4",`把光源拖到<b>右邊</b>，放在第 2 組<b>眼睛</b>的位置（入射角大約 <b>${a(st.d.s2_r)}°</b>），讀出入射角和反射角。`),
+  bind:()=>bindAngles("r4",num(st.d.s2_r),1,()=>[Math.abs(SIM.th),Math.abs(SIM.th)]),ok:()=>passed("r4")});
+add({k:"第 4 組・反過來",left:"sim",render:()=>`
+  <h2>反射光跑到哪裡去了？</h2>
+  <p>第 2 組：大頭針在<b>左邊</b> ${a(st.d.s2_i)}°、眼睛在右邊。第 4 組：光源放在<b>眼睛的位置</b> ${a(st.d.r4_i)}°，反射光射到左邊 ${a(st.d.r4_r)}°。</p>
+  ${choice("o4",[["same","反射光剛好射向第 2 組大頭針的方向"],["diff","反射光走到別的地方"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o4","same","選好了。","比較第 2 組大頭針的角度和第 4 組反射光的角度。"),ok:()=>st.obs.o4==="same"});
+
+/* --- 帶著數據問 e度（左邊改顯示「我的數據」） --- */
+add({k:"問 e度",left:"data",render:()=>`
+  <h2>帶著你的數據去問 e度</h2>
+  <p>按<span class="ui">複製</span>，到因材網 e度 的對話框貼上。</p>
+  <div class="row"><button class="btn primary" id="copy" type="button">複製給 e度 的話</button>
+  <a class="btn" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
+  <p class="fb" id="fb" role="status"></p>
+  <div class="tip"><b>e度 問「看第幾組數據」時</b><span>${dataSmall()}</span></div>
+  <p class="note">iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看左邊「我的數據」，一邊回答 e度。討論完，把 e度 給的結論複製、貼在下面，再按「下一步」。</p>
+  <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>
+  <div class="tip"><b>📌 討論到最後，e度 會給你一句結論</b><span>在 e度 長按「請寫下這句結論」後面那一句，選「拷貝」，回來貼在這裡，才能按下一步。</span></div>
+  <textarea id="concl" aria-label="e度 給的結論">${esc(st.concl||"")}</textarea>`,
+  bind:()=>{$("prompt").textContent=promptText();$("copy").addEventListener("click",copyPrompt);
+    $("concl").addEventListener("input",e=>{st.concl=e.target.value;save();navState();});},
+  ok:()=>(st.concl||"").trim().length>=8});
+
+add({k:"最後判斷",left:"data",render:()=>`
+  <h2>跟 e度 討論後，再判斷一次</h2>
+  <div style="display:grid;gap:8px">${STMTS.map((t,ix)=>{const n=ix+1;return `<div class="stmt"><div><b>${n}.</b> ${t}</div>
+    <div class="row"><div class="opts" data-n="${n}">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.post[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
+    <span class="was">原本：${mk(st.pre[n])}</span></div></div>`;}).join("")}</div>`,
+  bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st.post[g.dataset.n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
+  ok:()=>STMTS.every((_,ix)=>st.post[ix+1])});
+
+add({k:"組內共學・一句話",left:"data",render:()=>`
+  <h2>組內每人說一句：光碰到鏡子後，往哪裡走？</h2>
+  <div class="tip"><b>挑一組自己的數據，照句型說出來</b><span>我看第＿組：入射角 ＿°、反射角 ＿°，所以反射角＿＿入射角；角度都要從＿＿量起。</span></div>
+  <p class="note">組長點名，每個人都要說。全組一起把句子修得更好，再把<b>修好的那一句</b>寫在下面。</p>
+  <textarea id="why" aria-label="我們組修好的一句話">${esc(st.why)}</textarea>`,
+  bind:()=>$("why").addEventListener("input",e=>{st.why=e.target.value;save();navState();}),
+  ok:()=>st.why.trim().length>=8});
+
+add({k:"生活應用",left:"life",render:()=>`
+  <h2>生活挑戰：躲在轉角的警察</h2>
+  <p>警匪片裡，警察躲在轉角，用一面鏡子偷看走廊另一頭。拉左邊的滑桿<b>轉動鏡子</b>，讓警察從鏡子裡看到嫌犯。</p>
+  <p class="note">想一想：嫌犯身上的光射到鏡子，要怎麼反射才會進到警察的眼睛？</p>
+  <p class="fb${st.obs.life?" good":""}" id="fb" role="status">${st.obs.life?"看到了！入射角＝反射角，光剛好轉進警察的眼睛。":""}</p>
+  <p class="note">生活中還有：潛望鏡、牙醫看牙齒的小鏡子、汽車的照後鏡，都是利用光的反射看到「看不到的地方」。</p>`,
+  ok:()=>!!st.obs.life});
+add({k:"完成",left:"data",render:()=>{
+  const chg=changed();
+  return `<h2>完成！這是你的證據卡</h2>
+  <div class="card"><div><b>座號 ${esc(st.seat)}</b>・4-2 光的反射</div>
+  <table><thead><tr><th>題</th><th>直覺</th><th>最後</th></tr></thead><tbody>
+  ${STMTS.map((_,ix)=>{const n=ix+1;return `<tr><td>${n}</td><td>${mk(st.pre[n])}${st.conf[n]==="guess"?"（猜）":""}</td><td${st.pre[n]!==st.post[n]?' class="chg"':""}>${mk(st.post[n])}</td></tr>`;}).join("")}
+  </tbody></table>
+  <div>${chg.length?`<span class="chg">改變判斷：第 ${chg.join("、")} 題</span>`:"判斷都沒有改變"}</div>
+  <div><b>修好的一句話：</b>${esc(st.why)}</div></div>
+  <button type="button" class="btn primary" id="shot">📷 一鍵存成圖片</button>
+  <p class="fb" id="fb" role="status"></p>
+  <p class="note">上傳由顧問協助：按下後選 Padlet 分享上傳，或先「儲存影像」存到相簿。每組只傳一張代表卡。</p>
+  <p><button type="button" class="tiny" id="reset">重新開始（下一位同學使用時）</button></p>`;},
+  bind:()=>{$("shot").addEventListener("click",saveCard);
+    let armed=false;$("reset").addEventListener("click",e=>{if(!armed){armed=true;e.target.textContent="再按一次確認清除";return;}
+    try{localStorage.removeItem(KEY);}catch(_){}location.reload();});},last:true});
+
+/* ===== 量角度的步驟（和模擬器實際角度比對） ===== */
+function angleStep(id,text){
+  return `<h2>${text}</h2>
+  <div class="fields">
+    <label class="field"><span class="lab">入射角</span><input id="ai" inputmode="decimal" value="${esc(st.d[id+"_i"]??"")}"><span class="unit">度</span></label>
+    <label class="field"><span class="lab">反射角</span><input id="ar" inputmode="decimal" value="${esc(st.d[id+"_r"]??"")}"><span class="unit">度</span></label>
+  </div>
+  <p class="note">量角器：0° 對法線、90° 對鏡面。</p>
+  <button type="button" class="btn primary" id="chk">檢查</button>
+  <p class="fb" id="fb" role="status"></p>`;
+}
+function passed(id){return !!(st.d[id+"_ok"]||st.skip[id]);}
+function bindAngles(id,target,side,getAct){
+  const show=(cls,msg)=>{const f=$("fb");f.className="fb "+cls;f.innerHTML=msg;};
+  if(passed(id))show("good",st.skip[id]?"老師已確認，可以繼續。":"數據合理，可以按下一步。");
+  ["ai","ar"].forEach(k=>$(k).addEventListener("input",()=>{st.d[id+"_ok"]=false;save();navState();$("fb").textContent="";$("fb").className="fb";}));
+  $("chk").addEventListener("click",()=>{
+    const i=num($("ai").value), r=num($("ar").value), [ai,ar]=getAct();
+    st.d[id+"_i"]=$("ai").value; st.d[id+"_r"]=$("ar").value;
+    if(i==null||r==null){show("bad","兩個角度都要填數字喔。");save();return;}
+    if(side&&Math.sign(SIM.th)!==side){show("bad",`光源要放在<b>${side<0?"左":"右"}邊</b>喔。`);save();return;}
+    if(target!=null&&Math.abs(ai-target)>5){show("bad",`入射角要調到大約 ${a(target)}°，再拖一下光源。`);save();return;}
+    if(Math.abs(i-ai)<=TOL&&Math.abs(r-ar)<=TOL){st.d[id+"_ok"]=true;st.tries[id]=0;save();show("good","數據合理！可以按下一步。");navState();return;}
+    st.tries[id]=(st.tries[id]||0)+1;save();
+    let hint="跟量角器上的角度好像不一樣，再看一次。";
+    if(i>90||r>90||i<0||r<0)hint="角度要在 0°～90° 之間喔。";
+    else if(Math.abs(i-(90-ai))<=TOL||Math.abs(r-(90-ar))<=TOL)hint="你是不是從鏡面量的？量角器的 <b>0° 要對準法線</b>、90° 對齊鏡面。";
+    show("bad",hint+(st.tries[id]>=2?`<br><button type="button" class="tiny" id="tskip">老師確認過了，繼續</button>`:""));
+    const sk=$("tskip");if(sk)sk.addEventListener("click",()=>{st.skip[id]=true;save();show("good","老師已確認，可以繼續。");navState();});
+  });
+}
+function choice(key,opts){return `<div class="opts" data-key="${key}">${opts.map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.obs[key]===v}">${l}</button>`).join("")}</div>`;}
+function bindChoice(key,right,good,bad,pre,preMsg){
+  const g=document.querySelector(`.opts[data-key="${key}"]`),f=$("fb");
+  const showFb=()=>{if(!st.obs[key])return;const ok=st.obs[key]===right;f.className="fb "+(ok?"good":"bad");f.textContent=ok?good:bad;};
+  showFb();
+  g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    if(pre&&!pre()){f.className="fb bad";f.textContent=preMsg;return;}
+    st.obs[key]=b.dataset.v;save();
+    g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));showFb();navState();});
+}
+const changed=()=>STMTS.map((_,ix)=>{const n=ix+1;return st.pre[n]&&st.post[n]&&st.pre[n]!==st.post[n]?n:null;}).filter(Boolean);
+
+/* ===== 我的數據（e度 對話時一直顯示在左邊） ===== */
+const a=x=>r1(num(x));
+function dataSmall(){return `第 1 組（縫隙）：入射 ${a(st.d.s1_i)}°、反射 ${a(st.d.s1_r)}°<br>第 2 組（縫隙）：入射 ${a(st.d.s2_i)}°、反射 ${a(st.d.s2_r)}°<br>第 3 組：垂直射向鏡面，沿原路反射回來<br>第 4 組（反過來）：入射 ${a(st.d.r4_i)}°、反射 ${a(st.d.r4_r)}°`;}
+function renderData(){
+  $("paneData").innerHTML=`<div class="dcard">
+    <h2>我的數據</h2>
+    <p class="note" style="margin:0">e度 問你「看第幾組數據」時，看這裡回答。角度都從法線量起。</p>
+    <div class="grp"><div class="tag">第 1 組<small>縫隙觀察</small></div>
+      <div class="val">入射角 <b>${a(st.d.s1_i)}°</b>　反射角 <b>${a(st.d.s1_r)}°</b></div>
+      <div class="obs">眼睛移到這個位置，才從縫隙看到大頭針</div></div>
+    <div class="grp"><div class="tag">第 2 組<small>縫隙觀察</small></div>
+      <div class="val">入射角 <b>${a(st.d.s2_i)}°</b>　反射角 <b>${a(st.d.s2_r)}°</b></div>
+      <div class="obs">大頭針換位置，眼睛也要換位置才看得到</div></div>
+    <div class="grp"><div class="tag">第 3 組<small>垂直</small></div>
+      <div class="val">入射角 <b>0°</b>　反射角 <b>0°</b></div>
+      <div class="obs">我看到：光沿著原路反射回來</div></div>
+    <div class="grp"><div class="tag">第 4 組<small>光源・反過來</small></div>
+      <div class="val">入射角 <b>${a(st.d.r4_i)}°</b>　反射角 <b>${a(st.d.r4_r)}°</b></div>
+      <div class="obs">我看到：光源放在第 2 組眼睛的位置，反射光射向第 2 組大頭針的方向</div></div>
+    <div class="mine"><b>我原本的判斷</b>${STMTS.map((t,ix)=>`<span>${ix+1}. ${t}　<b>${mk(st.pre[ix+1])}</b></span>`).join("")}</div>
+  </div>`;
+}
+
+/* ===== 給 e度 的提示詞 ===== */
+const mark=v=>v==="O"?"○ 對":v==="X"?"✗ 錯":"還沒判斷";
+function promptText(){
+  const d=st.d;
+  return `我是國中八年級學生，正在學「光的反射」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 4 句話。
+
+【我原本的直覺判斷】
+${STMTS.map((t,ix)=>`${ix+1}.「${t}」我覺得：${mark(st.pre[ix+1])}${st.conf[ix+1]==="guess"?"（用猜的）":st.conf[ix+1]==="sure"?"（有把握）":""}`).join("\n")}
+
+【我在模擬實驗中的數據】（角度都用量角器從法線量起）
+實驗一：平面鏡用白紙遮住只留一條縫隙，大頭針放在左前方，我移動眼睛直到從縫隙看到大頭針，再畫出光線量角度。
+第1組 縫隙觀察：入射角 ${a(d.s1_i)}°，反射角 ${a(d.s1_r)}°
+第2組 縫隙觀察（大頭針換位置）：入射角 ${a(d.s2_i)}°，反射角 ${a(d.s2_r)}°
+實驗二：改用光源照向平面鏡。
+第3組 光源在正上方（垂直射向鏡面）：入射角 0°，我看到光沿著原路反射回來
+第4組 光源放在第2組眼睛的位置：入射角 ${a(d.r4_i)}°，反射角 ${a(d.r4_r)}°，反射光射向第2組大頭針的方向
+
+【請你這樣帶我】
+1. 一次只問我一個問題，用國中生聽得懂的話，回答簡短。
+2. 每一句都先問我要看「第幾組」數據，再讓我自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
+3. 第1句：請我比較第1組和第2組。
+4. 第2句：問我量角器的 0° 對準哪一條線，入射角、反射角是跟哪一條線的夾角；如果從鏡面量，角度會變成多少？
+5. 第3句：請我看第3組。第4句：請我比較第2組和第4組，也問我：為什麼眼睛一定要移到某個位置，才能從縫隙看到大頭針？
+6. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
+7. 全部討論完，請我用一句話說出「反射定律」。
+最後一步（很重要）：全部討論完，先請我自己試著說出結論；再用下面的格式，給我一句完整、正確、國中生看得懂的結論（40 字以內），讓我清楚知道要記下哪一句：
+📌 請寫下這句結論：……
+這個格式只在對話最後出現一次。`;
+}
+function copyPrompt(){
+  const txt=promptText(),f=$("fb");
+  const fb=()=>{document.querySelector("details").open=true;const rg=document.createRange();rg.selectNodeContents($("prompt"));const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);f.className="fb bad";f.textContent="已幫你選取文字，請長按後選「拷貝」。";};
+  try{navigator.clipboard.writeText(txt).then(()=>{f.className="fb good";f.textContent="已複製！到 e度 對話框貼上就可以開始。";},fb);}catch(e){fb();}
+}
+
+/* ===== 一鍵把證據卡存成圖片 ===== */
+function wrap(g,text,maxW){const out=[];let line="";for(const ch of text){if(g.measureText(line+ch).width>maxW){out.push(line);line=ch;}else line+=ch;}if(line)out.push(line);return out;}
+function cardCanvas(){
+  const W=1080,F='"Noto Sans TC","PingFang TC",sans-serif',cv=document.createElement("canvas"),g=cv.getContext("2d");
+  g.font=`30px ${F}`;
+  const stLines=STMTS.map(t=>wrap(g,t,600));
+  const whyLines=wrap(g,st.why,W-160);
+  const conLines=wrap(g,st.concl||"",W-160);
+  const H=426+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+150+whyLines.length*44+90+(conLines.length?conLines.length*44+70:0);
+  cv.width=W;cv.height=H;
+  g.fillStyle="#EFF2F5";g.fillRect(0,0,W,H);
+  g.fillStyle="#fff";g.strokeStyle="#2C5D8A";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
+  g.fillStyle="#2C5D8A";g.font=`700 26px ${F}`;g.fillText("八年級自然・4-2 光的反射",80,100);
+  g.fillStyle="#1B2430";g.font=`900 52px ${F}`;g.fillText("我的證據卡",80,168);
+  g.font=`700 34px ${F}`;g.fillText(`座號 ${st.seat}`,W-80-g.measureText(`座號 ${st.seat}`).width,168);
+  g.fillStyle="#DCE7F2";g.beginPath();g.roundRect(80,200,W-160,166,16);g.fill();
+  g.fillStyle="#1B2430";g.font=`28px ${F}`;
+  g.fillText(`縫隙　第 1 組：入射 ${a(st.d.s1_i)}°　反射 ${a(st.d.s1_r)}°　第 2 組：入射 ${a(st.d.s2_i)}°　反射 ${a(st.d.s2_r)}°`,104,248);
+  g.fillText(`第 3 組：垂直射向鏡面 → 沿原路反射回來`,104,296);
+  g.fillText(`第 4 組（反過來）：入射 ${a(st.d.r4_i)}°　反射 ${a(st.d.r4_r)}°`,104,344);
+  let y=426;g.font=`700 24px ${F}`;g.fillStyle="#566273";g.fillText("敘述",80,y-12);g.fillText("直覺",W-300,y-12);g.fillText("最後",W-170,y-12);
+  STMTS.forEach((t,ix)=>{const n=ix+1,ls=stLines[ix];g.strokeStyle="#CBD3DD";g.lineWidth=2;g.beginPath();g.moveTo(80,y);g.lineTo(W-80,y);g.stroke();
+    g.font=`30px ${F}`;g.fillStyle="#1B2430";ls.forEach((l,k)=>g.fillText((k?"　 ":`${n}. `)+l,80,y+44+k*42));
+    g.font=`700 40px ${F}`;g.fillText(mk(st.pre[n]),W-290,y+48);
+    g.fillStyle=st.pre[n]!==st.post[n]?"#8A4B22":"#1B2430";g.fillText(mk(st.post[n]),W-160,y+48);
+    y+=Math.max(1,ls.length)*42+30;});
+  const chg=changed();
+  g.fillStyle="#8A4B22";g.font=`700 30px ${F}`;g.fillText(chg.length?`改變判斷：第 ${chg.join("、")} 題`:"判斷都沒有改變",80,y+50);
+  y+=110;if(conLines.length){g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("📌 e度 結論：",80,y);g.font=`30px ${F}`;conLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));y+=conLines.length*44+70;}
+  g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("我們組修好的一句話：",80,y);
+  g.font=`30px ${F}`;whyLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));
+  return cv;
+}
+function saveCard(){
+  const f=$("fb"),cv=cardCanvas(),name=`4-2反射證據卡_${st.seat||"座號"}.png`;
+  cv.toBlob(async blob=>{
+    const file=new File([blob],name,{type:"image/png"});
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"4-2 反射證據卡"});f.className="fb good";f.textContent="完成！";return;}}catch(e){if(e&&e.name==="AbortError")return;}
+    const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+    f.className="fb good";f.innerHTML=`已下載圖片。如果沒看到，<a href="${url}" target="_blank" rel="noopener">點這裡打開圖片</a>，再長按存到相簿。`;
+  },"image/png");
+}
+
+/* ===== 左邊切換：模擬器／我的數據 ===== */
+function setLeft(mode){
+  ["Slit","Top","Sim","Life","Data"].forEach(k=>$("pane"+k).classList.toggle("on",k.toLowerCase()===mode));
+  if(mode==="data")renderData();
+  if(mode==="slit")SLIT.draw();
+  if(mode==="top")TOP.draw();
+  if(mode==="life")LIFE.draw();
+  const B={slit:`<span>上方：實驗桌的樣子（看得到大頭針真正的位置）・下方：眼睛從縫隙看到的畫面</span>`,
+    top:`<span>從上往下看：入射線、反射線與量角器・0° 對法線、90° 對鏡面</span>`,
+    sim:`<span>拖曳紅色光源改變入射角・量角器 0° 對法線、90° 對鏡面</span>`,
+    life:`<span>上視圖：轉角的走廊與鏡子</span>`,
+    data:`<span>e度 問你數據時，看這裡</span><button type="button" id="toSim">回模擬器</button>`};
+  $("bar").innerHTML=B[mode];
+  if($("toSim"))$("toSim").addEventListener("click",()=>setLeft("sim"));
+}
+
+/* ===== 實驗一：縫隙（2.5D 實驗桌＋眼睛看到的畫面），上視圖畫光線 ===== */
+const PINS=[{deg:30,dist:175},{deg:55,dist:150}];
+const EYE_R=190;
+function curTrial(){const k=STEPS[st.i]&&STEPS[st.i].k||"";return k.startsWith("第 2 組")||k==="比一比"?1:0;}
+function pinPos(t){const p=PINS[t],r=p.deg*Math.PI/180;return{x:300-p.dist*Math.sin(r),y:300-p.dist*Math.cos(r)};}
+function eyePos(phi){const r=phi*Math.PI/180;return{x:300+EYE_R*Math.sin(r),y:300-EYE_R*Math.cos(r)};}
+function slitAct(t){const phi=st.d["eye"+t]??70;return[PINS[t].deg,phi];}
+const SLIT=(function(){
+  const NS="http://www.w3.org/2000/svg";
+  const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);p.appendChild(n);return n;};
+  const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
+  const sc=$("scene"),ev=$("eyeview"),rng=$("eyeR");
+  /* 2.5D 投影：鏡子在後方（距離 0），越往前越下面、越往左偏 */
+  const P=(x,y)=>{const d=300-y;return[75+x*0.8-d*0.3,92+d*0.55];};
+  function draw(){
+    const t=curTrial(),pin=pinPos(t),phi=+(st.d["eye"+t]??70),eye=eyePos(phi);
+    rng.value=phi;
+    sc.innerHTML="";
+    const c=[P(30,300),P(570,300),P(570,20),P(30,20)];
+    E("polygon",{points:c.map(q=>q.join(",")).join(" "),fill:"#EDE3D2",stroke:"#C9B79A"},sc);
+    const m0=P(60,300),m1=P(540,300),H=52;
+    E("polygon",{points:`${m0[0]},${m0[1]} ${m1[0]},${m1[1]} ${m1[0]},${m1[1]-H} ${m0[0]},${m0[1]-H}`,fill:"#F8FAFC",stroke:"#94A3B8"},sc);
+    const s0=P(293,300),s1=P(307,300);
+    E("polygon",{points:`${s0[0]},${s0[1]} ${s1[0]},${s1[1]} ${s1[0]},${s1[1]-H} ${s0[0]},${s0[1]-H}`,fill:"#64748B"},sc);
+    T(sc,m1[0]-40,m1[1]-H-8,"平面鏡（貼白紙）",{"font-size":12,fill:"#475569"});
+    T(sc,(s0[0]+s1[0])/2,s0[1]-H-8,"縫隙",{"font-size":12,fill:"#0F172A","font-weight":700});
+    const pp=P(pin.x,pin.y);
+    E("ellipse",{cx:pp[0],cy:pp[1],rx:6,ry:3,fill:"rgba(0,0,0,.18)"},sc);
+    E("line",{x1:pp[0],y1:pp[1],x2:pp[0],y2:pp[1]-40,stroke:"#B91C1C","stroke-width":3},sc);
+    E("circle",{cx:pp[0],cy:pp[1]-42,r:5,fill:"#DC2626"},sc);
+    T(sc,pp[0],pp[1]+18,"大頭針",{"font-size":12,fill:"#B91C1C","font-weight":700});
+    const ep=P(eye.x,eye.y),eyH=34,sm=[(s0[0]+s1[0])/2,s0[1]-H*0.45];
+    E("line",{x1:ep[0],y1:ep[1]-eyH,x2:sm[0],y2:sm[1],stroke:"#2C5D8A","stroke-width":1.5,"stroke-dasharray":"5 4"},sc);
+    E("line",{x1:ep[0],y1:ep[1],x2:ep[0],y2:ep[1]-eyH+10,stroke:"#94A3B8","stroke-width":2},sc);
+    const g=E("g",{transform:`translate(${ep[0]},${ep[1]-eyH})`},sc);
+    E("path",{d:"M-16,0 Q0,-12 16,0 Q0,12 -16,0Z",fill:"#fff",stroke:"#1B2430","stroke-width":2},g);E("circle",{cx:-3,cy:0,r:5,fill:"#1B2430"},g);
+    T(sc,ep[0],ep[1]+16,"你的眼睛",{"font-size":12,fill:"#2C5D8A","font-weight":700});
+    /* 眼睛看到的畫面 */
+    ev.innerHTML="";
+    const clip=E("clipPath",{id:"slitclip"},E("defs",{},ev));E("rect",{x:102,y:40,width:36,height:160},clip);
+    E("rect",{x:0,y:0,width:240,height:240,fill:"#F1F5F9"},ev);
+    E("rect",{x:10,y:40,width:220,height:160,fill:"#FFFFFF",stroke:"#CBD5E1"},ev);
+    E("rect",{x:102,y:40,width:36,height:160,fill:"#7B8794"},ev);
+    const off=(phi-PINS[t].deg)*14, gp=E("g",{"clip-path":"url(#slitclip)"},ev);
+    E("rect",{x:116+off,y:78,width:8,height:112,fill:"#B91C1C"},gp);E("circle",{cx:120+off,cy:76,r:11,fill:"#DC2626"},gp);
+    T(ev,120,226,"縫隙",{"font-size":13,fill:"#475569"});
+    const see=Math.abs(phi-PINS[t].deg)<=1.5;
+    $("seen").textContent=see?"👀 看到大頭針了！":"縫隙裡還看不到大頭針";
+    $("seen").style.color=see?"var(--ok)":"var(--muted)";
+    if(see&&!st.obs["see"+(t+1)]){st.obs["see"+(t+1)]=true;save();const f=$("fb");if(f){f.className="fb good";f.textContent="看到了！按下一步。";}navState();}
+  }
+  rng.addEventListener("input",()=>{const t=curTrial();st.d["eye"+t]=+rng.value;save();draw();});
+  return{draw};
+})();
+const TOP=(function(){
+  const NS="http://www.w3.org/2000/svg",svg=$("topv");
+  const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
+  const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
+  function draw(){
+    const t=curTrial(),pin=pinPos(t),eye=eyePos(+(st.d["eye"+t]??70)),O=[300,300],R=120;
+    svg.innerHTML="";
+    const m=E("marker",{id:"ah2",viewBox:"0 0 10 10",refX:5,refY:5,markerWidth:7,markerHeight:7,orient:"auto"},E("defs",{}));E("path",{d:"M0 0 L10 5 L0 10 z",fill:"#DC2626"},m);
+    E("rect",{x:60,y:300,width:480,height:8,fill:"#94A3B8"});
+    for(let x=70;x<545;x+=14)E("line",{x1:x,y1:308,x2:x-10,y2:320,stroke:"#CBD5E1"});
+    E("rect",{x:60,y:292,width:233,height:9,fill:"#fff",stroke:"#9CA3AF"});E("rect",{x:307,y:292,width:233,height:9,fill:"#fff",stroke:"#9CA3AF"});
+    T(svg,300,338,"▲ 縫隙",{"font-size":12,fill:"#0F172A"});T(svg,470,340,"平面鏡（從上往下看）",{"font-size":12,fill:"#475569"});
+    E("path",{d:`M ${O[0]-R} ${O[1]} A ${R} ${R} 0 0 1 ${O[0]+R} ${O[1]}`,fill:"rgba(44,93,138,.05)",stroke:"#93C5FD"});
+    for(let deg=0;deg<=90;deg+=5){for(const sg of[-1,1]){if(deg===0&&sg===1)continue;const r=deg*Math.PI/180,len=deg%10?5:11;
+      E("line",{x1:O[0]+sg*R*Math.sin(r),y1:O[1]-R*Math.cos(r),x2:O[0]+sg*(R-len)*Math.sin(r),y2:O[1]-(R-len)*Math.cos(r),stroke:"#3B82F6"});
+      if(deg%10===0)T(svg,O[0]+sg*(R+13)*Math.sin(r),O[1]-(R+13)*Math.cos(r)+4,deg,{"font-size":10,fill:"#1D4ED8"});}}
+    E("line",{x1:300,y1:300,x2:300,y2:40,stroke:"#475569","stroke-dasharray":"6 5"});T(svg,300,32,"法線",{fill:"#475569"});
+    const ray=(a,b)=>{const mx=a[0]+(b[0]-a[0])*.55,my=a[1]+(b[1]-a[1])*.55;E("polyline",{points:`${a[0]},${a[1]} ${mx},${my} ${b[0]},${b[1]}`,fill:"none",stroke:"#DC2626","stroke-width":2.6,"marker-mid":"url(#ah2)"});};
+    ray([pin.x,pin.y],O);ray(O,[eye.x,eye.y]);
+    E("circle",{cx:pin.x,cy:pin.y,r:8,fill:"#DC2626",stroke:"#7F1D1D","stroke-width":2});T(svg,pin.x,pin.y-14,"大頭針",{"font-size":12,fill:"#B91C1C"});
+    const g=E("g",{transform:`translate(${eye.x},${eye.y})`});E("path",{d:"M-16,0 Q0,-12 16,0 Q0,12 -16,0Z",fill:"#fff",stroke:"#1B2430","stroke-width":2},g);E("circle",{cx:-3,cy:0,r:5,fill:"#1B2430"},g);
+    T(svg,eye.x,eye.y-16,"眼睛",{"font-size":12,fill:"#2C5D8A"});
+    T(svg,(pin.x+300)/2-26,(pin.y+300)/2,"入射線",{"font-size":12,fill:"#B91C1C"});T(svg,(eye.x+300)/2+26,(eye.y+300)/2,"反射線",{"font-size":12,fill:"#B91C1C"});
+  }
+  return{draw};
+})();
+
+/* ===== 生活應用：轉角的鏡子 ===== */
+const LIFE=(function(){
+  const NS="http://www.w3.org/2000/svg",svg=$("life"),rng=$("mAng");
+  const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
+  const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
+  const M=[130,120],POL=[130,330],SUS=[520,120];
+  function draw(){
+    const ang=+(st.d.mAng??15);rng.value=ang;svg.innerHTML="";
+    const m=E("marker",{id:"ah3",viewBox:"0 0 10 10",refX:5,refY:5,markerWidth:7,markerHeight:7,orient:"auto"},E("defs",{}));E("path",{d:"M0 0 L10 5 L0 10 z",fill:"#DC2626"},m);
+    E("rect",{x:0,y:0,width:600,height:380,fill:"#CBD5E1"});
+    E("rect",{x:60,y:60,width:520,height:120,fill:"#F8FAFC"});E("rect",{x:60,y:60,width:140,height:310,fill:"#F8FAFC"});
+    T(svg,400,95,"走廊",{fill:"#94A3B8"});T(svg,110,250,"走廊",{fill:"#94A3B8"});T(svg,400,280,"牆壁",{fill:"#64748B","font-size":16});
+    /* 直接看：被牆擋住 */
+    E("line",{x1:POL[0],y1:POL[1],x2:SUS[0],y2:SUS[1],stroke:"#64748B","stroke-dasharray":"4 5"});
+    T(svg,265,250,"✕ 直接看會被牆擋住",{fill:"#475569","font-size":12});
+    /* 鏡子 */
+    const r=ang*Math.PI/180,dir=[Math.cos(r),-Math.sin(r)],L=34;
+    E("line",{x1:M[0]-dir[0]*L,y1:M[1]-dir[1]*L,x2:M[0]+dir[0]*L,y2:M[1]+dir[1]*L,stroke:"#1E3A5F","stroke-width":6,"stroke-linecap":"round"});
+    const n=[-dir[1],dir[0]];const nn=(n[0]+n[1]>0)?n:[-n[0],-n[1]];
+    E("line",{x1:M[0],y1:M[1],x2:M[0]+nn[0]*70,y2:M[1]+nn[1]*70,stroke:"#475569","stroke-dasharray":"5 4"});
+    T(svg,M[0]+nn[0]*82,M[1]+nn[1]*82,"法線",{fill:"#475569","font-size":11});
+    /* 光線：嫌犯 → 鏡子 → 反射 */
+    const din=[-1,0],dot=din[0]*nn[0]+din[1]*nn[1],dout=[din[0]-2*dot*nn[0],din[1]-2*dot*nn[1]];
+    const ray=(a,b,c)=>{const mx=a[0]+(b[0]-a[0])*.5,my=a[1]+(b[1]-a[1])*.5;E("polyline",{points:`${a[0]},${a[1]} ${mx},${my} ${b[0]},${b[1]}`,fill:"none",stroke:c||"#DC2626","stroke-width":3,"marker-mid":"url(#ah3)"});};
+    ray([SUS[0]-14,SUS[1]],M);
+    let tEnd=400;if(dout[1]<0)tEnd=Math.min(tEnd,(60-M[1])/dout[1]);if(dout[0]>0)tEnd=Math.min(tEnd,dout[1]>.05?(370-M[1])/dout[1]:(580-M[0])/dout[0]);if(dout[0]<0)tEnd=Math.min(tEnd,(60-M[0])/dout[0]);if(dout[1]>0)tEnd=Math.min(tEnd,(370-M[1])/dout[1]);
+    if(dout[0]>0&&M[1]+dout[1]*((200-M[0])/dout[0])>180)tEnd=Math.min(tEnd,(200-M[0])/dout[0]);
+    ray(M,[M[0]+dout[0]*tEnd,M[1]+dout[1]*tEnd]);
+    const see=Math.abs(ang-45)<=2;
+    E("circle",{cx:SUS[0],cy:SUS[1],r:16,fill:"#7F1D1D"});T(svg,SUS[0],SUS[1]+34,"嫌犯",{fill:"#7F1D1D","font-weight":700});
+    E("circle",{cx:POL[0],cy:POL[1],r:16,fill:"#1E3A8A"});T(svg,POL[0]+44,POL[1]+5,"警察",{fill:"#1E3A8A","font-weight":700});
+    T(svg,M[0]-40,M[1]-40,"鏡子",{fill:"#1E3A5F","font-weight":700});
+    $("lseen").textContent=see?"👀 警察從鏡子裡看到嫌犯了！":"鏡子的角度還不對，警察看不到嫌犯";
+    $("lseen").style.color=see?"var(--ok)":"var(--muted)";
+    if(see&&!st.obs.life){st.obs.life=true;save();const f=$("fb");if(f){f.className="fb good";f.textContent="看到了！入射角＝反射角，光剛好轉進警察的眼睛。";}navState();}
+  }
+  rng.addEventListener("input",()=>{st.d.mAng=+rng.value;save();draw();});
+  return{draw};
+})();
+
+/* ===== 反射模擬器：可拖曳光源，不顯示角度數字，要自己讀量角器 ===== */
+const SIM={th:-35};
+(function(){
+  const NS="http://www.w3.org/2000/svg",svg=$("rsim");
+  const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
+  const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
+  const O=[300,300],R=170;
+  const defs=E("defs",{});const m=E("marker",{id:"ah",viewBox:"0 0 10 10",refX:5,refY:5,markerWidth:7,markerHeight:7,orient:"auto"},defs);E("path",{d:"M0 0 L10 5 L0 10 z",fill:"#DC2626"},m);
+  E("rect",{x:40,y:300,width:520,height:10,fill:"#94A3B8"});
+  for(let x=50;x<560;x+=14)E("line",{x1:x,y1:310,x2:x-10,y2:324,stroke:"#94A3B8"});
+  T(svg,520,346,"平面鏡",{fill:"#475569"});
+  E("path",{d:`M ${O[0]-R} ${O[1]} A ${R} ${R} 0 0 1 ${O[0]+R} ${O[1]}`,fill:"rgba(44,93,138,.05)",stroke:"#93C5FD"});
+  for(let deg=0;deg<=90;deg+=5){for(const sg of[-1,1]){if(deg===0&&sg===1)continue;const r=deg*Math.PI/180,len=deg%10?6:13;
+    E("line",{x1:O[0]+sg*R*Math.sin(r),y1:O[1]-R*Math.cos(r),x2:O[0]+sg*(R-len)*Math.sin(r),y2:O[1]-(R-len)*Math.cos(r),stroke:"#3B82F6"});
+    if(deg%10===0)T(svg,O[0]+sg*(R+15)*Math.sin(r),O[1]-(R+15)*Math.cos(r)+4,deg,{"font-size":11,fill:"#1D4ED8"});}}
+  E("line",{x1:300,y1:300,x2:300,y2:60,stroke:"#475569","stroke-dasharray":"6 5"});T(svg,300,52,"法線",{fill:"#475569"});
+  const gR=E("g",{});
+  const src=E("g",{});E("circle",{r:26,fill:"transparent"},src);E("circle",{r:16,fill:"#FEE2E2",stroke:"#DC2626","stroke-width":2},src);E("circle",{r:5,fill:"#DC2626"},src);
+  const lbl=T(svg,0,0,"光源（拖我）",{fill:"#B91C1C","font-size":12});
+  const L=250;
+  function ray(a,b){const mx=a[0]+(b[0]-a[0])*.55,my=a[1]+(b[1]-a[1])*.55;E("polyline",{points:`${a[0]},${a[1]} ${mx},${my} ${b[0]},${b[1]}`,fill:"none",stroke:"#DC2626","stroke-width":3,"marker-mid":"url(#ah)"},gR);}
+  function upd(){
+    const th=SIM.th,r=th*Math.PI/180,sx=300+L*Math.sin(r),sy=300-L*Math.cos(r);
+    src.setAttribute("transform",`translate(${sx},${sy})`);lbl.setAttribute("x",sx);lbl.setAttribute("y",sy-24);
+    gR.innerHTML="";
+    ray([sx,sy],O);
+    if(Math.abs(th)<1){E("line",{x1:306,y1:300,x2:306,y2:300-L+20,stroke:"#DC2626","stroke-width":2,"stroke-dasharray":"5 4"},gR);T(gR,350,140,"反射光沿原路回去",{fill:"#B91C1C","font-size":12});}
+    else{ray(O,[300-L*Math.sin(r),300-L*Math.cos(r)]);
+      const ar=62,s1=Math.sign(th);
+      E("path",{d:`M 300 ${300-ar} A ${ar} ${ar} 0 0 ${s1>0?1:0} ${300+ar*Math.sin(r)} ${300-ar*Math.cos(r)}`,fill:"none",stroke:"#15803D","stroke-width":3},gR);
+      E("path",{d:`M 300 ${300-ar} A ${ar} ${ar} 0 0 ${s1>0?0:1} ${300-ar*Math.sin(r)} ${300-ar*Math.cos(r)}`,fill:"none",stroke:"#7E22CE","stroke-width":3},gR);
+      const h=Math.abs(r)/2;
+      T(gR,300+s1*(92*Math.sin(h)+12),300-92*Math.cos(h),"入射角",{fill:"#15803D","font-size":12});
+      T(gR,300-s1*(92*Math.sin(h)+12),300-92*Math.cos(h),"反射角",{fill:"#7E22CE","font-size":12});}
+  }
+  function pt(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+  src.style.cursor="grab";
+  src.addEventListener("pointerdown",e=>{e.preventDefault();src.setPointerCapture(e.pointerId);
+    const mv=ev=>{const q=pt(ev);SIM.th=Math.max(-85,Math.min(85,Math.round(Math.atan2(q.x-300,300-q.y)*180/Math.PI)));upd();};
+    mv(e);const up=()=>{src.removeEventListener("pointermove",mv);src.removeEventListener("pointerup",up);src.removeEventListener("pointercancel",up);};
+    src.addEventListener("pointermove",mv);src.addEventListener("pointerup",up);src.addEventListener("pointercancel",up);});
+  upd();
+})();
+
+/* ===== 步驟切換 ===== */
+function go(delta){st.i=Math.max(0,Math.min(STEPS.length-1,st.i+delta));save();render();}
+function navState(){
+  const s=STEPS[st.i],nx=$("next");if(!nx)return;
+  nx.disabled=!(s.check?!!st.obs["c"+st.i]:(s.ok?s.ok():true));
+}
+function render(){
+  const s=STEPS[st.i];
+  setLeft(s.left);
+  let h=`<div class="step"><div class="kicker">${s.k}</div>${s.render()}`;
+  if(s.check)h+=`<div><button type="button" class="opt" id="ck" aria-pressed="${!!st.obs["c"+st.i]}">✓ ${s.check}</button></div>`;
+  h+=`<div class="nav"><button type="button" class="btn" id="prev"${st.i?"":" disabled"}>上一步</button>${s.last?"":`<button type="button" class="btn primary" id="next">下一步</button>`}</div></div>`;
+  $("side").innerHTML=h;$("side").scrollTop=0;
+  if(s.bind)s.bind();
+  if(s.check)$("ck").addEventListener("click",e=>{st.obs["c"+st.i]=true;save();e.currentTarget.setAttribute("aria-pressed","true");navState();});
+  $("prev").addEventListener("click",()=>go(-1));
+  if($("next"))$("next").addEventListener("click",()=>go(1));
+  navState();
+  $("progTxt").textContent=`${st.i+1}／${STEPS.length}`;
+  $("progBar").style.width=(100*(st.i+1)/STEPS.length)+"%";
+}
+if(st.i>=STEPS.length)st.i=0;
+render();
+</script>
+</body>
+</html>
