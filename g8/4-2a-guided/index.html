@@ -215,7 +215,7 @@ add({k:"第 2 組・換位置再找",left:"slit",render:()=>`
   <p>大頭針移到更靠近鏡面的地方。拉滑桿移動眼睛，再從縫隙找到它。</p>
   <p class="fb${st.obs.see2?" good":""}" id="fb" role="status">${st.obs.see2?"看到了！按下一步。":""}</p>`,
   ok:()=>!!st.obs.see2});
-add({k:"第 2 組・量角度",left:"top",render:()=>angleStep("s2",`注意！鏡子換到<b>下面</b>了。先找<b>鏡面</b>和<b>法線</b>，再讀出第 2 組的<b>入射角</b>和<b>反射角</b>。`),
+add({k:"第 2 組・量角度",left:"top",render:()=>angleStep("s2",`用量角器讀出第 2 組的<b>入射角</b>和<b>反射角</b>。`),
   bind:()=>bindAngles("s2",null,0,()=>slitAct(1)),ok:()=>passed("s2")});
 add({k:"比一比",left:"top",render:()=>`
   <h2>比一比：第 1 組和第 2 組</h2>
@@ -230,6 +230,7 @@ add({k:"比一比",left:"top",render:()=>`
 /* --- 實驗二：用光源再驗證 --- */
 add({k:"實驗二・移動光源",left:"sim",render:()=>`
   <h2>換用光源：拖動光源，看反射光怎麼走</h2>
+  <div class="tip"><span>注意！畫面轉了半圈：<b>鏡子在下面</b></span><span>先找到<b>鏡面</b>和<b>法線</b></span></div>
   <p>按住左邊紅色的<b>光源</b>，從高處慢慢往鏡面壓低，再往上拉回來。看鏡子另一邊的<b>反射光</b>：</p>
   ${choice("o0",[["sym","光源壓低，反射光也跟著壓低（左右對稱）"],["still","反射光都不動"],["opp","光源壓低，反射光反而抬高"]])}
   <p class="fb" id="fb" role="status"></p>`,
@@ -525,8 +526,8 @@ const TOP=(function(){
   const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
   const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
   function draw(){
-    /* 第 1 組：鏡子在上方（跟 2.5D 實驗桌同方向）；第 2 組：鏡子在下方（原本角度，多一次視角轉換） */
-    const t=curTrial(),F=t===0,Y=y=>F?360-y:y;
+    /* 實驗一（縫隙）：鏡子在上方，跟 2.5D 實驗桌同方向；實驗二的模擬器才換成鏡子在下方 */
+    const t=curTrial(),F=true,Y=y=>F?360-y:y;
     const pin0=pinPos(t),eye0=eyePos(+(st.d["eye"+t]??70));
     const pin={x:pin0.x,y:Y(pin0.y)},eye={x:eye0.x,y:Y(eye0.y)},O=[300,Y(300)],R=120,up=F?1:-1;
     svg.innerHTML="";
