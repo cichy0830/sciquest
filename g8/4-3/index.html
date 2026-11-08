@@ -118,6 +118,10 @@ details summary{cursor:pointer;color:var(--muted);font-size:14px}
 const SIM_MAIN="https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html?locale=zh_TW&screens=1";
 const SIM_BACKUP="bending-light_all.html?locale=zh_TW&screens=1";
 const GATE_CODE="43"; /* 老師示範完公布的通關數字 */
+/* 三個檢查點：老師在全班面前問完問題，再公布數字放行 */
+const GATES={A:"43",B:"27",C:"86"};
+/* 三種角色：各用不同的 e度 精靈與提示詞 */
+const ROLES={adv:{nm:"顧問",bot:"自然探究精靈"},lead:{nm:"組長",bot:"一般精靈"},mem:{nm:"組員",bot:"樂學精靈"}};
 
 /* ===== 4 句迷思是非題（正解只在教師資料，網頁不顯示） ===== */
 const STMTS=[
@@ -133,7 +137,7 @@ const TOL=4;
 
 /* ===== 狀態（存在這台 iPad 的瀏覽器裡） ===== */
 const KEY="refr43-v3";
-let st={seat:"",watched:false,pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
+let st={seat:"",role:"",gates:{},watched:false,pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=Object.assign(st,s);}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
 const $=id=>document.getElementById(id);
@@ -151,6 +155,14 @@ add({k:"開始",left:"video",render:()=>`
   <div class="field" style="max-width:200px"><span class="lab">座號</span><input id="seat" inputmode="numeric" value="${esc(st.seat)}" aria-label="座號"></div>`,
   bind:()=>$("seat").addEventListener("input",e=>{st.seat=e.target.value.trim();save();navState();}),
   ok:()=>!!st.seat});
+
+add({k:"選角色",left:"video",render:()=>`
+  <h2>你今天的角色是？</h2>
+  <div class="opts" id="roles">${Object.entries(ROLES).map(([v,r])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.role===v}">${r.nm}</button>`).join("")}</div>
+  <p class="note">選錯了可以按「上一步」回來改。等一下問 e度 時，不同角色會拿到不同的提示詞。</p>`,
+  bind:()=>$("roles").addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;st.role=b.dataset.v;save();
+    $("roles").querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();}),
+  ok:()=>!!st.role});
 
 add({k:"看影片",left:"video",render:()=>`
   <h2>看左邊的影片</h2>
@@ -180,6 +192,15 @@ add({k:"等一下",left:"sim",render:()=>`
   bind:()=>$("code").addEventListener("input",e=>{st.gate=e.target.value.trim()===GATE_CODE;save();navState();
     const f=$("fb");f.className="fb"+(st.gate?" good":"");f.textContent=st.gate?"可以開始了！":"";}),
   ok:()=>st.gate});
+
+function gateStep(key,k,title,body){add({k,left:"data",render:()=>`
+  <h2>${title}</h2>
+  <div class="gate"><span>${body}</span>
+  <div class="field" style="max-width:180px"><span class="lab">通關數字</span><input id="code" inputmode="numeric" aria-label="通關數字" value="${st.gates[key]?GATES[key]:""}"></div></div>
+  <p class="fb${st.gates[key]?" good":""}" id="fb" role="status">${st.gates[key]?"可以繼續了！":""}</p>`,
+  bind:()=>$("code").addEventListener("input",e=>{st.gates[key]=e.target.value.trim()===GATES[key];save();navState();
+    const f=$("fb");f.className="fb"+(st.gates[key]?" good":"");f.textContent=st.gates[key]?"可以繼續了！":"";}),
+  ok:()=>!!st.gates[key]});}
 
 /* --- 空氣 → 水：第 1 組（垂直）、第 2 組（斜射） --- */
 add({k:"空氣→水",left:"sim",render:()=>`
@@ -233,15 +254,19 @@ add({k:"第 3 組・水→空氣",left:"sim",render:()=>`
   <p class="fb" id="fb" role="status"></p>`,
   bind:()=>bindChoice("o4","same","對！光反過來走，路徑一樣、方向相反。","再看一次表格左欄的兩個數字。"),ok:()=>st.obs.o4==="same"});
 
+/* --- 檢查點 B：量完三組，全班停下來 --- */
+gateStep("B","檢查點・量完三組","🛑 停！把 iPad 蓋上，抬頭看老師",
+  "老師會問大家：光從<b>空氣進入水</b>、從<b>水進入空氣</b>，各往哪裡偏？請你用自己的數據回答。說完，老師會公布下一個通關數字。");
+
 /* --- 帶著數據問 e度（左邊改顯示「我的數據」） --- */
 add({k:"問 e度",left:"data",render:()=>`
   <h2>帶著你的數據去問 e度</h2>
-  <p>按<span class="ui">複製</span>，到因材網 e度 的對話框貼上。</p>
+  <div class="tip"><b>你是「${roleNm()}」：請在 e度 選「${roleBot()}」</b><span>選好精靈，再按<span class="ui">複製</span>，到對話框貼上。</span></div>
   <div class="row"><button class="btn primary" id="copy" type="button">複製給 e度 的話</button>
   <a class="btn" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
   <p class="fb" id="fb" role="status"></p>
   <div class="tip"><b>e度 問「看第幾組數據」時</b><span>${dataSmall()}</span></div>
-  <p class="note">iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看左邊「我的數據」，一邊回答 e度。討論完，把 e度 給的結論複製、貼在下面，再按「下一步」。</p>
+  <p class="note">e度 每次只會講 2～3 句，<b>一定要讀完再回答</b>。iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看左邊「我的數據」，一邊回答 e度。</p>
   <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>
   <div class="tip"><b>📌 討論到最後，e度 會給你一句結論</b><span>在 e度 長按「請寫下這句結論」後面那一句，選「拷貝」，回來貼在這裡，才能按下一步。</span></div>
   <textarea id="concl" aria-label="e度 給的結論">${esc(st.concl||"")}</textarea>`,
@@ -258,6 +283,10 @@ add({k:"最後判斷",left:"data",render:()=>`
     st.post[g.dataset.n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
   ok:()=>STMTS.every((_,ix)=>st.post[ix+1])});
 
+/* --- 檢查點 C：e度 討論完，全班停下來 --- */
+gateStep("C","檢查點・問完 e度","🛑 停！把 iPad 蓋上，抬頭看老師",
+  "老師會問：誰跟 e度 討論後<b>改變了判斷</b>？為什麼改？聽完，老師會公布下一個通關數字，開始組內共學。");
+
 add({k:"組內共學・一句話",left:"data",render:()=>`
   <h2>組內每人說一句：為什麼加了水的杯子，就看得到硬幣？</h2>
   <div class="tip"><b>用你的第 3 組數據，照句型說出來</b><span>硬幣反射的光從<b>水</b>射入<b>空氣</b>，入射角 <b>${a(st.d.a_i)}°</b>、折射角 <b>${a(st.d.a_r)}°</b>，光＿＿法線，所以光能越過杯緣進入＿＿。</span></div>
@@ -269,7 +298,7 @@ add({k:"組內共學・一句話",left:"data",render:()=>`
 add({k:"完成",left:"data",render:()=>{
   const chg=changed();
   return `<h2>完成！這是你的證據卡</h2>
-  <div class="card"><div><b>座號 ${esc(st.seat)}</b>・4-3 光的折射</div>
+  <div class="card"><div><b>座號 ${esc(st.seat)}</b>・${roleNm()}・4-3 光的折射</div>
   <table><thead><tr><th>題</th><th>直覺</th><th>最後</th></tr></thead><tbody>
   ${STMTS.map((_,ix)=>{const n=ix+1;return `<tr><td>${n}</td><td>${mk(st.pre[n])}${st.conf[n]==="guess"?"（猜）":""}</td><td${st.pre[n]!==st.post[n]?' class="chg"':""}>${mk(st.post[n])}</td></tr>`;}).join("")}
   </tbody></table>
@@ -349,31 +378,70 @@ function renderData(){
 
 /* ===== 給 e度 的提示詞 ===== */
 const mark=v=>v==="O"?"○ 對":v==="X"?"✗ 錯":"還沒判斷";
-function promptText(){
+const roleNm=()=>(ROLES[st.role]||{nm:"組員"}).nm;
+const roleBot=()=>(ROLES[st.role]||ROLES.mem).bot;
+function promptData(){
   const d=st.d;
-  return `我是國中八年級學生，正在學「4-3 光的折射」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 4 句話。
+  return `【情境】從斜上方看空杯子，看不到杯底的硬幣；加水後，同樣的位置卻看得到硬幣了。
 
-【情境】從斜上方看空杯子，看不到杯底的硬幣；加水後，同樣的位置卻看得到硬幣了。
-
-【我原本的直覺判斷】
+【要檢查的 4 句話，和我原本的直覺判斷】
 ${STMTS.map((t,ix)=>`${ix+1}.「${t}」我覺得：${mark(st.pre[ix+1])}${st.conf[ix+1]==="guess"?"（用猜的）":st.conf[ix+1]==="sure"?"（有把握）":""}`).join("\n")}
 
 【我在模擬器上的數據】（因材網物理模擬「光的折射」，角度都從法線量起）
 第1組 空氣→水，垂直射入：入射角 ${a(d.v_i)}°，折射角 ${a(d.v_r)}°（拖動光源時，我看到只有垂直射入不偏折）
 第2組 空氣→水，斜射：入射角 ${a(d.w_i)}°，折射角 ${a(d.w_r)}°
-第3組 水→空氣：入射角 ${a(d.a_i)}°（等於第2組的折射角），折射角 ${a(d.a_r)}°
-
-【請你這樣帶我】
-1. 一次只問我一個問題，用國中生聽得懂的話，回答簡短。
-2. 每一句都先問我要看「第幾組」數據，再讓我自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
-3. 第1句：請我比較第1組和第2組，說明光從空氣進入水中，什麼情況下會偏折、什麼情況下不會。
-4. 第2句：請我看第3組的入射角和折射角。第3句：請我比較第2組和第3組在空氣中的角度。
-5. 第4句：先問我「我們看得到硬幣，光是從哪裡出發、往哪裡走？」再請我用第3組的數據，說明光從水射入空氣時怎麼偏折、為什麼會越過杯緣進入眼睛。
-6. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
-7. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」。
-最後一步（很重要）：全部討論完，先請我自己試著說出結論；再用下面的格式，給我一句完整、正確、國中生看得懂的結論（40 字以內），讓我清楚知道要記下哪一句：
+第3組 水→空氣：入射角 ${a(d.a_i)}°（等於第2組的折射角），折射角 ${a(d.a_r)}°`;
+}
+const ENDING=`最後一步（很重要）：全部討論完，先請我自己試著說出結論；再用下面的格式，給我一句完整、正確、國中生看得懂的結論（40 字以內），讓我清楚知道要記下哪一句：
 📌 請寫下這句結論：……
 這個格式只在對話最後出現一次。`;
+const ORDER=`第1句：請我比較第1組和第2組，說明光從空氣進入水中，什麼情況下會偏折、什麼情況下不會。
+第2句：請我看第3組的入射角和折射角。
+第3句：請我比較第2組和第3組在空氣中的角度。
+第4句：先問我「我們看得到硬幣，光是從哪裡出發、往哪裡走？」再請我用第3組的數據，說明光從水射入空氣時怎麼偏折、為什麼會越過杯緣進入眼睛。`;
+function promptText(){
+  const r=st.role||"mem";
+  if(r==="adv")return `我是國中八年級學生，在組裡擔任「顧問」。我已經做完「4-3 光的折射」的實驗，等一下要到各組協助同學。請你分兩個階段帶我。
+
+${promptData()}
+
+【第一階段：確認我自己真的懂】
+1. 一次只問我一個問題，每次回答不超過 3 句，不要直接給答案。
+2. 照 4 句話的順序，要我用數據說出對或錯，以及為什麼：
+${ORDER}
+3. 我說得不完整時要追問，問得深入一點，例如：為什麼垂直射入不偏折？從哪兩組數據看得出光的可逆性？為什麼看到的硬幣比實際淺？
+
+【第二階段：教我怎麼確認組員懂了沒】
+我 4 句都說對之後，請給我：
+(1) 3 個可以問組員的檢查問題，每題附上「聽到什麼回答，才代表他真的懂」。
+(2) 組員最常見的 2 個錯誤說法，以及我可以怎麼提示（只提示「看第幾組數據」，不說答案）。
+
+${ENDING}`;
+  if(r==="lead")return `我是國中八年級學生，在組裡擔任「組長」，正在學「4-3 光的折射」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 4 句話。
+
+${promptData()}
+
+【請你這樣帶我】
+1. 一次只問我一個問題，每次回答不超過 3 句，用國中生聽得懂的話。
+2. 每一句都先問我要看「第幾組」數據，再讓我自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
+${ORDER}
+3. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
+4. 全部討論完，請我用一句話說明「為什麼加水後看得到杯底的硬幣」，並提醒我：等一下要帶組員每人說一句，給我一個可以問組員的問題。
+
+${ENDING}`;
+  return `我是國中八年級學生，正在學「4-3 光的折射」。自然科對我來說有點難，請你當我的學習夥伴，用很簡單的話，陪我一步一步想。
+
+${promptData()}
+
+【請你這樣帶我】
+1. 每次回答最多 2 句話，用我平常說話的方式。用到「法線、入射角、折射角」這些詞時，先用一句簡單的話解釋。
+2. 一次只問我 1 個問題，盡量給我 2～3 個選項讓我選。
+3. 我答錯時，不要直接說答案，先給我一個提示（例如「看第幾組數據」），讓我再試一次；我答對了，請告訴我哪裡做得好。
+4. 照這個順序，一句一句帶我判斷對或錯：
+${ORDER}
+5. 如果我的數據看起來怪怪的，請我回模擬器再量一次。
+
+${ENDING.replace("40 字以內","30 字以內")}`;
 }
 function copyPrompt(){
   const txt=promptText(),f=$("fb");
@@ -395,7 +463,7 @@ function cardCanvas(){
   g.fillStyle="#fff";g.strokeStyle="#2C5D8A";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
   g.fillStyle="#2C5D8A";g.font=`700 26px ${F}`;g.fillText("八年級自然・4-3 光的折射",80,100);
   g.fillStyle="#1B2430";g.font=`900 52px ${F}`;g.fillText("我的證據卡",80,168);
-  g.font=`700 34px ${F}`;g.fillText(`座號 ${st.seat}`,W-80-g.measureText(`座號 ${st.seat}`).width,168);
+  const who=`${roleNm()}　座號 ${st.seat}`;g.font=`700 34px ${F}`;g.fillText(who,W-80-g.measureText(who).width,168);
   g.fillStyle="#DCE7F2";g.beginPath();g.roundRect(80,200,W-160,166,16);g.fill();
   g.fillStyle="#1B2430";g.font=`28px ${F}`;
   g.fillText(`第 1 組 空氣→水（垂直）：入射 ${a(st.d.v_i)}°　折射 ${a(st.d.v_r)}°（不偏折）`,104,248);

@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<title>光的傳播實驗室</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 暗房實驗桌 — 左側模擬器（側視＋紙屏正視／光速賽道），右側關卡卡片；手機時上下堆疊 */
+:root{
+  --bg:#eef1f5; --panel:#ffffff; --ink:#18202c; --muted:#5d6878; --line:#d5dbe4;
+  --screen:#10151d; --screen-grid:#2a3442; --screen-ink:#9fb0c6;
+  --accent:#e08a12; --accent-ink:#ffffff; --accent-soft:#fdf0dc;
+  --good:#1f8a4c; --good-soft:#e2f4e9; --bad:#c2372f; --bad-soft:#fbe6e4;
+  --led-r:#ff4d4d; --led-g:#3ddc6b; --led-b:#4d8dff;
+  --font-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1016; --panel:#151b24; --ink:#e7ecf3; --muted:#9aa6b6; --line:#28323f;
+  --screen:#07090d; --screen-grid:#1f2833; --screen-ink:#7f90a6;
+  --accent:#f0a33a; --accent-ink:#1a1206; --accent-soft:#2c2112;
+  --good:#4cc47f; --good-soft:#12291c; --bad:#ef6a60; --bad-soft:#331816; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1016; --panel:#151b24; --ink:#e7ecf3; --muted:#9aa6b6; --line:#28323f;
+  --screen:#07090d; --screen-grid:#1f2833; --screen-ink:#7f90a6;
+  --accent:#f0a33a; --accent-ink:#1a1206; --accent-soft:#2c2112;
+  --good:#4cc47f; --good-soft:#12291c; --bad:#ef6a60; --bad-soft:#331816; color-scheme:dark}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:clamp(22px,3vw,30px);font-weight:900;letter-spacing:.02em;text-wrap:balance}
+.brand .unit{font-family:var(--font-num);font-size:13px;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 7px;letter-spacing:.06em}
+.hud{display:flex;gap:10px;flex-wrap:wrap}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 14px;font-size:14px;color:var(--muted);display:flex;gap:6px;align-items:baseline}
+.chip b{font-family:var(--font-num);color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums}
+.main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab{font:inherit;font-size:15px;border:1px solid var(--line);background:transparent;color:var(--muted);padding:6px 14px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.label{font-size:13px;color:var(--muted);letter-spacing:.04em;margin:0 0 6px}
+canvas{display:block;width:100%;border-radius:8px;background:var(--screen)}
+#side{aspect-ratio:800/210}
+.views{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+.sq{aspect-ratio:1/1}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 18px;margin-top:14px}
+.ctrl{display:grid;gap:2px}
+.ctrl .row{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+.ctrl .val{font-family:var(--font-num);font-variant-numeric:tabular-nums;color:var(--accent);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;font:inherit;font-size:14px;padding:6px 8px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px}
+.stat{border:1px dashed var(--line);border-radius:8px;padding:6px 10px}
+.stat span{display:block;font-size:12px;color:var(--muted)}
+.stat b{font-family:var(--font-num);font-size:18px;font-variant-numeric:tabular-nums}
+#race{aspect-ratio:800/300}
+.btn{font:inherit;font-weight:700;font-size:15px;border:0;border-radius:8px;padding:9px 18px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+td.num,th.num{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+/* quest */
+.quest{position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+@media (max-width:900px){.quest{position:static;order:-1}}
+.dots{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.dot{width:22px;height:8px;border-radius:4px;background:var(--line)}
+.dot.now{background:var(--accent)}
+.dot.ok{background:var(--good)}
+.dot.miss{background:var(--bad)}
+.qtag{display:inline-block;font-size:12px;letter-spacing:.06em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 8px;margin-bottom:6px}
+.qtext{font-size:18px;font-weight:700;margin:0 0 12px;text-wrap:pretty}
+.opts{display:grid;gap:8px}
+.opt{font:inherit;text-align:left;padding:10px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.fb{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:15px}
+.fb.good{background:var(--good-soft);color:var(--good)}
+.fb.bad{background:var(--bad-soft);color:var(--bad)}
+.fb p{margin:0;color:var(--ink)}
+.fb strong{display:block;margin-bottom:2px}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .25s 2}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+/* overlay */
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:20;padding:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+[hidden]{display:none!important}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(560px,100%);max-height:90vh;overflow:auto;display:grid;gap:14px}
+.card h2{margin:0;font-size:22px}
+.form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:480px){.form{grid-template-columns:minmax(0,1fr)}}
+.form label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.form input{font:inherit;font-size:16px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.rules{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+.big{font-family:var(--font-num);font-size:34px;font-weight:600;font-variant-numeric:tabular-nums}
+.sumgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.me td{background:var(--accent-soft)}
+.err{color:var(--bad);font-size:14px;margin:0}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="unit">4-1</span><h1>光的傳播實驗室</h1></div>
+    <div class="hud" aria-live="polite">
+      <span class="chip">玩家 <b id="hudName">—</b></span>
+      <span class="chip">時間 <b id="hudTime">00:00</b></span>
+      <span class="chip">答錯 <b id="hudWrong">0</b></span>
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="panel" aria-label="模擬器">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabPin" aria-selected="true">針孔成像</button>
+        <button class="tab" role="tab" id="tabSpeed" aria-selected="false">光速賽跑</button>
+      </div>
+
+      <div id="pinView">
+        <p class="label">側面看（光線經過針孔）</p>
+        <canvas id="side" width="800" height="250"></canvas>
+        <div class="views">
+          <div><p class="label">光源（從正面看三色 LED）</p><canvas id="src" class="sq" width="400" height="400"></canvas></div>
+          <div><p class="label">紙屏上的像（格線 1 cm）</p><canvas id="scr" class="sq" width="400" height="400"></canvas></div>
+        </div>
+        <div class="controls">
+          <div class="ctrl"><div class="row"><label for="p">光源到針孔</label><span class="val" id="pv"></span></div><input type="range" id="p" min="10" max="40" step="1" value="20"></div>
+          <div class="ctrl"><div class="row"><label for="q">針孔到紙屏</label><span class="val" id="qv"></span></div><input type="range" id="q" min="5" max="40" step="1" value="20"></div>
+          <div class="ctrl"><div class="row"><label for="d">針孔大小（直徑）</label><span class="val" id="dv"></span></div><input type="range" id="d" min="0.5" max="8" step="0.5" value="1"></div>
+          <div class="ctrl"><div class="row"><span>針孔形狀</span></div><div class="seg" id="shapeSeg"><button data-v="circle" aria-pressed="true">圓形</button><button data-v="tri" aria-pressed="false">三角形</button></div></div>
+          <div class="ctrl"><div class="row"><span>針孔數量</span></div><div class="seg" id="holeSeg"><button data-v="1" aria-pressed="true">1 個</button><button data-v="2" aria-pressed="false">2 個</button></div></div>
+        </div>
+        <div class="readout">
+          <div class="stat"><span>光源高度</span><b>4.0 cm</b></div>
+          <div class="stat"><span>像的高度</span><b id="rH"></b></div>
+          <div class="stat"><span>像距 ÷ 物距</span><b id="rM"></b></div>
+        </div>
+      </div>
+
+      <div id="speedView" hidden>
+        <p class="label">四條 3 公尺長的賽道（慢動作播放：放慢約 3 億倍）</p>
+        <canvas id="race" width="800" height="300"></canvas>
+        <div class="actions"><button class="btn" id="fire">發射光！</button><span class="note" id="raceNote">按下發射，四道光同時出發。</span></div>
+        <div class="tablewrap" style="margin-top:12px">
+          <table aria-label="賽跑結果">
+            <thead><tr><th>介質</th><th class="num">光速（m/s）</th><th class="num">跑完 3 m</th></tr></thead>
+            <tbody id="raceBody"></tbody>
+          </table>
+        </div>
+        <p class="note">光在真空中的速度約 3×10⁸ m/s，也就是每秒約 30 萬公里；光進入空氣、水、玻璃等介質時速度會變慢。</p>
+      </div>
+    </section>
+
+    <aside class="panel quest" aria-label="關卡">
+      <div class="dots" id="dots"></div>
+      <div id="qbox"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="overlay" id="startOv">
+  <div class="card">
+    <h2>光的傳播實驗室</h2>
+    <p style="margin:0">一邊操作模擬器，一邊闖過 13 個關卡。全部答對就通關，用時越短排名越前面。</p>
+    <ul class="rules">
+      <li>答錯可以再試，但每答錯一次加 <b id="penTxt"></b> 秒。</li>
+      <li>「操作題」要把模擬器調到指定狀態，再按「檢查」。</li>
+      <li>每一題第一次就答對，會記為「首答正確」。</li>
+    </ul>
+    <form class="form" id="startForm">
+      <label>班級<input id="fCls" inputmode="numeric" maxlength="4" value="802" required></label>
+      <label>座號<input id="fSeat" inputmode="numeric" maxlength="2" required></label>
+      <label>姓名<input id="fName" maxlength="8" required></label>
+    </form>
+    <p class="err" id="startErr" hidden>請填寫班級、座號和姓名。</p>
+    <div class="actions"><button class="btn" id="startBtn">開始挑戰</button><button class="btn ghost" id="boardBtn">先看排行榜</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="endOv" hidden>
+  <div class="card">
+    <h2 id="endTitle">通關！</h2>
+    <div class="sumgrid">
+      <div class="stat"><span>總時間</span><b id="eTotal"></b></div>
+      <div class="stat"><span>首答正確</span><b id="eFirst"></b></div>
+      <div class="stat"><span>答錯次數</span><b id="eWrong"></b></div>
+    </div>
+    <p class="note" id="eDetail"></p>
+    <div>
+      <p class="label" id="boardLabel">排行榜</p>
+      <div class="tablewrap"><table><thead><tr><th class="num">名次</th><th>座號</th><th>姓名</th><th class="num">總時間</th><th class="num">首答正確</th></tr></thead><tbody id="boardBody"><tr><td colspan="5">讀取中…</td></tr></tbody></table></div>
+      <p class="note" id="boardNote"></p>
+    </div>
+    <div class="actions"><button class="btn" id="againBtn">再玩一次</button><button class="btn ghost" id="closeBoard" hidden>回到開始畫面</button></div>
+  </div>
+</div>
+
+<script>
+/* ===== 設定 ===== */
+const CONFIG = {
+  SHEET_URL: "",        // 部署 Google Apps Script 後，把網址貼在這裡；留空則只存在本機
+  PENALTY_SEC: 10       // 每答錯一次加幾秒
+};
+
+/* ===== 工具 ===== */
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmtTime = s => { s = Math.max(0, Math.round(s)); return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); };
+function fitCanvas(c){ const r=c.getBoundingClientRect(), dpr=window.devicePixelRatio||1; const w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr)); if(c.width!==w||c.height!==h){c.width=w;c.height=h;} const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx,w:r.width,h:r.height}; }
+
+/* ===== 針孔成像模擬 ===== */
+const LEDS = [ // 光源正面座標（cm），以針孔軸為中心；L 形，高 4 cm
+  {x:-0.75,y: 2, c:"--led-r"},
+  {x:-0.75,y:-2, c:"--led-g"},
+  {x: 1.25,y:-2, c:"--led-b"}
+];
+const LED_R = 0.3; // LED 半徑 cm
+const S = { p:20, q:20, d:1, shape:"circle", holes:1 };
+const HOLE_GAP = 2; // 兩孔中心距（cm）
+
+function readSim(){
+  S.p=+$("p").value; S.q=+$("q").value; S.d=+$("d").value;
+  $("pv").textContent=S.p+" cm"; $("qv").textContent=S.q+" cm"; $("dv").textContent=S.d.toFixed(1)+" mm";
+  const m=S.q/S.p;
+  $("rH").textContent=(4*m).toFixed(1)+" cm"; $("rM").textContent=m.toFixed(2)+" 倍";
+}
+function holeCenters(){ return S.holes===2 ? [-HOLE_GAP/2, HOLE_GAP/2] : [0]; }
+
+function drawSide(){
+  const {ctx,w,h}=fitCanvas($("side"));
+  ctx.clearRect(0,0,w,h);
+  const pad=24, s=(w-2*pad)/82, cy=h/2;
+  const xPlate=pad+41*s, xObj=xPlate-S.p*s, xScr=xPlate+S.q*s;
+  const ink=css("--screen-ink"), grid=css("--screen-grid");
+  // axis
+  ctx.strokeStyle=grid; ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(pad,cy); ctx.lineTo(w-pad,cy); ctx.stroke(); ctx.setLineDash([]);
+  const m=S.q/S.p, dcm=S.d/10;
+  const ys=[2,-2];
+  // ray bundles
+  ys.forEach((y,i)=>{
+    const col=css(i===0?"--led-r":"--led-g");
+    const yImg=-y*m;
+    // edge rays through hole top/bottom (blur)
+    ctx.fillStyle=col; ctx.globalAlpha=Math.min(0.35,0.06+S.d*0.04);
+    ctx.beginPath();
+    const ht=dcm/2, yt=ht+(ht-y)*m, yb=-ht+(-ht-y)*m;
+    ctx.moveTo(xObj,cy-y*s); ctx.lineTo(xPlate,cy-ht*s); ctx.lineTo(xScr,cy-yt*s); ctx.lineTo(xScr,cy-yb*s); ctx.lineTo(xPlate,cy+ht*s); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1; ctx.strokeStyle=col; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(xObj,cy-y*s); ctx.lineTo(xScr,cy-yImg*s); ctx.stroke();
+  });
+  // object (side): bar
+  ctx.strokeStyle=ink; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(xObj,cy-2*s); ctx.lineTo(xObj,cy+2*s); ctx.stroke();
+  [[2,"--led-r"],[-2,"--led-g"]].forEach(([y,c])=>{ctx.fillStyle=css(c); ctx.beginPath(); ctx.arc(xObj,cy-y*s,Math.max(3,LED_R*s),0,7); ctx.fill();});
+  // plate with hole
+  const gap=Math.max(3,dcm*s);
+  ctx.strokeStyle=ink; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(xPlate,cy-10*s); ctx.lineTo(xPlate,cy-gap/2); ctx.moveTo(xPlate,cy+gap/2); ctx.lineTo(xPlate,cy+10*s); ctx.stroke();
+  // screen
+  ctx.strokeStyle="#d9dee6"; ctx.lineWidth=5; ctx.globalAlpha=.85;
+  ctx.beginPath(); ctx.moveTo(xScr,cy-10*s); ctx.lineTo(xScr,cy+10*s); ctx.stroke(); ctx.globalAlpha=1;
+  // labels
+  ctx.fillStyle=ink; ctx.font="12px "+css("--font-body"); ctx.textAlign="center";
+  ctx.fillText("光源",xObj,h-6); ctx.fillText("針孔",xPlate,h-6); ctx.fillText("紙屏",xScr,h-6);
+  ctx.font="12px "+css("--font-num");
+  ctx.fillText(S.p+" cm",(xObj+xPlate)/2,14); ctx.fillText(S.q+" cm",(xPlate+xScr)/2,14);
+}
+
+function shapePath(ctx,cx,cy,r,shape,flip){ // r: 外接半徑（px）
+  ctx.beginPath();
+  if(shape==="tri"){
+    const k=flip?-1:1;
+    for(let i=0;i<3;i++){const a=-Math.PI/2+i*2*Math.PI/3; const x=cx+r*Math.cos(a), y=cy+k*r*Math.sin(a); i?ctx.lineTo(x,y):ctx.moveTo(x,y);}
+    ctx.closePath();
+  } else ctx.arc(cx,cy,r,0,Math.PI*2);
+}
+function drawGrid(ctx,w,h,range){
+  const sc=w/(2*range);
+  ctx.fillStyle=css("--screen"); ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle=css("--screen-grid"); ctx.lineWidth=1;
+  for(let v=-range;v<=range;v++){const px=w/2+v*sc, py=h/2+v*sc; ctx.globalAlpha=v%5===0?1:.45; ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,h);ctx.moveTo(0,py);ctx.lineTo(w,py);ctx.stroke();}
+  ctx.globalAlpha=1; return sc;
+}
+function drawSource(){
+  const {ctx,w,h}=fitCanvas($("src")); const sc=drawGrid(ctx,w,h,5);
+  ctx.strokeStyle=css("--screen-ink"); ctx.lineWidth=3; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(w/2-0.75*sc,h/2-2*sc); ctx.lineTo(w/2-0.75*sc,h/2+2*sc); ctx.lineTo(w/2+1.25*sc,h/2+2*sc); ctx.stroke();
+  LEDS.forEach(L=>{const x=w/2+L.x*sc,y=h/2-L.y*sc; ctx.shadowColor=css(L.c); ctx.shadowBlur=14; ctx.fillStyle=css(L.c); ctx.beginPath(); ctx.arc(x,y,LED_R*sc,0,7); ctx.fill();});
+  ctx.shadowBlur=0; ctx.fillStyle=css("--screen-ink"); ctx.font="12px "+css("--font-num"); ctx.textAlign="left"; ctx.fillText("±5 cm",6,h-8);
+}
+function drawScreen(){
+  const {ctx,w,h}=fitCanvas($("scr")); const R=10, sc=drawGrid(ctx,w,h,R);
+  const m=S.q/S.p, dcm=S.d/10, grow=(S.p+S.q)/S.p;
+  const kr=(S.shape==="tri"?dcm/Math.sqrt(3)*1.2:dcm/2)*grow; // 模糊核外接半徑（cm）
+  const lr=LED_R*m;
+  const area=Math.PI*(kr+lr)**2;
+  const holeArea=(S.d/10)**2;
+  const alpha=Math.min(1,20000*holeArea/(S.p*S.p)/area);
+  // 每個光點先畫在暫存畫布（填滿＋描邊＝孔形與 LED 圓的合成），再以相加方式疊到紙屏
+  const tmp=drawScreen.tmp||(drawScreen.tmp=document.createElement("canvas"));
+  const dpr=window.devicePixelRatio||1; tmp.width=Math.round(w*dpr); tmp.height=Math.round(h*dpr);
+  const t=tmp.getContext("2d");
+  holeCenters().forEach(hx=>{
+    LEDS.forEach(L=>{
+      const X=hx+(hx-L.x)*m, Y=-L.y*m; // 像點（cm）
+      const px=w/2+X*sc, py=h/2-Y*sc;
+      t.setTransform(1,0,0,1,0,0); t.clearRect(0,0,tmp.width,tmp.height); t.setTransform(dpr,0,0,dpr,0,0);
+      t.fillStyle=css(L.c); t.strokeStyle=css(L.c); t.lineJoin="round";
+      const N=6; t.globalAlpha=0.32; // 由外到內疊幾層，邊緣淡、中心亮，看起來較模糊
+      for(let k=N;k>=1;k--){ const f=k/N; t.lineWidth=Math.max(1,2*lr*sc*(0.5+0.5*f)); shapePath(t,px,py,Math.max(0.5,kr*sc*f),S.shape,true); t.fill(); t.stroke(); t.beginPath(); t.arc(px,py,Math.max(0.5,lr*sc*(0.5+0.5*f)),0,Math.PI*2); t.fill(); }
+      t.globalAlpha=1;
+      ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.globalCompositeOperation="lighter"; ctx.globalAlpha=alpha; ctx.drawImage(tmp,0,0); ctx.restore();
+    });
+  });
+  ctx.fillStyle=css("--screen-ink"); ctx.font="12px "+css("--font-num"); ctx.textAlign="left"; ctx.fillText("±10 cm",6,h-8);
+}
+function drawPin(){ readSim(); drawSide(); drawSource(); drawScreen(); }
+["p","q","d"].forEach(id=>$(id).addEventListener("input",drawPin));
+function segInit(id,key,parse){ $(id).querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); S[key]=parse(b.dataset.v); drawPin(); })); }
+segInit("shapeSeg","shape",v=>v); segInit("holeSeg","holes",v=>+v);
+
+/* ===== 光速賽跑 ===== */
+const MEDIA=[
+  {name:"真空",n:1.0,     v:"3.00×10⁸",col:"#f5d76e"},
+  {name:"空氣",n:1.0003,  v:"約 3.00×10⁸",col:"#9fd8ff"},
+  {name:"水",  n:1.333,   v:"約 2.25×10⁸",col:"#4d8dff"},
+  {name:"玻璃",n:1.5,     v:"2.00×10⁸",col:"#b98cff"}
+];
+const RACE={running:false,t0:0,done:false,ran:false};
+const VIS_SEC=3; // 真空跑完畫面秒數
+function raceTable(){
+  $("raceBody").innerHTML=MEDIA.map(M=>`<tr><td>${M.name}</td><td class="num">${M.v}</td><td class="num">${RACE.done?(10*M.n).toFixed(1)+" 奈秒":"—"}</td></tr>`).join("");
+}
+function drawRace(now){
+  const {ctx,w,h}=fitCanvas($("race"));
+  ctx.fillStyle=css("--screen"); ctx.fillRect(0,0,w,h);
+  const left=64, right=w-16, laneH=(h-20)/MEDIA.length;
+  const el=RACE.running?(now-RACE.t0)/1000:(RACE.done?1e9:0);
+  let all=true;
+  MEDIA.forEach((M,i)=>{
+    const y=10+i*laneH, cy=y+laneH/2;
+    ctx.fillStyle=css("--screen-grid"); ctx.globalAlpha=.6; ctx.fillRect(left,y+6,right-left,laneH-12); ctx.globalAlpha=1;
+    ctx.fillStyle=css("--screen-ink"); ctx.font="14px "+css("--font-body"); ctx.textAlign="right"; ctx.fillText(M.name,left-10,cy+5);
+    const frac=Math.min(1,el/(VIS_SEC*M.n)); if(frac<1) all=false;
+    const x=left+frac*(right-left-8);
+    const g=ctx.createLinearGradient(x-90,0,x,0); g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,M.col);
+    ctx.fillStyle=g; ctx.fillRect(Math.max(left,x-90),cy-3,Math.min(90,x-left),6);
+    ctx.shadowColor=M.col; ctx.shadowBlur=16; ctx.fillStyle=M.col; ctx.beginPath(); ctx.arc(x,cy,6,0,7); ctx.fill(); ctx.shadowBlur=0;
+  });
+  ctx.strokeStyle="#d9dee6"; ctx.setLineDash([5,4]); ctx.beginPath(); ctx.moveTo(right-4,6); ctx.lineTo(right-4,h-6); ctx.stroke(); ctx.setLineDash([]);
+  if(RACE.running){
+    if(all){RACE.running=false;RACE.done=true;RACE.ran=true;raceTable();$("fire").disabled=false;$("raceNote").textContent="全部抵達終點！看看表格裡的時間。";}
+    else requestAnimationFrame(drawRace);
+  }
+}
+$("fire").addEventListener("click",()=>{RACE.running=true;RACE.done=false;RACE.t0=performance.now();$("fire").disabled=true;$("raceNote").textContent="比賽中…";raceTable();requestAnimationFrame(drawRace);});
+
+/* ===== 分頁 ===== */
+function showTab(which){
+  $("tabPin").setAttribute("aria-selected",which==="pin"); $("tabSpeed").setAttribute("aria-selected",which==="speed");
+  $("pinView").hidden=which!=="pin"; $("speedView").hidden=which!=="speed";
+  requestAnimationFrame(()=>{ which==="pin"?drawPin():drawRace(performance.now()); });
+}
+$("tabPin").addEventListener("click",()=>showTab("pin"));
+$("tabSpeed").addEventListener("click",()=>showTab("speed"));
+
+/* ===== 關卡 ===== */
+const Q=[
+ {tab:"pin",type:"mc",q:"先觀察：紙屏上的像和光源相比，有什麼不同？",o:["上下顛倒、左右相反","上下顛倒、左右不變","正立、左右相反","和光源完全一樣"],a:0,
+  hint:"比較兩個畫面裡紅色 LED 和藍色 LED 的位置。",ex:"光沿直線穿過針孔後交叉，所以像上下顛倒、左右也相反，這是倒立的實像。"},
+ {tab:"pin",type:"task",q:"操作題：調整光源或紙屏的位置，讓像比光源還大。",check:()=>S.q>S.p,
+  hint:"看下方「像的高度」，要超過 4.0 cm。",ex:"當針孔到紙屏的距離大於光源到針孔的距離，像就比光源大。"},
+ {tab:"pin",type:"mc",q:"下列哪一種操作，可以把像變大？",o:["把光源移遠一點","把紙屏移離針孔","把紙屏移近針孔","把針孔變大"],a:1,
+  hint:"分別拉動兩個距離的滑桿，看像的高度怎麼變。",ex:"紙屏離針孔越遠，或光源離針孔越近，像就越大。針孔大小只影響亮度和清晰度。"},
+ {tab:"pin",type:"task",q:"操作題：讓像的高度剛好和光源一樣（4.0 cm）。",check:()=>S.q===S.p,
+  hint:"兩個距離要相等。",ex:"光源到針孔與針孔到紙屏距離相等時，像和光源一樣大。"},
+ {tab:"pin",type:"mc",q:"把針孔變大之後，成像有什麼變化？",o:["像變暗但更清楚","像變亮但較模糊","像變大","像變成正立"],a:1,
+  hint:"把「針孔大小」拉到最大，觀察紙屏。",ex:"孔變大，進來的光變多所以變亮；但每個點的光會散成一片，像就模糊了。"},
+ {tab:"pin",type:"mc",q:"針孔很小時，把圓形孔換成三角形孔，像的形狀會？",o:["變成三角形","變成圓形","不變，仍是 L 形","消失"],a:2,
+  hint:"針孔大小調小一點，切換「針孔形狀」。",ex:"針孔夠小時，像的形狀由光源決定，和孔的形狀無關。孔很大時才看得出孔的形狀。"},
+ {tab:"pin",type:"mc",q:"如果開兩個針孔，紙屏上會看到什麼？",o:["一個更大的像","兩個像","沒有像","一個正立的像"],a:1,
+  hint:"把「針孔數量」切到 2 個。",ex:"每個針孔都會形成一個倒立的像，所以有兩個像；兩孔太近時，像會重疊。"},
+ {tab:"pin",type:"task",q:"操作題：讓像的高度變成光源的一半（2.0 cm）。",check:()=>S.q*2===S.p,
+  hint:"針孔到紙屏的距離要是光源到針孔距離的一半。",ex:"像高 ÷ 光源高 ＝ 像距 ÷ 物距，所以像距是物距的一半時，像高也是一半。"},
+ {tab:"pin",type:"mc",q:"光源高 4 cm，光源到針孔 10 cm，針孔到紙屏 30 cm，像高是多少？",o:["4 cm","12 cm","1.3 cm","30 cm"],a:1,
+  hint:"像高 ÷ 光源高 ＝ 像距 ÷ 物距。也可以用模擬器調調看。",ex:"30 ÷ 10 ＝ 3 倍，4 cm × 3 ＝ 12 cm。"},
+ {tab:"speed",type:"task",q:"操作題：切到「光速賽跑」，按下「發射光！」，等四道光都到終點。",check:()=>RACE.ran,
+  hint:"按下發射後，等到四道光都跑到右邊的虛線。",ex:"四道光同時出發，但到達的時間不一樣。"},
+ {tab:"speed",type:"mc",q:"光的速度由快到慢，正確的排序是？",o:["真空＞空氣＞水＞玻璃","玻璃＞水＞空氣＞真空","空氣＞真空＞水＞玻璃","四種一樣快"],a:0,
+  hint:"看表格中「跑完 3 m」的時間，時間越短越快。",ex:"光在真空中最快，空氣中幾乎一樣快，水中較慢，玻璃中更慢。"},
+ {tab:"speed",type:"mc",q:"光從空氣射入玻璃，速度會怎樣？",o:["變快","不變","變慢","變成零"],a:2,
+  hint:"比較空氣和玻璃兩條賽道。",ex:"玻璃中的光速約 2×10⁸ m/s，比空氣中慢。"},
+ {tab:"speed",type:"mc",q:"太陽與地球相距 1.5×10⁸ km，光速 3×10⁵ km/s，太陽光到地球要多久？",o:["5 秒","50 秒","500 秒","5×10⁹ 秒"],a:2,
+  hint:"時間 ＝ 距離 ÷ 速度，單位都是 km。",ex:"1.5×10⁸ ÷ 3×10⁵ ＝ 500 秒，大約 8 分 20 秒。"}
+];
+const G={idx:0,first:[],wrong:0,t0:0,timer:null,answered:false,player:null,finished:false};
+function renderDots(){ $("dots").innerHTML=Q.map((_,i)=>`<span class="dot ${i<G.idx?(G.first[i]?"ok":"miss"):(i===G.idx?"now":"")}" title="第 ${i+1} 關"></span>`).join(""); }
+function renderQ(){
+  renderDots(); const it=Q[G.idx]; G.answered=false; G.tried=false;
+  showTab(it.tab);
+  const tag=it.type==="task"?"操作題":"選擇題";
+  let html=`<span class="qtag">第 ${G.idx+1} / ${Q.length} 關．${tag}</span><p class="qtext">${it.q}</p>`;
+  if(it.type==="mc") html+=`<div class="opts">${it.o.map((t,i)=>`<button class="opt" data-i="${i}">${"ABCD"[i]}．${t}</button>`).join("")}</div>`;
+  else html+=`<div class="actions"><button class="btn" id="chk">檢查</button></div>`;
+  html+=`<div id="fb"></div><div class="actions" id="nextRow" hidden><button class="btn" id="next">${G.idx===Q.length-1?"完成挑戰":"下一關"}</button></div>`;
+  $("qbox").innerHTML=html;
+  if(it.type==="mc") $("qbox").querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answer(+b.dataset.i===it.a,b)));
+  else $("chk").addEventListener("click",()=>answer(!!it.check(),$("chk")));
+  $("next").addEventListener("click",nextQ);
+}
+function answer(ok,el){
+  if(G.answered) return; const it=Q[G.idx];
+  if(G.first[G.idx]===undefined) G.first[G.idx]=ok;
+  if(ok){
+    G.answered=true; el.classList.add("right");
+    $("qbox").querySelectorAll(".opt").forEach(b=>b.disabled=true); if($("chk")) $("chk").disabled=true;
+    $("fb").innerHTML=`<div class="fb good"><strong>答對了！</strong><p>${it.ex}</p></div>`; $("nextRow").hidden=false; $("next").focus();
+  } else {
+    G.wrong++; $("hudWrong").textContent=G.wrong;
+    if(el.classList.contains("opt")){el.classList.add("wrong"); el.disabled=true;}
+    el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+    $("fb").innerHTML=`<div class="fb bad"><strong>再想想（加 ${CONFIG.PENALTY_SEC} 秒）</strong><p>提示：${it.hint}</p></div>`;
+  }
+  renderDots();
+}
+function nextQ(){ if(G.idx<Q.length-1){G.idx++;renderQ();} else finish(); }
+function elapsed(){ return (performance.now()-G.t0)/1000; }
+function tick(){ $("hudTime").textContent=fmtTime(elapsed()+G.wrong*CONFIG.PENALTY_SEC); }
+
+/* ===== 開始／結束 ===== */
+$("penTxt").textContent=CONFIG.PENALTY_SEC;
+$("startBtn").addEventListener("click",e=>{
+  e.preventDefault();
+  const cls=$("fCls").value.trim(), seat=$("fSeat").value.trim(), name=$("fName").value.trim();
+  if(!cls||!seat||!name){$("startErr").hidden=false;return;}
+  G.player={cls,seat:seat.padStart(2,"0"),name}; $("hudName").textContent=`${cls}-${G.player.seat} ${name}`;
+  $("startOv").hidden=true; start();
+});
+$("startForm").addEventListener("submit",e=>{e.preventDefault();$("startBtn").click();});
+function start(){
+  G.idx=0;G.first=[];G.wrong=0;G.finished=false;$("hudWrong").textContent="0";
+  RACE.ran=false;RACE.done=false;RACE.running=false;raceTable();$("fire").disabled=false;$("raceNote").textContent="按下發射，四道光同時出發。";
+  G.t0=performance.now(); clearInterval(G.timer); G.timer=setInterval(tick,250); renderQ();
+}
+async function finish(){
+  if(G.finished) return; G.finished=true; clearInterval(G.timer);
+  const raw=elapsed(), total=raw+G.wrong*CONFIG.PENALTY_SEC, firstOk=G.first.filter(Boolean).length;
+  $("hudTime").textContent=fmtTime(total);
+  $("endTitle").textContent="通關！"; $("eTotal").textContent=fmtTime(total); $("eFirst").textContent=`${firstOk} / ${Q.length}`; $("eWrong").textContent=G.wrong;
+  const missed=G.first.map((v,i)=>v?null:i+1).filter(Boolean);
+  $("eDetail").textContent=`實際用時 ${fmtTime(raw)}，答錯加時 ${G.wrong*CONFIG.PENALTY_SEC} 秒。`+(missed.length?`第一次沒答對的關卡：${missed.join("、")}。`:"每一關都第一次就答對！");
+  $("closeBoard").hidden=true; $("againBtn").hidden=false; $("endOv").hidden=false;
+  const entry={cls:G.player.cls,seat:G.player.seat,name:G.player.name,totalSec:Math.round(total),rawSec:Math.round(raw),wrong:G.wrong,firstCorrect:firstOk,total:Q.length,detail:G.first.map(v=>v?1:0).join(""),ts:Date.now()};
+  await saveScore(entry); showBoard(entry);
+}
+$("againBtn").addEventListener("click",()=>{$("endOv").hidden=true;start();});
+$("boardBtn").addEventListener("click",()=>{
+  $("endTitle").textContent="排行榜"; ["eTotal","eFirst","eWrong"].forEach(i=>$(i).textContent="—"); $("eDetail").textContent="";
+  $("againBtn").hidden=true; $("closeBoard").hidden=false; $("startOv").hidden=true; $("endOv").hidden=false; showBoard(null);
+});
+$("closeBoard").addEventListener("click",()=>{$("endOv").hidden=true;$("startOv").hidden=false;});
+
+/* ===== 排行榜 ===== */
+const LS_KEY="lab41-board";
+function localRows(){ try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch(e){return [];} }
+async function saveScore(entry){
+  if(CONFIG.SHEET_URL){ try{ await fetch(CONFIG.SHEET_URL,{method:"POST",body:JSON.stringify(entry)}); return; }catch(e){} }
+  try{ const r=localRows(); r.push(entry); localStorage.setItem(LS_KEY,JSON.stringify(r)); }catch(e){}
+}
+async function loadRows(cls){
+  if(CONFIG.SHEET_URL){ try{ const res=await fetch(CONFIG.SHEET_URL+"?cls="+encodeURIComponent(cls||"")); const j=await res.json(); return {rows:j.rows||[],shared:true}; }catch(e){} }
+  return {rows:localRows().filter(r=>!cls||r.cls===cls),shared:false};
+}
+async function showBoard(me){
+  const cls=me?me.cls:($("fCls").value.trim()||"");
+  $("boardLabel").textContent=`排行榜（${cls||"全部"}班，每人取最佳成績）`;
+  $("boardBody").innerHTML=`<tr><td colspan="5">讀取中…</td></tr>`;
+  const {rows,shared}=await loadRows(cls);
+  const best={}; rows.forEach(r=>{const k=r.cls+"-"+r.seat; if(!best[k]||r.totalSec<best[k].totalSec||(r.totalSec===best[k].totalSec&&r.firstCorrect>best[k].firstCorrect)) best[k]=r;});
+  const list=Object.values(best).sort((a,b)=>a.totalSec-b.totalSec||b.firstCorrect-a.firstCorrect).slice(0,30);
+  const body=$("boardBody"); body.innerHTML="";
+  if(!list.length){ body.innerHTML=`<tr><td colspan="5">還沒有人通關，成為第一名吧！</td></tr>`; }
+  list.forEach((r,i)=>{
+    const tr=document.createElement("tr"); if(me&&r.cls===me.cls&&r.seat===me.seat) tr.className="me";
+    const cells=[[i+1,"num"],[r.seat,""],[r.name,""],[fmtTime(r.totalSec),"num"],[`${r.firstCorrect}/${r.total}`,"num"]];
+    cells.forEach(([t,c])=>{const td=document.createElement("td"); td.textContent=t; if(c) td.className=c; tr.appendChild(td);});
+    body.appendChild(tr);
+  });
+  $("boardNote").textContent=shared?"排行榜為全班共用。":"目前排行榜只記錄這台裝置上的成績。";
+}
+
+/* ===== 啟動 ===== */
+raceTable(); renderDots();
+Q.length && ($("qbox").innerHTML=`<p class="qtext">填好資料、按「開始挑戰」就會出現第一關。</p>`);
+showTab("pin");
+let rT; window.addEventListener("resize",()=>{clearTimeout(rT);rT=setTimeout(()=>{$("pinView").hidden?drawRace(performance.now()):drawPin();},120);});
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>showTab($("pinView").hidden?"speed":"pin"));
+new MutationObserver(()=>showTab($("pinView").hidden?"speed":"pin")).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+</script>
+
+</body>
+</html>

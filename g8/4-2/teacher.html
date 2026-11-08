@@ -184,13 +184,13 @@ const PERIODS=[
    todo:["轉動<b>轉角的鏡子</b>，讓嫌犯的光轉進警察的眼睛","按「<b>一鍵存成圖片</b>」，選 <b>Padlet</b> 上傳；沒有 App 就選「儲存影像」，掃 QR code 按「＋」","貼到<b>自己組別</b>那一欄"],
    extra:{qr:PADLET},watch:"顧問協助上傳；存圖失敗的同學先拿備用紙記錄。"},
   {nm:"預測",ph:2,min:2,tags:["自學"],h:"平面鏡成像：先預測",
-   todo:["掃 QR code 打開 <b>4-2b 平面鏡成像</b>","讀步驟 1 的問題，選一個答案"],extra:{qr:"4-2b-plane-mirror/"},watch:"換到第二站，一樣先預測。"},
+   todo:["掃 QR code 打開 <b>平面鏡偵探站</b>，輸入座號","憑直覺判斷 4 句話：選 ○／✗，再選把握程度"],extra:{qr:"4-2b-guided/"},watch:"換到第二站，一樣先預測。"},
   {nm:"實驗",ph:2,min:7,tags:["自學","共學"],h:"平面鏡成像：動手做實驗",
-   todo:["拖曳<b>點燃的蠟燭</b>放到想要的位置","拖曳<b>沒點燃的蠟燭</b>，讓它和像完全重疊，再記錄","至少記錄 <b>3 筆</b>，物距彼此相差 2 cm 以上"],extra:null,watch:"用玻璃板與兩支蠟燭找像的位置，數據直接比較物距與像距。"},
-  {nm:"問 e度",ph:2,min:5,tags:["AI 協作"],h:"平面鏡成像：帶著數據問 e度",todo:EDU_TODO,adv:EDU_ADV,
+   todo:["<b>第 1～3 筆</b>：點燃的蠟燭放在離玻璃板約 <b>5、10、15 cm</b>","拖<b>沒點燃的蠟燭</b>和像完全重疊，<b>看尺</b>讀出物距和像距","比一比：像的<b>大小</b>、蠟燭和像的<b>連線</b>、<b>紙屏</b>上看得到嗎？"],extra:{box:"網頁會檢查蠟燭位置和讀尺；讀錯兩次可由老師確認放行"},watch:"用玻璃板與兩支蠟燭找像的位置，數據直接比較物距與像距。"},
+  {nm:"問 e度",ph:2,min:5,tags:["AI 協作"],h:"平面鏡成像：帶著數據問 e度",todo:["按「<b>複製給 e度 的話</b>」，到因材網 e度 貼上","e度 問「看第幾筆數據」時，<b>看左邊的「我的數據」</b>回答","把 e度 最後給的結論<b>複製、貼回網頁</b>"],adv:EDU_ADV,
    extra:{box:"iPad 分割畫面：左邊放實驗網頁，右邊放因材網 e度"},watch:"e度 會追問物距與像距、虛像的意義。"},
-  {nm:"確認規律＋存卡",ph:2,min:3,tags:["自學"],h:"平面鏡成像：確認規律，存證據卡",
-   todo:["回答步驟 4 的 3 題，對照自己的預測","步驟 5 填<b>組別、座號</b>，按「<b>一鍵存成圖片</b>」","上傳到 <b>Padlet 自己組別</b>那一欄"],extra:{qr:PADLET},watch:""},
+  {nm:"判斷＋存卡",ph:2,min:3,tags:["自學"],h:"平面鏡成像：最後判斷，存證據卡",
+   todo:["跟 e度 討論後，<b>再判斷一次</b> 4 句話","生活挑戰：救護車的字為什麼<b>反著寫</b>？","填<b>組別</b>，按「<b>一鍵存成圖片</b>」，上傳到 <b>Padlet 自己組別</b>那一欄"],extra:{qr:PADLET},watch:""},
   {nm:"統整",ph:3,min:4,tags:["導學"],h:"統整：反射定律與平面鏡成像",
    todo:["反射角 ＝ 入射角，角度都從<b>法線</b>量起","平面鏡成<b>正立、等大的虛像</b>，像距 ＝ 物距","把 e度 的結論補進<b>講義</b>，下一節看<b>凹面鏡與凸面鏡</b>"],extra:null,watch:"教師挑選與預測不同的學生分享改變。"}
   ]},
@@ -255,7 +255,7 @@ function render(){
   $("adv").hidden=!s.adv;$("adv").innerHTML=s.adv?`<span class="k">先完成的同學</span><ul>${s.adv.map(t=>`<li>${t}</li>`).join("")}</ul>`:"";
   tick(0);
 }
-function goTo(i){cur=Math.max(0,Math.min(S.length-1,i));left=S[cur].min*60;running=false;beeped=false;$("timer").classList.remove("over","warn");setGo();save();render();}
+function goTo(i,hold){cur=Math.max(0,Math.min(S.length-1,i));left=S[cur].min*60;running=!hold;beeped=false;$("timer").classList.remove("over","warn");setGo();save();render();}
 function setGo(){$("go").textContent=running?"暫停":(left<S[cur].min*60?"繼續":"開始倒數");}
 function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1.2);o.start();o.stop(a.currentTime+1.2);}catch(e){}}
 function tick(dt){
@@ -272,7 +272,7 @@ function loop(t){const dt=last?(t-last)/1000:0;last=t;if(running)tick(dt);if(run
 $("go").addEventListener("click",()=>{running=!running;setGo();});
 $("plus").addEventListener("click",()=>{left+=30;if(left>0)$("timer").classList.remove("over");tick(0);});
 $("minus").addEventListener("click",()=>{left-=30;tick(0);});
-$("reset").addEventListener("click",()=>goTo(cur));
+$("reset").addEventListener("click",()=>goTo(cur,true));
 $("prev").addEventListener("click",()=>goTo(cur-1));
 $("next").addEventListener("click",()=>goTo(cur+1));
 $("p1").addEventListener("click",()=>setPeriod(0));
@@ -285,7 +285,7 @@ addEventListener("keydown",e=>{
   else if(e.key===" "){running=!running;setGo();e.preventDefault();}
   else if(e.key==="f"||e.key==="F")fs();
   else if(e.key==="1")setPeriod(0);else if(e.key==="2")setPeriod(1);
-  else if(e.key==="r"||e.key==="R")goTo(cur);});
+  else if(e.key==="r"||e.key==="R")goTo(cur,true);});
 try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{});}catch(e){}
 setPeriod(P,true);requestAnimationFrame(loop);
 </script>

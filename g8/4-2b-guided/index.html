@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>平面鏡偵探站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* 版面：左（直向時為上）依步驟切換「影片 → 模擬器 → 我的數據」；右（下）一次只顯示一個步驟 */
+:root{
+  --bg:#EFF2F5; --panel:#FFFFFF; --ink:#1B2430; --muted:#566273; --line:#CBD3DD;
+  --wave:#2C5D8A; --wave-soft:#DCE7F2; --rope:#8A4B22; --rope-soft:#F4E6DA;
+  --ok:#2F6B3A; --ok-soft:#E1EFE3;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:8px max(14px,env(safe-area-inset-right,0px)) 8px max(14px,env(safe-area-inset-left,0px));padding-top:max(8px,env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.top .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--wave);font-weight:700}
+.top h1{font-family:var(--display);font-size:clamp(19px,2.6vw,24px);margin:0;line-height:1.3}
+.prog{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.prog .bar{width:120px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--wave);width:0}
+.split{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(330px,1fr);min-height:0}
+@media (max-width:900px), (orientation:portrait){.split{grid-template-columns:1fr;grid-template-rows:minmax(0,52fr) minmax(0,48fr)}}
+.left{position:relative;min-height:0;background:var(--panel);border-right:1px solid var(--line);display:grid;grid-template-rows:minmax(0,1fr) auto}
+@media (max-width:900px), (orientation:portrait){.left{border-right:0;border-bottom:3px solid var(--rope)}}
+.pane{min-height:0;display:none}
+.pane.on{display:block}
+#paneVideo{background:#111;display:none;place-items:center}
+#paneVideo.on{display:grid}
+#paneVideo video{width:100%;height:100%;max-height:100%;object-fit:contain;background:#111}
+#paneSim{background:#fff}
+#paneSim.on{display:grid;place-items:center}
+#rsim{width:100%;height:100%;max-height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+#paneSlit,#paneLife{background:#fff;overflow:auto}
+#paneSlit.on{display:grid;grid-template-rows:auto 1fr;align-content:start}
+#paneLife.on{display:grid;align-content:center;justify-items:center;gap:6px;padding:8px}
+#scene{width:100%;max-height:34vh;display:block}
+.eyewrap{display:grid;justify-items:center;align-content:start;gap:6px;padding:6px 12px 12px}
+.eyelab{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.08em}
+#eyeview{width:min(46vh,300px);height:auto;border:4px solid #334155;border-radius:14px;background:#fff;display:block}
+.eyeslide{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--wave);width:min(560px,100%)}
+.eyeslide input{flex:1;height:36px;accent-color:var(--wave)}
+.seen{min-height:1.6em;font-weight:900;font-size:18px}
+#paneTop{background:#fff}
+#paneTop.on{display:grid;place-items:center}
+#topv{width:100%;height:100%;max-height:100%;display:block}
+#life{width:100%;max-height:60vh;display:block;touch-action:none}
+#paneData{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;background:var(--bg)}
+.simbar{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);padding:5px 12px;background:var(--panel);border-top:1px solid var(--line)}
+.simbar button,.simbar a{all:unset;cursor:pointer;color:var(--wave);font-weight:700}
+.simbar button:focus-visible,.simbar a:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.side{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;padding:14px max(14px,env(safe-area-inset-right,0px)) 30px max(14px,env(safe-area-inset-left,0px))}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--rope)}
+.step h2{margin:0;font-size:22px;line-height:1.45;text-wrap:balance}
+.step p{margin:0}
+.note{font-size:14px;color:var(--muted)}
+.ui{font-weight:700;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:0 6px;white-space:nowrap}
+.big{font-size:20px;line-height:1.6;padding:14px;border-radius:12px;background:var(--bg);border:2px solid var(--line)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:52px;min-width:88px;padding:8px 16px;border:2px solid var(--line);border-radius:12px;background:var(--bg);font-weight:700;font-size:18px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.opt[aria-pressed="true"]{border-color:var(--wave);background:var(--wave);color:var(--panel)}
+.opt:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.lab{font-size:14px;color:var(--muted);font-weight:700}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.field{display:grid;gap:4px}
+.field input{font:inherit;font-size:24px;font-weight:700;width:100%;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-align:center;font-variant-numeric:tabular-nums}
+.unit{font-size:14px;color:var(--muted)}
+textarea{font:inherit;width:100%;min-height:96px;padding:10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border-radius:12px;font-weight:700;font-size:17px;text-decoration:none;cursor:pointer;border:2px solid var(--wave);font-family:var(--body);background:transparent;color:var(--wave)}
+.btn.primary{background:var(--wave);color:var(--panel)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:4px}
+.fb{min-height:1.5em;font-weight:700;border-radius:10px}
+.fb.good{color:var(--ok);background:var(--ok-soft);padding:8px 12px}
+.fb.bad{color:var(--rope);background:var(--rope-soft);padding:8px 12px}
+.gate{border:2px dashed var(--rope);border-radius:12px;padding:14px;display:grid;gap:8px;background:var(--rope-soft)}
+.tip{border-left:5px solid var(--rope);background:var(--rope-soft);border-radius:10px;padding:10px 12px;display:grid;gap:4px}
+.tip b{color:var(--rope)}
+table{border-collapse:collapse;width:100%;font-size:16px;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:7px 4px;text-align:center}
+th{color:var(--muted);font-weight:500;font-size:13px}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--body);font-size:14px;line-height:1.6;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:220px;overflow:auto}
+details summary{cursor:pointer;color:var(--muted);font-size:14px}
+.stmt{display:grid;gap:6px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--bg)}
+.was{font-size:13px;color:var(--muted)}
+.card{border-left:5px solid var(--wave);background:var(--wave-soft);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.chg{font-weight:700;color:var(--rope)}
+.tiny{all:unset;cursor:pointer;font-size:13px;color:var(--muted);text-decoration:underline}
+/* 我的數據面板 */
+.dcard{background:var(--panel);border:2px solid var(--wave);border-radius:16px;padding:16px;display:grid;gap:12px;max-width:760px;margin:0 auto}
+.dcard h2{margin:0;font-size:22px}
+.grp{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;padding:12px;border-radius:12px;background:var(--bg)}
+.grp .tag{grid-row:span 2;font-weight:900;font-size:20px;color:var(--panel);background:var(--wave);border-radius:10px;padding:8px 12px;text-align:center;line-height:1.25}
+.grp .tag small{display:block;font-size:12px;font-weight:700}
+.grp .val{font-size:19px}
+.grp .val b{font-size:24px;font-variant-numeric:tabular-nums}
+.grp .obs{font-size:15px;color:var(--muted)}
+.mine{display:grid;gap:4px;font-size:15px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#psim{width:100%;height:100%;max-height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+#amb{width:100%;max-height:56vh;display:block}
+.dtab td,.dtab th{font-size:17px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="eyebrow">八年級自然・4-2 平面鏡成像</span>
+    <h1>平面鏡偵探站：玻璃板後面的像在哪裡？</h1>
+    <div class="prog" aria-label="進度"><span id="progTxt"></span><span class="bar"><i id="progBar"></i></span></div>
+  </div>
+  <div class="split">
+    <div class="left">
+      <div class="pane" id="paneSim"><svg id="psim" viewBox="0 0 600 345" role="img" aria-label="從上往下看的實驗桌：玻璃板、點燃與沒點燃的蠟燭"></svg></div>
+      <div class="pane" id="paneLife"><svg id="amb" viewBox="0 0 600 360" role="img" aria-label="救護車車頭與前車的後照鏡"></svg>
+        <div class="seen" id="lseen" role="status"></div></div>
+      <div class="pane" id="paneData"></div>
+      <div class="simbar" id="bar"></div>
+    </div>
+    <div class="side" id="side" aria-live="polite"></div>
+  </div>
+</div>
+
+<script>
+/* ===== 4 句迷思是非題（正解：✗ ○ ✗ ○，網頁不顯示） ===== */
+const STMTS=[
+  "蠟燭離玻璃板越遠，它的像就越小。",
+  "像到鏡面的距離，等於物體到鏡面的距離。",
+  "在像的位置放一張紙屏，紙屏上可以看到蠟燭的像。",
+  "物體和像的連線，會和鏡面互相垂直。"
+];
+const TARGETS=[5,10,15];   /* 三筆數據的物距（cm） */
+const TOLD=0.5;            /* 讀尺容許誤差（cm） */
+
+const KEY="plane42-v1";
+let st={seat:"",pre:{},conf:{},d:{},obs:{},post:{},i:0,skip:{},tries:{},concl:"",grp:"",L:{x:200,y:170},U:{x:470,y:110},screen:false,flip:false};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=Object.assign(st,s);}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
+const $=id=>document.getElementById(id);
+const num=v=>{const x=parseFloat(String(v??"").replace(/[^\d.\-]/g,""));return isFinite(x)?x:null;};
+const r1=x=>x==null?"—":(Math.round(x*10)/10).toString();
+const a=x=>r1(num(x));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mk=v=>v==="O"?"○":v==="X"?"✗":"—";
+
+const STEPS=[];const add=o=>STEPS.push(o);
+
+add({k:"開始",left:"sim",render:()=>`
+  <h2>先寫下你的座號</h2>
+  <div class="field" style="max-width:200px"><span class="lab">座號</span><input id="seat" inputmode="numeric" value="${esc(st.seat)}" aria-label="座號"></div>`,
+  bind:()=>$("seat").addEventListener("input",e=>{st.seat=e.target.value.trim();save();navState();}),
+  ok:()=>!!st.seat});
+
+STMTS.forEach((t,ix)=>{const n=ix+1;add({k:`你覺得呢？ ${n}／${STMTS.length}`,left:"sim",render:()=>`
+  <h2>這句話對嗎？</h2>
+  <div class="big"><b>${n}.</b> ${t}</div>
+  <div class="lab">憑直覺選</div>
+  <div class="opts" data-grp="pre">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.pre[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
+  <div class="lab">把握程度</div>
+  <div class="opts" data-grp="conf">${[["sure","有把握"],["guess","用猜的"]].map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.conf[n]===v}">${l}</button>`).join("")}</div>
+  <p class="note">不用寫理由，等一下用左邊的實驗找證據。</p>`,
+  bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st[g.dataset.grp][n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();
+    if(st.pre[n]&&st.conf[n])setTimeout(()=>go(1),350);})),
+  ok:()=>!!(st.pre[n]&&st.conf[n])});});
+
+add({k:"看看實驗桌",left:"sim",render:()=>`
+  <h2>看看實驗桌（從上往下看）</h2>
+  <p>中間藍色的是<b>玻璃板</b>，當作平面鏡。左邊是<b>點燃的蠟燭</b>，右邊是<b>沒點燃的蠟燭</b>。</p>
+  <p>玻璃板後面淡淡的，就是點燃蠟燭的<b>像</b>。下面的尺從玻璃板（0）往兩邊量，每一小格 1 cm。</p>`,check:"我看懂了"});
+
+TARGETS.forEach((tg,ix)=>{const n=ix+1;add({k:`第 ${n} 筆・找像`,left:"sim",render:()=>`
+  <h2>第 ${n} 筆：蠟燭放在離玻璃板大約 <b>${tg} cm</b></h2>
+  <ol style="margin:0;padding-left:1.3em;display:grid;gap:4px">
+    <li>拖曳<b>點燃的蠟燭</b>，放到離玻璃板大約 ${tg} cm 的地方（上下位置自己選）。</li>
+    <li>拖曳<b>沒點燃的蠟燭</b>，讓它和像<b>完全重疊</b>。</li>
+    <li>看下面的尺，讀出<b>物距</b>和<b>像距</b>。</li></ol>
+  <div class="fields">
+    <label class="field"><span class="lab">物距（蠟燭到玻璃板）</span><input id="pi" inputmode="decimal" value="${esc(st.d["p"+n]??"")}"><span class="unit">cm</span></label>
+    <label class="field"><span class="lab">像距（像到玻璃板）</span><input id="qi" inputmode="decimal" value="${esc(st.d["q"+n]??"")}"><span class="unit">cm</span></label>
+  </div>
+  <button type="button" class="btn primary" id="chk">檢查</button>
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindTrial(n,tg),ok:()=>passedT(n)});});
+
+add({k:"比一比・距離",left:"data",render:()=>`
+  <h2>比一比：像距和物距</h2>
+  ${miniTable()}
+  <p>每一筆的像距和物距：</p>
+  ${choice("o1",[["eq","一樣大"],["more","像距比較大"],["less","像距比較小"],["none","沒有固定關係"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o1","選好了。"),ok:()=>!!st.obs.o1});
+
+add({k:"比一比・大小",left:"sim",render:()=>`
+  <h2>像的大小會變嗎？</h2>
+  <p>你用的「沒點燃的蠟燭」和點燃的蠟燭<b>一樣大</b>。蠟燭放在 5 cm、10 cm、15 cm 時，它每一次都能和像<b>完全重疊</b>。</p>
+  <p>所以，蠟燭離玻璃板越遠時，像的大小：</p>
+  ${choice("o2",[["same","和蠟燭一樣大，不會變"],["small","變小"],["big","變大"]])}
+  <p class="fb" id="fb" role="status"></p>
+  <p class="note">提示：站在鏡子前往後退，「看起來」變小，跟像「真的」變小，是一樣的事嗎？</p>`,
+  bind:()=>bindChoice("o2","選好了。"),ok:()=>!!st.obs.o2});
+
+add({k:"比一比・連線",left:"sim",render:()=>`
+  <h2>蠟燭和像的連線</h2>
+  <p>重疊時，左邊出現一條<b>綠色虛線</b>連起蠟燭和像，旁邊還有一個小記號。這條連線和玻璃板：</p>
+  ${choice("o3",[["perp","互相垂直"],["para","互相平行"],["slant","斜斜的，角度不一定"]])}
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>bindChoice("o3","選好了。"),ok:()=>!!st.obs.o3});
+
+add({k:"紙屏實驗",left:"sim",render:()=>`
+  <h2>在像的位置放一張紙屏</h2>
+  <p>按下面的按鈕，把沒點燃的蠟燭拿走，在像的位置放一張<b>白色紙屏</b>。</p>
+  <button type="button" class="btn${st.screen?" primary":""}" id="scr">${st.screen?"✓ 已放紙屏":"📄 放紙屏"}</button>
+  <div id="scrq" ${st.screen?"":"hidden"}><p>紙屏上看得到蠟燭的像嗎？</p>
+  ${choice("o4",[["no","看不到，紙屏上一片白"],["yes","看得到"]])}</div>
+  <p class="fb" id="fb" role="status"></p>`,
+  bind:()=>{$("scr").addEventListener("click",()=>{st.screen=true;save();PS.draw();render();});
+    if(st.screen)bindChoice("o4","選好了。想一想：光真的有跑到玻璃板後面嗎？");},
+  ok:()=>st.screen&&!!st.obs.o4});
+
+add({k:"問 e度",left:"data",render:()=>`
+  <h2>帶著你的數據去問 e度</h2>
+  <p>按<span class="ui">複製</span>，到因材網 e度 的對話框貼上。</p>
+  <div class="row"><button class="btn primary" id="copy" type="button">複製給 e度 的話</button>
+  <a class="btn" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
+  <p class="fb" id="fb" role="status"></p>
+  <p class="note">iPad 小技巧：把因材網和這一頁並排（分割畫面），e度 問「看第幾筆數據」時，看左邊「我的數據」回答。</p>
+  <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>
+  <div class="tip"><b>📌 討論到最後，e度 會給你一句結論</b><span>在 e度 長按「請寫下這句結論」後面那一句，選「拷貝」，回來貼在這裡，才能按下一步。</span></div>
+  <textarea id="concl" aria-label="e度 給的結論">${esc(st.concl||"")}</textarea>`,
+  bind:()=>{$("prompt").textContent=promptText();$("copy").addEventListener("click",copyPrompt);
+    $("concl").addEventListener("input",e=>{st.concl=e.target.value;save();navState();});},
+  ok:()=>(st.concl||"").trim().length>=8});
+
+add({k:"最後判斷",left:"data",render:()=>`
+  <h2>跟 e度 討論後，再判斷一次</h2>
+  <div style="display:grid;gap:8px">${STMTS.map((t,ix)=>{const n=ix+1;return `<div class="stmt"><div><b>${n}.</b> ${t}</div>
+    <div class="row"><div class="opts" data-n="${n}">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.post[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
+    <span class="was">原本：${mk(st.pre[n])}</span></div></div>`;}).join("")}</div>`,
+  bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st.post[g.dataset.n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
+  ok:()=>STMTS.every((_,ix)=>st.post[ix+1])});
+
+add({k:"生活應用",left:"life",render:()=>`
+  <h2>生活挑戰：救護車的字為什麼反著寫？</h2>
+  <p>左邊是救護車車頭，上面的字是<b>反過來</b>寫的。按下面的按鈕，換成<b>前面那輛車的司機</b>從後照鏡（平面鏡）看。</p>
+  <button type="button" class="btn${st.flip?" primary":""}" id="flip">${st.flip?"↩ 換回直接看":"🪞 從後照鏡看"}</button>
+  <div id="lq" ${st.obs.sawMirror?"":"hidden"}><p>為什麼要反著寫？</p>
+  ${choice("o5",[["lr","平面鏡的像左右相反，從後照鏡看剛好變正的"],["ud","平面鏡的像上下顛倒"],["big","平面鏡會把字放大"]])}</div>
+  <p class="fb" id="fb" role="status"></p>
+  <p class="note">生活中還有：照鏡子時舉右手，鏡中的人看起來舉的是另一邊的手。</p>`,
+  bind:()=>{$("flip").addEventListener("click",()=>{st.flip=!st.flip;if(st.flip)st.obs.sawMirror=true;save();AMB.draw();render();});
+    if(st.obs.sawMirror)bindChoice("o5","選好了。");},
+  ok:()=>!!st.obs.o5});
+
+add({k:"完成",left:"data",render:()=>{
+  const chg=changed();
+  return `<h2>完成！這是你的證據卡</h2>
+  <div class="card"><div><b>座號 ${esc(st.seat)}</b>・4-2 平面鏡成像</div>
+  <table><thead><tr><th>題</th><th>直覺</th><th>最後</th></tr></thead><tbody>
+  ${STMTS.map((_,ix)=>{const n=ix+1;return `<tr><td>${n}</td><td>${mk(st.pre[n])}${st.conf[n]==="guess"?"（猜）":""}</td><td${st.pre[n]!==st.post[n]?' class="chg"':""}>${mk(st.post[n])}</td></tr>`;}).join("")}
+  </tbody></table>
+  <div>${chg.length?`<span class="chg">改變判斷：第 ${chg.join("、")} 題</span>`:"判斷都沒有改變"}</div>
+  <div><b>📌 e度 結論：</b>${esc(st.concl)}</div></div>
+  <div class="field" style="max-width:200px"><span class="lab">組別</span><input id="grp" inputmode="numeric" value="${esc(st.grp)}" aria-label="組別"></div>
+  <button type="button" class="btn primary" id="shot">📷 一鍵存成圖片</button>
+  <p class="fb" id="fb" role="status"></p>
+  <p class="note">按下後選 <b>Padlet</b> 直接上傳；或選「儲存影像」存到相簿，再到 Padlet 按「＋」上傳。貼到自己組別的那一欄。</p>
+  <p><button type="button" class="tiny" id="reset">重新開始（下一位同學使用時）</button></p>`;},
+  bind:()=>{$("grp").addEventListener("input",e=>{st.grp=e.target.value.trim();save();});
+    $("shot").addEventListener("click",()=>{if(!st.grp){const f=$("fb");f.className="fb bad";f.textContent="先填組別喔。";return;}saveCard();});
+    let armed=false;$("reset").addEventListener("click",e=>{if(!armed){armed=true;e.target.textContent="再按一次確認清除";return;}
+    try{localStorage.removeItem(KEY);}catch(_){}location.reload();});},last:true});
+
+/* ===== 每一筆：位置與讀尺都和模擬實驗比對 ===== */
+function passedT(n){return !!(st.d["ok"+n]||st.skip["t"+n]);}
+function bindTrial(n,tg){
+  const show=(cls,msg)=>{const f=$("fb");f.className="fb "+cls;f.innerHTML=msg;};
+  if(passedT(n))show("good",st.skip["t"+n]?"老師已確認，可以繼續。":"數據合理，可以按下一步。");
+  ["pi","qi"].forEach(k=>$(k).addEventListener("input",()=>{st.d["ok"+n]=false;save();navState();$("fb").textContent="";$("fb").className="fb";}));
+  $("chk").addEventListener("click",()=>{
+    const p=num($("pi").value),q=num($("qi").value),P=PS.p(),Q=PS.q();
+    st.d["p"+n]=$("pi").value;st.d["q"+n]=$("qi").value;save();
+    if(Math.abs(P-tg)>1){show("bad",`點燃的蠟燭要放在離玻璃板大約 <b>${tg} cm</b>，現在大約 ${r1(P)} cm。`);return;}
+    if(!PS.matched()){show("bad","沒點燃的蠟燭還沒和像<b>完全重疊</b>，再拖一下。");return;}
+    if(p==null||q==null){show("bad","物距和像距都要填數字喔。");return;}
+    if(Math.abs(p-P)<=TOLD&&Math.abs(q-Q)<=TOLD){st.d["ok"+n]=true;st.d["m"+n]={p:P,q:Q,y:st.L.y};st.tries["t"+n]=0;save();show("good","數據合理！可以按下一步。");navState();return;}
+    st.tries["t"+n]=(st.tries["t"+n]||0)+1;save();
+    show("bad","跟尺上的距離好像不一樣。從<b>玻璃板（0）</b>開始，數到<b>蠟燭的中心</b>，每一小格 1 cm。"+(st.tries["t"+n]>=2?`<br><button type="button" class="tiny" id="tskip">老師確認過了，繼續</button>`:""));
+    const sk=$("tskip");if(sk)sk.addEventListener("click",()=>{st.skip["t"+n]=true;save();show("good","老師已確認，可以繼續。");navState();});
+  });
+}
+function choice(key,opts){return `<div class="opts" data-key="${key}">${opts.map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.obs[key]===v}">${l}</button>`).join("")}</div>`;}
+/* 頁面只記錄學生的選擇，不判對錯：結論留給 e度 對話 */
+function bindChoice(key,msg){
+  const g=document.querySelector(`.opts[data-key="${key}"]`),f=$("fb");
+  if(st.obs[key]){f.className="fb good";f.textContent=msg;}
+  g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
+    st.obs[key]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+    f.className="fb good";f.textContent=msg;navState();});
+}
+const changed=()=>STMTS.map((_,ix)=>{const n=ix+1;return st.pre[n]&&st.post[n]&&st.pre[n]!==st.post[n]?n:null;}).filter(Boolean);
+const OBS={o1:{eq:"一樣大",more:"像距比較大",less:"像距比較小",none:"沒有固定關係"},o2:{same:"和蠟燭一樣大，不會變",small:"變小",big:"變大"},o3:{perp:"互相垂直",para:"互相平行",slant:"斜斜的，角度不一定"},o4:{no:"看不到，紙屏上一片白",yes:"看得到"}};
+const ob=k=>OBS[k][st.obs[k]]||"還沒選";
+
+/* ===== 我的數據 ===== */
+function miniTable(){return `<table class="dtab"><thead><tr><th></th><th>物距</th><th>像距</th></tr></thead><tbody>
+  ${TARGETS.map((_,ix)=>`<tr><td>第 ${ix+1} 筆</td><td>${a(st.d["p"+(ix+1)])} cm</td><td>${a(st.d["q"+(ix+1)])} cm</td></tr>`).join("")}</tbody></table>`;}
+function renderData(){
+  $("paneData").innerHTML=`<div class="dcard">
+    <h2>我的數據</h2>
+    <p class="note" style="margin:0">e度 問你「看第幾筆數據」時，看這裡回答。距離都從玻璃板量起。</p>
+    ${TARGETS.map((_,ix)=>`<div class="grp"><div class="tag">第 ${ix+1} 筆<small>找像</small></div>
+      <div class="val">物距 <b>${a(st.d["p"+(ix+1)])}</b> cm　像距 <b>${a(st.d["q"+(ix+1)])}</b> cm</div>
+      <div class="obs">沒點燃的蠟燭和像完全重疊</div></div>`).join("")}
+    <div class="grp"><div class="tag">觀察<small>大小・連線</small></div>
+      <div class="val" style="font-size:16px">像的大小：${ob("o2")}<br>蠟燭和像的連線與玻璃板：${ob("o3")}</div></div>
+    <div class="grp"><div class="tag">紙屏<small>像的位置</small></div>
+      <div class="val" style="font-size:16px">紙屏上：${ob("o4")}</div></div>
+    <div class="mine"><b>我原本的判斷</b>${STMTS.map((t,ix)=>`<span>${ix+1}. ${t}　<b>${mk(st.pre[ix+1])}</b></span>`).join("")}</div>
+  </div>`;
+}
+
+/* ===== 給 e度 的提示詞 ===== */
+const mark=v=>v==="O"?"○ 對":v==="X"?"✗ 錯":"還沒判斷";
+function promptText(){
+  const d=st.d;
+  return `我是國中八年級學生，正在學「平面鏡成像」。請你當我的學習夥伴，不要直接告訴我答案，用提問一步一步帶我用自己的數據檢查下面 4 句話。
+
+【我原本的直覺判斷】
+${STMTS.map((t,ix)=>`${ix+1}.「${t}」我覺得：${mark(st.pre[ix+1])}${st.conf[ix+1]==="guess"?"（用猜的）":st.conf[ix+1]==="sure"?"（有把握）":""}`).join("\n")}
+
+【我在模擬實驗中的數據】
+實驗：白紙上立一片玻璃板當平面鏡，前面放點燃的蠟燭，後面拿一支一樣大、沒點燃的蠟燭去找像的位置，直到和像完全重疊，再用尺量距離（都從玻璃板量起）。
+${TARGETS.map((_,ix)=>`第${ix+1}筆：物距 ${a(d["p"+(ix+1)])} cm，像距 ${a(d["q"+(ix+1)])} cm`).join("\n")}
+觀察1：一樣大的沒點燃蠟燭每次都能和像完全重疊。我判斷像的大小：${ob("o2")}
+觀察2：蠟燭和像的連線與玻璃板：${ob("o3")}
+觀察3：在像的位置放紙屏，紙屏上：${ob("o4")}
+
+【請你這樣帶我】
+1. 一次只問我一個問題，用國中生聽得懂的話，回答簡短。
+2. 每一句都先問我要看「第幾筆」數據或哪一個觀察，再讓我自己判斷對或錯；就算我原本判斷對了，也要我用數據說出為什麼。
+3. 第1句：請我想想「看起來變小」和「像真的變小」有什麼不同，再用觀察1判斷。
+4. 第2句：請我比較三筆數據的物距和像距。
+5. 第3句：請我用觀察3判斷，並問我：光真的有跑到玻璃板後面嗎？這種像叫做什麼像？
+6. 第4句：請我用觀察2判斷，並說出像和物體對鏡面是什麼關係。
+7. 如果我的數據看起來怪怪的，請我回模擬實驗再量一次。
+最後一步（很重要）：全部討論完，先請我自己試著說出平面鏡成像的特性；再用下面的格式，給我一句完整、正確、國中生看得懂的結論（40 字以內），讓我清楚知道要記下哪一句：
+📌 請寫下這句結論：……
+這個格式只在對話最後出現一次。`;
+}
+function copyPrompt(){
+  const txt=promptText(),f=$("fb");
+  const fb=()=>{document.querySelector("details").open=true;const rg=document.createRange();rg.selectNodeContents($("prompt"));const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);f.className="fb bad";f.textContent="已幫你選取文字，請長按後選「拷貝」。";};
+  try{navigator.clipboard.writeText(txt).then(()=>{f.className="fb good";f.textContent="已複製！到 e度 對話框貼上就可以開始。";},fb);}catch(e){fb();}
+}
+
+/* ===== 一鍵把證據卡存成圖片 ===== */
+function wrap(g,text,maxW){const out=[];let line="";for(const ch of String(text)){if(g.measureText(line+ch).width>maxW){out.push(line);line=ch;}else line+=ch;}if(line)out.push(line);return out;}
+function cardCanvas(){
+  const W=1080,F='"Noto Sans TC","PingFang TC",sans-serif',cv=document.createElement("canvas"),g=cv.getContext("2d");
+  g.font=`30px ${F}`;
+  const stLines=STMTS.map(t=>wrap(g,t,600));
+  const conLines=wrap(g,st.concl||"",W-160);
+  const obsL=[`像的大小：${ob("o2")}`,`連線與玻璃板：${ob("o3")}`,`紙屏上：${ob("o4")}`];
+  const H=230+TARGETS.length*48+obsL.length*44+60+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+120+conLines.length*44+120;
+  cv.width=W;cv.height=H;
+  g.fillStyle="#EFF2F5";g.fillRect(0,0,W,H);
+  g.fillStyle="#fff";g.strokeStyle="#2C5D8A";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
+  g.fillStyle="#2C5D8A";g.font=`700 26px ${F}`;g.fillText("八年級自然・4-2 平面鏡成像",80,100);
+  g.fillStyle="#1B2430";g.font=`900 52px ${F}`;g.fillText("我的證據卡",80,168);
+  const who=`第 ${st.grp} 組　座號 ${st.seat}`;g.font=`700 34px ${F}`;g.fillText(who,W-80-g.measureText(who).width,168);
+  let y=200;const bh=TARGETS.length*48+obsL.length*44+40;
+  g.fillStyle="#DCE7F2";g.beginPath();g.roundRect(80,y,W-160,bh,16);g.fill();
+  g.fillStyle="#1B2430";g.font=`28px ${F}`;
+  TARGETS.forEach((_,ix)=>{g.fillText(`第 ${ix+1} 筆：物距 ${a(st.d["p"+(ix+1)])} cm　像距 ${a(st.d["q"+(ix+1)])} cm`,104,y+46+ix*48);});
+  obsL.forEach((l,k)=>g.fillText(l,104,y+46+TARGETS.length*48+k*44));
+  y+=bh+70;g.font=`700 24px ${F}`;g.fillStyle="#566273";g.fillText("敘述",80,y-12);g.fillText("直覺",W-300,y-12);g.fillText("最後",W-170,y-12);
+  STMTS.forEach((t,ix)=>{const n=ix+1,ls=stLines[ix];g.strokeStyle="#CBD3DD";g.lineWidth=2;g.beginPath();g.moveTo(80,y);g.lineTo(W-80,y);g.stroke();
+    g.font=`30px ${F}`;g.fillStyle="#1B2430";ls.forEach((l,k)=>g.fillText((k?"　 ":`${n}. `)+l,80,y+44+k*42));
+    g.font=`700 40px ${F}`;g.fillText(mk(st.pre[n]),W-290,y+48);
+    g.fillStyle=st.pre[n]!==st.post[n]?"#8A4B22":"#1B2430";g.fillText(mk(st.post[n]),W-160,y+48);
+    y+=Math.max(1,ls.length)*42+30;});
+  const chg=changed();
+  g.fillStyle="#8A4B22";g.font=`700 30px ${F}`;g.fillText(chg.length?`改變判斷：第 ${chg.join("、")} 題`:"判斷都沒有改變",80,y+50);
+  y+=120;g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("📌 e度 結論：",80,y);g.font=`30px ${F}`;conLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));
+  return cv;
+}
+function saveCard(){
+  const f=$("fb"),cv=cardCanvas(),name=`4-2平面鏡證據卡_第${st.grp}組_${st.seat||"座號"}.png`;
+  cv.toBlob(async blob=>{
+    const file=new File([blob],name,{type:"image/png"});
+    try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"4-2 平面鏡證據卡"});f.className="fb good";f.textContent="完成！";return;}}catch(e){if(e&&e.name==="AbortError")return;}
+    const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+    f.className="fb good";f.innerHTML=`已下載圖片。如果沒看到，<a href="${url}" target="_blank" rel="noopener">點這裡打開圖片</a>，再長按存到相簿。`;
+  },"image/png");
+}
+
+/* ===== 左邊切換 ===== */
+function setLeft(mode){
+  ["Sim","Life","Data"].forEach(k=>$("pane"+k).classList.toggle("on",k.toLowerCase()===mode));
+  if(mode==="data")renderData();
+  if(mode==="sim")PS.draw();
+  if(mode==="life")AMB.draw();
+  const B={sim:`<span>從上往下看的實驗桌・拖曳兩支蠟燭・尺從玻璃板（0）往兩邊量</span>`,
+    life:`<span>救護車與前車的後照鏡</span>`,
+    data:`<span>e度 問你數據時，看這裡</span><button type="button" id="toSim">回實驗桌</button>`};
+  $("bar").innerHTML=B[mode];
+  if($("toSim"))$("toSim").addEventListener("click",()=>setLeft("sim"));
+}
+
+/* ===== 平面鏡實驗桌（上視圖；1 cm = 10 單位） ===== */
+const PS=(function(){
+  const NS="http://www.w3.org/2000/svg",svg=$("psim");
+  const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
+  const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),snap=(v,s)=>Math.round(v/s)*s;
+  function candle(p,lit,op){const g=E("g",{opacity:op??1},p);if(lit)E("circle",{r:17,fill:"rgba(251,146,60,.28)"},g);E("circle",{r:9,fill:"#fde68a",stroke:"#d97706","stroke-width":2},g);if(lit)E("circle",{r:4,fill:"#f97316"},g);E("circle",{r:24,fill:"transparent"},g);return g;}
+  const matched=()=>st.U.x===600-st.L.x&&st.U.y===st.L.y&&!st.screen;
+  function draw(){
+    svg.innerHTML="";
+    for(let x=0;x<=600;x+=10)E("line",{x1:x,y1:25,x2:x,y2:310,stroke:x%50===0?"#e2e8f0":"#f1f5f9"});
+    for(let y=30;y<=310;y+=10)E("line",{x1:0,y1:y,x2:600,y2:y,stroke:y%50===0?"#e2e8f0":"#f1f5f9"});
+    E("rect",{x:297,y:25,width:6,height:285,fill:"#bae6fd",stroke:"#0284c7"});
+    T(svg,300,18,"玻璃板（當作平面鏡）",{fill:"#0369a1"});
+    for(let d=0;d<=290;d+=10){for(const s of[-1,1]){const x=300+s*d;if(x<0||x>600)continue;E("line",{x1:x,y1:314,x2:x,y2:d%50===0?324:319,stroke:"#64748b"});if(d%50===0&&!(d===0&&s===1))T(svg,x,338,d/10,{"font-size":11,fill:"#475569"});}}
+    T(svg,24,338,"cm",{"font-size":11,fill:"#475569"});
+    const L=st.L,U=st.U,gx=600-L.x;
+    const ghost=candle(svg,true,.35);ghost.style.pointerEvents="none";ghost.setAttribute("transform",`translate(${gx},${L.y})`);
+    if(!matched()&&!st.screen)T(svg,gx,L.y-24,"像",{"font-size":12,fill:"#94a3b8"});
+    if(matched()){
+      E("line",{x1:L.x,y1:L.y,x2:U.x,y2:U.y,stroke:"#16a34a","stroke-dasharray":"5 4","stroke-width":2});
+      E("path",{d:`M 303 ${L.y-10} L 313 ${L.y-10} L 313 ${L.y}`,fill:"none",stroke:"#16a34a","stroke-width":2});
+    }
+    const lit=candle(svg,true);lit.setAttribute("transform",`translate(${L.x},${L.y})`);lit.style.cursor="grab";
+    T(svg,L.x,L.y-24,"點燃的蠟燭",{"font-size":12,fill:"#b45309"});
+    let un=null;
+    if(st.screen){
+      E("rect",{x:gx-3,y:L.y-40,width:6,height:80,fill:"#fff",stroke:"#475569","stroke-width":2});
+      T(svg,gx+34,L.y-46,"紙屏",{"font-size":13,fill:"#334155","font-weight":700});
+      const ins=E("g",{transform:`translate(${Math.min(gx+40,470)},${clamp(L.y+20,40,200)})`});
+      E("rect",{x:0,y:0,width:120,height:84,rx:8,fill:"#fff",stroke:"#334155","stroke-width":2},ins);
+      T(ins,60,-6,"紙屏上看到的",{"font-size":11,fill:"#334155"});T(ins,60,48,"（一片白）",{"font-size":12,fill:"#94a3b8"});
+    }else{
+      un=candle(svg,matched());un.setAttribute("transform",`translate(${U.x},${U.y})`);un.style.cursor="grab";
+      T(svg,U.x,U.y+34,matched()?"和像重疊了！":"沒點燃的蠟燭",{"font-size":12,fill:matched()?"#16a34a":"#475569","font-weight":matched()?700:400});
+    }
+    dragOn(lit,q=>{st.L={x:clamp(snap(q.x,5),60,285),y:clamp(snap(q.y,5),45,295)};});
+    if(un)dragOn(un,q=>{let x=clamp(q.x,315,585),y=clamp(q.y,45,295);if(Math.hypot(x-(600-st.L.x),y-st.L.y)<14){x=600-st.L.x;y=st.L.y;}else{x=Math.round(x);y=Math.round(y);}st.U={x,y};});
+  }
+  function pt(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+  let dragging=null;
+  function dragOn(el,fn){el.addEventListener("pointerdown",e=>{e.preventDefault();dragging=fn;svg.setPointerCapture(e.pointerId);fn(pt(e));save();draw();});}
+  svg.addEventListener("pointermove",e=>{if(!dragging)return;dragging(pt(e));draw();});
+  const end=()=>{if(dragging){dragging=null;save();const k=STEPS[st.i]&&STEPS[st.i].k||"";if(k.includes("找像")){const n=parseInt(k.replace(/\D/g,""));if(st.d["ok"+n]){st.d["ok"+n]=false;save();const f=$("fb");if(f){f.className="fb";f.textContent="蠟燭動過了，重新讀距離再按檢查。";}navState();}}}};
+  svg.addEventListener("pointerup",end);svg.addEventListener("pointercancel",end);
+  return{draw,matched,p:()=>(300-st.L.x)/10,q:()=>(st.U.x-300)/10};
+})();
+
+/* ===== 生活應用：救護車與後照鏡 ===== */
+const AMB=(function(){
+  const NS="http://www.w3.org/2000/svg",svg=$("amb");
+  const E=(t,at,p)=>{const n=document.createElementNS(NS,t);for(const k in at)n.setAttribute(k,at[k]);(p||svg).appendChild(n);return n;};
+  const T=(p,x,y,txt,at={})=>{const t=E("text",Object.assign({x,y,"font-size":13,fill:"#374151","text-anchor":"middle"},at),p);t.textContent=txt;return t;};
+  function truck(p){
+    E("rect",{x:-150,y:-90,width:300,height:180,rx:22,fill:"#F8FAFC",stroke:"#334155","stroke-width":4},p);
+    E("rect",{x:-120,y:-70,width:240,height:60,rx:8,fill:"#BFDBFE",stroke:"#334155","stroke-width":3},p);
+    E("rect",{x:-150,y:10,width:300,height:36,fill:"#DC2626"},p);
+    const t=E("g",{transform:"translate(0,38) scale(-1,1)"},p);T(t,0,0,"救護車",{"font-size":30,fill:"#fff","font-weight":900});
+    E("circle",{cx:-110,cy:68,r:12,fill:"#FDE68A",stroke:"#334155","stroke-width":2},p);E("circle",{cx:110,cy:68,r:12,fill:"#FDE68A",stroke:"#334155","stroke-width":2},p);
+  }
+  function draw(){
+    svg.innerHTML="";E("rect",{x:0,y:0,width:600,height:360,fill:"#E2E8F0"});
+    if(!st.flip){
+      T(svg,300,40,"直接看救護車車頭",{"font-size":18,fill:"#334155","font-weight":700});
+      truck(E("g",{transform:"translate(300,200)"}));
+      $("lseen").textContent="直接看：字是反的";$("lseen").style.color="var(--muted)";
+    }else{
+      T(svg,300,40,"前車司機從後照鏡（平面鏡）看",{"font-size":18,fill:"#334155","font-weight":700});
+      E("rect",{x:90,y:62,width:420,height:270,rx:40,fill:"#0F172A"});
+      E("rect",{x:104,y:76,width:392,height:242,rx:30,fill:"#CBD5E1"});
+      truck(E("g",{transform:"translate(300,200) scale(-0.8,0.8)"}));
+      $("lseen").textContent="🪞 從後照鏡看：字變正的了！";$("lseen").style.color="var(--ok)";
+    }
+  }
+  return{draw};
+})();
+
+/* ===== 步驟切換 ===== */
+function go(delta){st.i=Math.max(0,Math.min(STEPS.length-1,st.i+delta));save();render();}
+function navState(){
+  const s=STEPS[st.i],nx=$("next");if(!nx)return;
+  nx.disabled=!(s.check?!!st.obs["c"+st.i]:(s.ok?s.ok():true));
+}
+function render(){
+  const s=STEPS[st.i];
+  const si=STEPS.findIndex(x=>x.k==="紙屏實驗");if(st.i<si&&st.screen){st.screen=false;save();}
+  setLeft(s.left);
+  let h=`<div class="step"><div class="kicker">${s.k}</div>${s.render()}`;
+  if(s.check)h+=`<div><button type="button" class="opt" id="ck" aria-pressed="${!!st.obs["c"+st.i]}">✓ ${s.check}</button></div>`;
+  h+=`<div class="nav"><button type="button" class="btn" id="prev"${st.i?"":" disabled"}>上一步</button>${s.last?"":`<button type="button" class="btn primary" id="next">下一步</button>`}</div></div>`;
+  $("side").innerHTML=h;
+  if(s.bind)s.bind();
+  if(s.check)$("ck").addEventListener("click",e=>{st.obs["c"+st.i]=true;save();e.currentTarget.setAttribute("aria-pressed","true");navState();});
+  $("prev").addEventListener("click",()=>go(-1));
+  if($("next"))$("next").addEventListener("click",()=>go(1));
+  navState();
+  $("progTxt").textContent=`${st.i+1}／${STEPS.length}`;
+  $("progBar").style.width=(100*(st.i+1)/STEPS.length)+"%";
+}
+if(st.i>=STEPS.length)st.i=0;
+/* 紙屏實驗之前，沒點燃的蠟燭都在；回到前面的步驟就收起紙屏 */
+render();
+</script>
+</body>
+</html>
