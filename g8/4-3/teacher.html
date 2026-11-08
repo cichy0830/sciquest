@@ -51,6 +51,16 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);f
 .todo li::before{content:counter(s);font-family:var(--num);font-weight:600;font-size:.8em;color:var(--card);background:var(--water);border-radius:8px;min-width:1.6em;text-align:center;padding:0 .2em}
 .todo b{color:var(--water)}
 .extra{display:grid;gap:10px}
+.stage.withsim{grid-template-columns:minmax(0,1.8fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);align-content:stretch;overflow:hidden}
+.stage.withsim .txtcol{display:grid;align-content:start;gap:clamp(8px,1vw,16px);overflow:auto;min-height:0}
+.stage.withsim .todo li{font-size:clamp(15px,1.3vw,24px)}
+.stage.withsim h1{font-size:clamp(20px,2vw,36px)}
+.stage.withsim.big{grid-template-columns:1fr}.stage.withsim.big .txtcol{display:none}
+.simcol{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:8px;min-height:0}
+#simSlot{min-height:0;border:1px solid var(--rule);border-radius:12px;overflow:hidden;background:#fff}
+#simSlot iframe{width:100%;height:100%;border:0;display:block}
+.simbar{display:flex;gap:8px;flex-wrap:wrap}
+.simbar button{font:inherit;font-size:clamp(13px,1vw,17px);padding:6px 14px;border-radius:999px;border:1px solid var(--rule);background:var(--card);cursor:pointer}
 .box{border-radius:14px;padding:clamp(10px,1.2vw,20px);background:var(--beam-soft);font-size:clamp(16px,1.6vw,28px);line-height:1.5}
 .box.water{background:var(--water-soft)}
 .box .k{display:block;font-size:.62em;font-weight:900;letter-spacing:.12em;color:var(--beam)}
@@ -167,20 +177,20 @@ const S=[
   extra:"stmts",watch:"4 句是非題對應四個迷思，<b>把握度</b>讓老師看出「有把握卻判斷錯」的學生。"},
  {nm:"教師示範",ph:1,min:3,tags:["導學"],h:"看大螢幕：怎麼量角度",
   todo:["上方選<b>空氣</b>、下方選<b>水</b>，打開雷射","量角器中心對準入射點","<b>0° 對準法線</b>、<b>90° 對齊水面</b>，從法線讀角度"],
-  code:"43",watch:"示範後公布<b>通關數字</b>，全班同時開始，避免有人搶先跳步。"},
+  sim:true,code:"43",watch:"示範後公布<b>通關數字</b>，全班同時開始，避免有人搶先跳步。"},
  {nm:"模擬驗證",ph:1,min:6,tags:["自學","共學"],h:"移動光源，量三組數據",
   todo:["<b>移動光源</b>：從正上方慢慢往旁邊拖，看光什麼時候會轉彎","<b>第 1 組</b> 垂直射入水　<b>第 2 組</b> 斜射入水（約 45°）","<b>第 3 組</b> 水→空氣：入射角調成第 2 組的折射角","組內比對第 2 組的折射角，<b>相差超過 3° 的人重量</b>"],
-  extra:"tip",adv:["跟大家一起量，<b>同時完成自己的證據卡</b>（含 e度 對話）","完成後舉手，老師確認後準備進組"],
+  extra:"tip",adv:["網頁<b>不會鎖顧問</b>：不用等通關數字，一路做到證據卡（含 e度 對話）","看到「請根據流程指示，參與並引導小組討論」，就舉手給老師看，準備進組"],
   watch:"網頁<b>一次只給一個動作</b>，並依折射定律即時檢查角度；顧問團在這段先完成整套流程。"},
  {nm:"檢查點",ph:1,min:2,tags:["導學"],h:"全班停：光往哪裡偏？",
   todo:["請大家<b>蓋上 iPad、抬頭</b>","問：光從<b>空氣進入水</b>，往哪裡偏？從<b>水進入空氣</b>呢？","請 2～3 位同學<b>用自己的數據</b>回答，再公布通關數字"],
   code:"27",watch:"網頁在這裡<b>鎖住</b>，學生無法自己往下點；老師先確認全班看懂數據，再放行去問 e度。"},
  {nm:"問 e度",ph:1,min:7,tags:["AI 協作"],h:"帶著自己的數據問 e度",
-  todo:["依角色選精靈：<b>顧問→自然探究精靈</b>、<b>組長→一般精靈</b>、<b>組員→樂學精靈</b>","按「<b>複製給 e度 的話</b>」貼上；e度 每次只講 2～3 句，<b>讀完再回答</b>","討論完，把 e度 的結論<b>複製、貼回網頁</b>，完成最後判斷"],
+  todo:["依角色選擇：<b>顧問→自然探究精靈</b>、<b>組長→一般模式</b>、<b>組員→樂學精靈</b>","按「<b>複製給 e度 的話</b>」貼上；e度 每次只講 2～3 句，<b>讀完再回答</b>","討論完，把 e度 的結論<b>複製、貼回網頁</b>，完成最後判斷"],
   extra:"split",adv:["到<b>負責的組</b>坐下協助","幫卡住的同學複製、貼上、開分割畫面","同學答不出 e度 時，<b>只提示「看第幾組數據」</b>，不說答案"],
   watch:"每位學生帶去的數據不同，e度 <b>一次只問一題、不給答案</b>；已完成證據卡的顧問團進組協助。"},
  {nm:"組內共學",ph:1,min:5,tags:["共學"],h:"每人說一句：為什麼加了水就看得到硬幣？",code:"86",
-  todo:["先問全班：誰跟 e度 討論後<b>改變了判斷</b>？為什麼？聽完再公布通關數字","用<b>自己的第 3 組數據</b>當證據，照句型說出來","組長點名，<b>每個人都要說</b>；全組一起把那句話修得更好"],
+  todo:["先問全班：誰<b>改變了判斷</b>，或從<b>猜的變有把握</b>？為什麼？聽完再公布通關數字","用<b>自己的第 3 組數據</b>當證據，照句型說出來","組長點名，<b>每個人都要說</b>；全組一起把那句話修得更好"],
   extra:"frame",adv:["協助組長，讓<b>每個組員都說出自己的一句話</b>","聽完後引導：光從哪裡出發？往哪裡偏？","帶全組<b>把一句話修得更清楚</b>，寫在網頁的「一句話」"],
   watch:"不做開放式討論，只回答開場影片的同一個問題；<b>句型＋自己的數據</b>讓每個人都講得出來，顧問團帶著修句子。"},
  {nm:"上傳 Padlet",ph:2,min:3,tags:["互學"],h:"每組上傳一張代表證據卡",
@@ -227,18 +237,29 @@ function extra(kind){
     default:return "";
   }
 }
+const SIM_MAIN="https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_all.html?locale=zh_TW&screens=1";
+const SIM_BACKUP="bending-light_all.html?locale=zh_TW&screens=1";
+let simFrame=null,simBig=false,simAlt=false;
+function getSim(){if(!simFrame){simFrame=document.createElement("iframe");simFrame.title="因材網物理模擬：光的折射";simFrame.allow="fullscreen";simFrame.src=SIM_MAIN;}return simFrame;}
 function render(){
   const s=S[cur];
   $("track").querySelectorAll(".node").forEach((b,i)=>{b.classList.toggle("done",i<cur);b.classList.toggle("now",i===cur);b.setAttribute("aria-current",i===cur?"step":"false");});
   $("phases").querySelectorAll(".phase").forEach((p,i)=>p.classList.toggle("now",i===s.ph));
-  $("stage").innerHTML=`<div class="eyebrow">${PH[s.ph].nm}・${s.nm}${s.tags.map(t=>`<span class="chip" style="background:var(${TAG[t]})">${t}</span>`).join("")}</div>
+  if(simFrame&&simFrame.parentNode)simFrame.parentNode.removeChild(simFrame);
+  $("stage").classList.toggle("withsim",!!s.sim);$("stage").classList.toggle("big",!!s.sim&&simBig);
+  $("stage").innerHTML=(s.sim?`<div class="simcol"><div id="simSlot"></div><div class="simbar"><button type="button" id="simBig">${simBig?"顯示步驟說明":"放大模擬器"}</button><button type="button" id="simSwap">${simAlt?"改回官網版":"載不出來？換備用版"}</button></div></div><div class="txtcol">`:"")+`<div class="eyebrow">${PH[s.ph].nm}・${s.nm}${s.tags.map(t=>`<span class="chip" style="background:var(${TAG[t]})">${t}</span>`).join("")}</div>
     <h1>${s.h}</h1>
     <ol class="todo">${s.todo.map(t=>`<li><span>${t}</span></li>`).join("")}</ol>
     ${extra(s.extra)}
     ${s.code?`<div class="extra"><button type="button" class="reveal" id="rv">${revealed[s.code]?"通關數字":"問完了，按這裡公布通關數字"}</button>${revealed[s.code]?`<div class="code">${s.code}</div>`:""}</div>`:""}
-    <div class="watch"><b>觀課看點：</b>${s.watch}</div>`;
+    <div class="watch"><b>觀課看點：</b>${s.watch}</div>`+(s.sim?`</div>`:"");
+  if(s.sim){$("simSlot").appendChild(getSim());
+    /* 不重繪整個畫面，避免模擬器重新載入、示範到一半的設定消失 */
+    $("simBig").addEventListener("click",e=>{simBig=!simBig;$("stage").classList.toggle("big",simBig);e.currentTarget.textContent=simBig?"顯示步驟說明":"放大模擬器";});
+    $("simSwap").addEventListener("click",e=>{simAlt=!simAlt;getSim().src=simAlt?SIM_BACKUP:SIM_MAIN;e.currentTarget.textContent=simAlt?"改回官網版":"載不出來？換備用版";});}
   if(s.extra==="qr"&&window.QRCode){new QRCode($("qr"),{text:SITE,width:Math.min(220,Math.round(innerWidth*.12)),height:Math.min(220,Math.round(innerWidth*.12)),correctLevel:QRCode.CorrectLevel.M});}
-  if($("rv"))$("rv").addEventListener("click",()=>{revealed[s.code]=true;render();});
+  if($("rv"))$("rv").addEventListener("click",e=>{revealed[s.code]=true;
+    if(s.sim){const b=e.currentTarget;b.textContent="通關數字";if(!b.nextElementSibling){const d=document.createElement("div");d.className="code";d.textContent=s.code;b.after(d);}}else render();});
   $("tLab").textContent=`${s.nm}・${s.min} 分鐘`;
   $("adv").hidden=!s.adv;$("adv").innerHTML=s.adv?`<span class="k">顧問團任務</span><ul>${s.adv.map(t=>`<li>${t}</li>`).join("")}</ul>`:"";
   tick(0);

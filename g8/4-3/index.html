@@ -91,6 +91,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:14px}
 .grp .val b{font-size:24px;font-variant-numeric:tabular-nums}
 .grp .obs{font-size:15px;color:var(--muted)}
 .mine{display:grid;gap:4px;font-size:15px}
+.lr::after{content:"左邊"}
+@media (max-width:900px), (orientation:portrait){.lr::after{content:"上方"}}
+.split.noleft{grid-template-columns:1fr!important;grid-template-rows:1fr!important}.split.noleft .left{display:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -121,7 +124,7 @@ const GATE_CODE="43"; /* 老師示範完公布的通關數字 */
 /* 三個檢查點：老師在全班面前問完問題，再公布數字放行 */
 const GATES={A:"43",B:"27",C:"86"};
 /* 三種角色：各用不同的 e度 精靈與提示詞 */
-const ROLES={adv:{nm:"顧問",bot:"自然探究精靈"},lead:{nm:"組長",bot:"一般精靈"},mem:{nm:"組員",bot:"樂學精靈"}};
+const ROLES={adv:{nm:"顧問",bot:"自然探究精靈"},lead:{nm:"組長",bot:"一般模式"},mem:{nm:"組員",bot:"樂學精靈"}};
 
 /* ===== 4 句迷思是非題（正解只在教師資料，網頁不顯示） ===== */
 const STMTS=[
@@ -137,7 +140,7 @@ const TOL=4;
 
 /* ===== 狀態（存在這台 iPad 的瀏覽器裡） ===== */
 const KEY="refr43-v3";
-let st={seat:"",role:"",gates:{},watched:false,pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
+let st={seat:"",role:"",gates:{},pconf:{},watched:false,pre:{},conf:{},d:{},obs:{},post:{},why:"",i:0,skip:{},tries:{},gate:false,sim:"main"};
 try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s)st=Object.assign(st,s);}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}};
 const $=id=>document.getElementById(id);
@@ -150,13 +153,13 @@ const mk=v=>v==="O"?"○":v==="X"?"✗":"—";
 const STEPS=[];
 const add=o=>STEPS.push(o);
 
-add({k:"開始",left:"video",render:()=>`
+add({k:"開始",left:"none",render:()=>`
   <h2>先寫下你的座號</h2>
   <div class="field" style="max-width:200px"><span class="lab">座號</span><input id="seat" inputmode="numeric" value="${esc(st.seat)}" aria-label="座號"></div>`,
   bind:()=>$("seat").addEventListener("input",e=>{st.seat=e.target.value.trim();save();navState();}),
   ok:()=>!!st.seat});
 
-add({k:"選角色",left:"video",render:()=>`
+add({k:"選角色",left:"none",render:()=>`
   <h2>你今天的角色是？</h2>
   <div class="opts" id="roles">${Object.entries(ROLES).map(([v,r])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.role===v}">${r.nm}</button>`).join("")}</div>
   <p class="note">選錯了可以按「上一步」回來改。等一下問 e度 時，不同角色會拿到不同的提示詞。</p>`,
@@ -165,7 +168,7 @@ add({k:"選角色",left:"video",render:()=>`
   ok:()=>!!st.role});
 
 add({k:"看影片",left:"video",render:()=>`
-  <h2>看左邊的影片</h2>
+  <h2>看<span class="lr"></span>的影片</h2>
   <p>按影片的<span class="ui">▶ 播放</span>，從頭看到最後。</p>
   <p class="note">看完才能按「下一步」。看不清楚可以再看一次。</p>
   <p class="fb${st.watched?" good":""}" id="fb" role="status">${st.watched?"看完了！按下一步。":""}</p>`,
@@ -184,23 +187,25 @@ STMTS.forEach((t,ix)=>{const n=ix+1;add({k:`你覺得呢？ ${n}／${STMTS.lengt
     if(st.pre[n]&&st.conf[n])setTimeout(()=>go(1),350);})),
   ok:()=>!!(st.pre[n]&&st.conf[n])});});
 
-add({k:"等一下",left:"sim",render:()=>`
+add({k:"等一下",left:"sim",render:()=>isAdv()?`<h2>顧問先走：開始量數據</h2>${ADV_PASS}`:`
   <h2>看老師示範，等老師公布通關數字</h2>
   <div class="gate"><span>老師會在大螢幕示範怎麼用模擬器。示範完會說出一個數字，填進來就能開始。</span>
   <div class="field" style="max-width:180px"><span class="lab">通關數字</span><input id="code" inputmode="numeric" aria-label="通關數字" value="${st.gate?GATE_CODE:""}"></div></div>
   <p class="fb" id="fb" role="status"></p>`,
-  bind:()=>$("code").addEventListener("input",e=>{st.gate=e.target.value.trim()===GATE_CODE;save();navState();
+  bind:()=>!isAdv()&&$("code").addEventListener("input",e=>{st.gate=e.target.value.trim()===GATE_CODE;save();navState();
     const f=$("fb");f.className="fb"+(st.gate?" good":"");f.textContent=st.gate?"可以開始了！":"";}),
-  ok:()=>st.gate});
+  ok:()=>st.gate||isAdv()});
 
-function gateStep(key,k,title,body){add({k,left:"data",render:()=>`
+const isAdv=()=>st.role==="adv";
+const ADV_PASS=`<div class="tip"><b>你是顧問：不用等通關數字</b><span>直接按「下一步」繼續往前做，先完成自己的證據卡。</span></div>`;
+function gateStep(key,k,title,body){add({k,left:"data",render:()=>isAdv()?`<h2>顧問先走：繼續往下做</h2>${ADV_PASS}`:`
   <h2>${title}</h2>
   <div class="gate"><span>${body}</span>
   <div class="field" style="max-width:180px"><span class="lab">通關數字</span><input id="code" inputmode="numeric" aria-label="通關數字" value="${st.gates[key]?GATES[key]:""}"></div></div>
   <p class="fb${st.gates[key]?" good":""}" id="fb" role="status">${st.gates[key]?"可以繼續了！":""}</p>`,
-  bind:()=>$("code").addEventListener("input",e=>{st.gates[key]=e.target.value.trim()===GATES[key];save();navState();
+  bind:()=>!isAdv()&&$("code").addEventListener("input",e=>{st.gates[key]=e.target.value.trim()===GATES[key];save();navState();
     const f=$("fb");f.className="fb"+(st.gates[key]?" good":"");f.textContent=st.gates[key]?"可以繼續了！":"";}),
-  ok:()=>!!st.gates[key]});}
+  ok:()=>isAdv()||!!st.gates[key]});}
 
 /* --- 空氣 → 水：第 1 組（垂直）、第 2 組（斜射） --- */
 add({k:"空氣→水",left:"sim",render:()=>`
@@ -266,7 +271,7 @@ add({k:"問 e度",left:"data",render:()=>`
   <a class="btn" href="https://adl.edu.tw/" target="_blank" rel="noopener">開啟因材網</a></div>
   <p class="fb" id="fb" role="status"></p>
   <div class="tip"><b>e度 問「看第幾組數據」時</b><span>${dataSmall()}</span></div>
-  <p class="note">e度 每次只會講 2～3 句，<b>一定要讀完再回答</b>。iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看左邊「我的數據」，一邊回答 e度。</p>
+  <p class="note">e度 每次只會講 2～3 句，<b>一定要讀完再回答</b>。iPad 小技巧：把因材網和這一頁並排（分割畫面），一邊看<span class="lr"></span>「我的數據」，一邊回答 e度。</p>
   <details><summary>看看要貼給 e度 的內容</summary><pre id="prompt" tabindex="0" aria-label="提示詞內容"></pre></details>
   <div class="tip"><b>📌 討論到最後，e度 會給你一句結論</b><span>在 e度 長按「請寫下這句結論」後面那一句，選「拷貝」，回來貼在這裡，才能按下一步。</span></div>
   <textarea id="concl" aria-label="e度 給的結論">${esc(st.concl||"")}</textarea>`,
@@ -278,14 +283,16 @@ add({k:"最後判斷",left:"data",render:()=>`
   <h2>跟 e度 討論後，再判斷一次</h2>
   <div style="display:grid;gap:8px">${STMTS.map((t,ix)=>{const n=ix+1;return `<div class="stmt"><div><b>${n}.</b> ${t}</div>
     <div class="row"><div class="opts" data-n="${n}">${["○ 對","✗ 錯"].map((l,j)=>`<button type="button" class="opt" data-v="${j?"X":"O"}" aria-pressed="${st.post[n]===(j?"X":"O")}">${l}</button>`).join("")}</div>
-    <span class="was">原本：${mk(st.pre[n])}</span></div></div>`;}).join("")}</div>`,
+    <div class="opts" data-c="${n}">${[["sure","有把握"],["unsure","還不確定"]].map(([v,l])=>`<button type="button" class="opt" data-v="${v}" aria-pressed="${st.pconf[n]===v}">${l}</button>`).join("")}</div>
+    <span class="was">原本：${mk(st.pre[n])}${confTxt(st.conf[n])}</span></div></div>`;}).join("")}</div>`,
   bind:()=>document.querySelectorAll(".opts").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;
-    st.post[g.dataset.n]=b.dataset.v;save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
-  ok:()=>STMTS.every((_,ix)=>st.post[ix+1])});
+    if(g.dataset.n)st.post[g.dataset.n]=b.dataset.v;else st.pconf[g.dataset.c]=b.dataset.v;
+    save();g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));navState();})),
+  ok:()=>STMTS.every((_,ix)=>st.post[ix+1]&&st.pconf[ix+1])});
 
 /* --- 檢查點 C：e度 討論完，全班停下來 --- */
 gateStep("C","檢查點・問完 e度","🛑 停！把 iPad 蓋上，抬頭看老師",
-  "老師會問：誰跟 e度 討論後<b>改變了判斷</b>？為什麼改？聽完，老師會公布下一個通關數字，開始組內共學。");
+  "老師會問：誰跟 e度 討論後<b>改變了判斷</b>，或從<b>猜的變成有把握</b>？為什麼？聽完，老師會公布下一個通關數字，開始組內共學。");
 
 add({k:"組內共學・一句話",left:"data",render:()=>`
   <h2>組內每人說一句：為什麼加了水的杯子，就看得到硬幣？</h2>
@@ -298,11 +305,12 @@ add({k:"組內共學・一句話",left:"data",render:()=>`
 add({k:"完成",left:"data",render:()=>{
   const chg=changed();
   return `<h2>完成！這是你的證據卡</h2>
+  ${isAdv()?`<div class="gate" style="border-style:solid"><b style="font-size:20px;color:var(--rope)">📣 請根據流程指示，參與並引導小組討論</b></div>`:""}
   <div class="card"><div><b>座號 ${esc(st.seat)}</b>・${roleNm()}・4-3 光的折射</div>
   <table><thead><tr><th>題</th><th>直覺</th><th>最後</th></tr></thead><tbody>
-  ${STMTS.map((_,ix)=>{const n=ix+1;return `<tr><td>${n}</td><td>${mk(st.pre[n])}${st.conf[n]==="guess"?"（猜）":""}</td><td${st.pre[n]!==st.post[n]?' class="chg"':""}>${mk(st.post[n])}</td></tr>`;}).join("")}
+  ${STMTS.map((_,ix)=>{const n=ix+1;return `<tr><td>${n}</td><td>${mk(st.pre[n])}${confTxt(st.conf[n])}</td><td${st.pre[n]!==st.post[n]||(st.conf[n]==="guess"&&st.pconf[n]==="sure")?' class="chg"':""}>${mk(st.post[n])}${confTxt(st.pconf[n])}</td></tr>`;}).join("")}
   </tbody></table>
-  <div>${chg.length?`<span class="chg">改變判斷：第 ${chg.join("、")} 題</span>`:"判斷都沒有改變"}</div>
+  <div>${growthLines().map(l=>`<span class="chg">${l}</span>`).join("<br>")}</div>
   <div><b>修好的一句話：</b>${esc(st.why)}</div></div>
   <button type="button" class="btn primary" id="shot">📷 一鍵存成圖片</button>
   <p class="fb" id="fb" role="status"></p>
@@ -353,6 +361,15 @@ function bindChoice(key,right,good,bad){
   g.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;st.obs[key]=b.dataset.v;save();
     g.querySelectorAll(".opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));showFb();navState();});
 }
+const confTxt=v=>v==="guess"?"（猜的）":v==="sure"?"（有把握）":v==="unsure"?"（不確定）":"";
+const confShort=v=>v==="guess"?"猜的":v==="sure"?"有把握":v==="unsure"?"不確定":"";
+const firmer=()=>STMTS.map((_,ix)=>{const n=ix+1;return st.conf[n]==="guess"&&st.pconf[n]==="sure"?n:null;}).filter(Boolean);
+const unsureL=()=>STMTS.map((_,ix)=>{const n=ix+1;return st.pconf[n]==="unsure"?n:null;}).filter(Boolean);
+function growthLines(){const L=[],c=changed(),f=firmer(),u=unsureL();
+  L.push(c.length?`改變判斷：第 ${c.join("、")} 題`:"判斷都沒有改變");
+  if(f.length)L.push(`從「猜的」變「有把握」：第 ${f.join("、")} 題`);
+  if(u.length)L.push(`還不確定：第 ${u.join("、")} 題`);
+  return L;}
 const changed=()=>STMTS.map((_,ix)=>{const n=ix+1;return st.pre[n]&&st.post[n]&&st.pre[n]!==st.post[n]?n:null;}).filter(Boolean);
 
 /* ===== 我的數據（e度 對話時一直顯示在左邊） ===== */
@@ -457,7 +474,8 @@ function cardCanvas(){
   const stLines=STMTS.map(t=>wrap(g,t,600));
   const whyLines=wrap(g,st.why,W-160);
   const conLines=wrap(g,st.concl||"",W-160);
-  const H=426+stLines.reduce((s,l)=>s+Math.max(1,l.length)*42+30,0)+150+whyLines.length*44+90+(conLines.length?conLines.length*44+70:0);
+  const gl=growthLines();
+  const H=426+stLines.reduce((s,l)=>s+Math.max(2,l.length)*42+30,0)+60+gl.length*46+90+whyLines.length*44+90+(conLines.length?conLines.length*44+70:0);
   cv.width=W;cv.height=H;
   g.fillStyle="#EFF2F5";g.fillRect(0,0,W,H);
   g.fillStyle="#fff";g.strokeStyle="#2C5D8A";g.lineWidth=4;g.beginPath();g.roundRect(30,30,W-60,H-60,28);g.fill();g.stroke();
@@ -473,11 +491,13 @@ function cardCanvas(){
   STMTS.forEach((t,ix)=>{const n=ix+1,ls=stLines[ix];g.strokeStyle="#CBD3DD";g.lineWidth=2;g.beginPath();g.moveTo(80,y);g.lineTo(W-80,y);g.stroke();
     g.font=`30px ${F}`;g.fillStyle="#1B2430";ls.forEach((l,k)=>g.fillText((k?"　 ":`${n}. `)+l,80,y+44+k*42));
     g.font=`700 40px ${F}`;g.fillText(mk(st.pre[n]),W-290,y+48);
-    g.fillStyle=st.pre[n]!==st.post[n]?"#8A4B22":"#1B2430";g.fillText(mk(st.post[n]),W-160,y+48);
-    y+=Math.max(1,ls.length)*42+30;});
-  const chg=changed();
-  g.fillStyle="#8A4B22";g.font=`700 30px ${F}`;g.fillText(chg.length?`改變判斷：第 ${chg.join("、")} 題`:"判斷都沒有改變",80,y+50);
-  y+=110;if(conLines.length){g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("📌 e度 結論：",80,y);g.font=`30px ${F}`;conLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));y+=conLines.length*44+70;}
+    g.font=`22px ${F}`;g.fillStyle="#566273";g.fillText(confShort(st.conf[n]),W-300,y+82);
+    const up=st.pre[n]!==st.post[n]||(st.conf[n]==="guess"&&st.pconf[n]==="sure");
+    g.fillStyle=up?"#8A4B22":"#1B2430";g.font=`700 40px ${F}`;g.fillText(mk(st.post[n]),W-160,y+48);
+    g.font=`${up?"700 ":""}22px ${F}`;g.fillText(confShort(st.pconf[n]),W-170,y+82);
+    y+=Math.max(2,ls.length)*42+30;});
+  g.fillStyle="#8A4B22";g.font=`700 30px ${F}`;gl.forEach((l,k)=>g.fillText(l,80,y+50+k*46));
+  y+=60+gl.length*46+50;if(conLines.length){g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("📌 e度 結論：",80,y);g.font=`30px ${F}`;conLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));y+=conLines.length*44+70;}
   g.fillStyle="#1B2430";g.font=`700 30px ${F}`;g.fillText("我們組修好的一句話：",80,y);
   g.font=`30px ${F}`;whyLines.forEach((l,k)=>g.fillText(l,80,y+48+k*44));
   return cv;
@@ -495,8 +515,10 @@ function saveCard(){
 /* ===== 左邊切換：影片／模擬器／我的數據 ===== */
 let simLoaded=false;
 function setLeft(mode){
+  document.querySelector(".split").classList.toggle("noleft",mode==="none");
   ["Video","Sim","Data"].forEach(k=>$("pane"+k).classList.toggle("on",k.toLowerCase()===mode));
   if(mode!=="video"){try{$("vid").pause();}catch(e){}}
+  if(mode==="none")return;
   if(mode==="sim"&&!simLoaded){setSim();simLoaded=true;}
   if(mode==="data")renderData();
   const u=st.sim==="backup"?SIM_BACKUP:SIM_MAIN;
