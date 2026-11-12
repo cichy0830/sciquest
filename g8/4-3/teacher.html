@@ -169,56 +169,60 @@ const TAG={自學:"--t-self",共學:"--t-co",互學:"--t-peer",導學:"--t-guide
 const STMTS=["光從空氣進入水中，因為光的直進性，不會發生偏折。","光由水中斜射入空氣時，折射角比入射角小。","光沿原來的折射線反方向射回去，會沿原來的入射線射出。","加水後看得到硬幣，是因為眼睛發出的光被水面偏折。"];
 /* 每一段：名稱、所屬階段、分鐘、四學標籤、學生要做的事、額外區塊、觀課看點 */
 const S=[
- {nm:"看影片",ph:0,min:2,tags:["自學"],h:"杯底的硬幣去哪了？",
-  todo:["打開<b>折射偵探站</b>，輸入座號、選<b>角色</b>（顧問／組長／組員）","按 ▶ 播放，<b>從頭看到最後</b>","想一想：硬幣沒有移動，為什麼加水後就看得到？"],
+ {nm:"課前準備",ph:0,min:10,pre:true,tags:["自學"],h:"就位後請馬上完成",
+  todo:["依<b>座位圖</b>找到你的位子","拿起 iPad，掃講義上的 <b>QR code</b>，打開<b>折射偵探站</b>","輸入<b>座號</b>、選<b>角色</b>（顧問／組長／組員）","用講義上的 <b>OpenID 帳號密碼</b>登入<b>因材網 e度</b>","完成後 <b>iPad 平放桌上</b>，等老師開始"],
+  extra:"qr",adv:["確認<b>你這組每個人</b>都登入成功、角色選對","有人登不進去，<b>舉手找老師</b>"],
+  watch:"提早 10 分鐘進場，登入與設定在上課前完成，<b>40 分鐘全部用在學習</b>；此段不計入全課時間。"},
+ {nm:"看影片",ph:1,min:2,tags:["自學"],h:"杯底的硬幣去哪了？",
+  todo:["回到<b>折射偵探站</b>，按 ▶ 播放，<b>從頭看到最後</b>","想一想：硬幣沒有移動，為什麼加水後就看得到？"],
   extra:"qr",watch:"網頁要學生<b>看完影片才能作答</b>，確保每個人都看過現象。"},
- {nm:"直覺判斷",ph:0,min:3,tags:["自學"],h:"先憑直覺判斷 4 句話",
+ {nm:"直覺判斷",ph:1,min:3,tags:["自學"],h:"先憑直覺判斷 4 句話",
   todo:["每一句選 <b>○ 對</b> 或 <b>✗ 錯</b>","再選「<b>有把握</b>」或「<b>用猜的</b>」","不用寫理由，等一下用證據檢查"],
   extra:"stmts",watch:"4 句是非題對應四個迷思，<b>把握度</b>讓老師看出「有把握卻判斷錯」的學生。"},
- {nm:"教師示範",ph:1,min:3,tags:["導學"],h:"看大螢幕：怎麼量角度",
+ {nm:"教師示範",ph:2,min:3,tags:["導學"],h:"看大螢幕：怎麼量角度",
   todo:["上方選<b>空氣</b>、下方選<b>水</b>，打開雷射","量角器中心對準入射點","<b>0° 對準法線</b>、<b>90° 對齊水面</b>，從法線讀角度"],
   sim:true,code:"43",watch:"示範後公布<b>通關數字</b>，全班同時開始，避免有人搶先跳步。"},
- {nm:"模擬驗證",ph:1,min:6,tags:["自學","共學"],h:"移動光源，量三組數據",
+ {nm:"模擬驗證",ph:2,min:6,tags:["自學","共學"],h:"移動光源，量三組數據",
   todo:["<b>移動光源</b>：從正上方慢慢往旁邊拖，看光什麼時候會轉彎","<b>第 1 組</b> 垂直射入水　<b>第 2 組</b> 斜射入水（約 45°）","<b>第 3 組</b> 水→空氣：入射角調成第 2 組的折射角","組內比對第 2 組的折射角，<b>相差超過 3° 的人重量</b>"],
-  extra:"tip",adv:["網頁<b>不會鎖顧問</b>：不用等通關數字，一路做到證據卡（含 e度 對話）","看到「請根據流程指示，參與並引導小組討論」，就舉手給老師看，準備進組"],
+  extra:"tip",adv:["網頁<b>不會鎖顧問</b>：不用等通關數字，一路做到探究歷程卡（含 e度 對話）","看到「請根據流程指示，參與並引導小組討論」，就舉手給老師看，準備進組"],
   watch:"網頁<b>一次只給一個動作</b>，並依折射定律即時檢查角度；顧問團在這段先完成整套流程。"},
- {nm:"檢查點",ph:1,min:2,tags:["導學"],h:"全班停：光往哪裡偏？",
+ {nm:"檢查點",ph:2,min:2,tags:["導學"],h:"全班停：光往哪裡偏？",
   todo:["請大家<b>蓋上 iPad、抬頭</b>","問：光從<b>空氣進入水</b>，往哪裡偏？從<b>水進入空氣</b>呢？","請 2～3 位同學<b>用自己的數據</b>回答，再公布通關數字"],
   code:"27",watch:"網頁在這裡<b>鎖住</b>，學生無法自己往下點；老師先確認全班看懂數據，再放行去問 e度。"},
- {nm:"問 e度",ph:1,min:7,tags:["AI 協作"],h:"帶著自己的數據問 e度",
+ {nm:"問 e度",ph:2,min:7,tags:["AI 協作"],h:"帶著自己的數據問 e度",
   todo:["依角色選擇：<b>顧問→自然探究精靈</b>、<b>組長→一般模式</b>、<b>組員→樂學精靈</b>","按「<b>複製給 e度 的話</b>」貼上；e度 每次只講 2～3 句，<b>讀完再回答</b>","討論完，把 e度 的結論<b>複製、貼回網頁</b>，完成最後判斷"],
-  extra:"split",adv:["到<b>負責的組</b>坐下協助","幫卡住的同學複製、貼上、開分割畫面","同學答不出 e度 時，<b>只提示「看第幾組數據」</b>，不說答案"],
-  watch:"每位學生帶去的數據不同，e度 <b>一次只問一題、不給答案</b>；已完成證據卡的顧問團進組協助。"},
- {nm:"組內共學",ph:1,min:5,tags:["共學"],h:"每人說一句：為什麼加了水就看得到硬幣？",code:"86",
+  extra:"tabs",adv:["到<b>負責的組</b>坐下協助","幫卡住的同學複製、貼上、切換分頁","同學答不出 e度 時，<b>只提示「看第幾組數據」</b>，不說答案"],
+  watch:"每位學生帶去的數據不同，e度 <b>一次只問一題、不給答案</b>；已完成探究歷程卡的顧問團進組協助。"},
+ {nm:"組內共學",ph:2,min:5,tags:["共學"],h:"每人說一句：為什麼加了水就看得到硬幣？",code:"86",
   todo:["先問全班：誰<b>改變了判斷</b>，或從<b>猜的變有把握</b>？為什麼？聽完再公布通關數字","用<b>自己的第 3 組數據</b>當證據，照句型說出來","組長點名，<b>每個人都要說</b>；全組一起把那句話修得更好"],
   extra:"frame",adv:["協助組長，讓<b>每個組員都說出自己的一句話</b>","聽完後引導：光從哪裡出發？往哪裡偏？","帶全組<b>把一句話修得更清楚</b>，寫在網頁的「一句話」"],
   watch:"不做開放式討論，只回答開場影片的同一個問題；<b>句型＋自己的數據</b>讓每個人都講得出來，顧問團帶著修句子。"},
- {nm:"上傳 Padlet",ph:2,min:3,tags:["互學"],h:"每組上傳一張代表證據卡",
-  todo:["選出全組修得最好的那一句的證據卡","在網頁最後一頁按「<b>一鍵存成圖片</b>」","<b>每組只傳一張</b>，標題寫「第＿組」"],
-  extra:"padlet",adv:["<b>由顧問操作上傳</b>：存圖→分享→Padlet","確認標題寫上組別","上傳完回報老師"],
-  watch:"由顧問團操作上傳，避免技術卡關；證據卡上有<b>直覺 vs 最後判斷</b>與修過的一句話。"},
- {nm:"組間互學",ph:2,min:3,tags:["互學"],h:"看看別組的一句話",
+ {nm:"上傳 Padlet",ph:3,min:3,tags:["互學"],h:"每組上傳一張代表探究歷程卡",
+  todo:["<b>顧問指定</b>一位組員的探究歷程卡作為代表","被指定的同學在網頁最後一頁按「<b>一鍵存成圖片</b>」，<b>自己上傳</b>到 Padlet","<b>每組只傳一張</b>，標題寫「第＿組」"],
+  extra:"padlet",adv:["看組員的探究歷程卡，<b>指定驗證最完整的那一位</b>上傳","確認全組<b>只傳一張</b>、標題寫上組別","上傳完回報老師"],
+  watch:"由顧問依<b>驗證情形</b>挑出代表、組員自己上傳；探究歷程卡上有<b>直覺 vs 最後判斷</b>與修過的一句話。"},
+ {nm:"組間互學",ph:3,min:3,tags:["互學"],h:"看看別組的一句話",
   todo:["看其他組的卡，替<b>解釋得最清楚</b>的一組按讚","留一句：我們同意／不同意，因為第＿組數據……","不能按自己這組"],
   extra:null,adv:["帶組員看 Padlet，提醒「看他們用了哪組數據」","協助輸入留言"],
   watch:"組間互學聚焦在<b>同一個問題</b>（為什麼加水看得到硬幣），比較得出差異。"},
- {nm:"教師導學",ph:2,min:5,tags:["導學"],h:"光到底走了哪條路？",
+ {nm:"教師導學",ph:3,min:5,tags:["導學"],h:"光到底走了哪條路？",
   todo:["看得讚最多的卡，和一張還有迷思的卡","看光路動畫：光從<b>硬幣</b>出發，在水面<b>偏離法線</b>，越過杯緣進入<b>眼睛</b>","眼睛沿直線往回看，硬幣看起來<b>變淺</b>"],
   extra:"video",watch:"收斂：空氣→水<b>偏向法線</b>、水→空氣<b>偏離法線</b>、光具<b>可逆性</b>；延伸泳池視深比實深淺。"},
- {nm:"預告",ph:2,min:1,tags:["導學"],h:"下一節：4-4 透鏡成像",
+ {nm:"預告",ph:3,min:1,tags:["導學"],h:"下一節：4-4 透鏡成像",
   todo:["光穿過<b>透鏡</b>時也會折射","想一想：放大鏡為什麼能把字變大？"],
   extra:null,watch:"今天的偏向／偏離法線，是下一節透鏡會聚與發散的基礎。"}
 ];
-const PH=[{nm:"引起動機",min:5},{nm:"發展活動",min:23},{nm:"總結活動",min:12}];
+const PH=[{nm:"課前",min:10},{nm:"引起動機",min:5},{nm:"發展活動",min:23},{nm:"總結活動",min:12}];
 const $=id=>document.getElementById(id);
 let cur=0, left=S[0].min*60, running=false, last=0, elapsed=0, totalRunning=false, beeped=false, revealed={};
-try{const v=JSON.parse(localStorage.getItem("ctrl43")||"null");if(v){cur=v.cur||0;elapsed=v.elapsed||0;}}catch(e){}
+try{const v=JSON.parse(localStorage.getItem("ctrl43v2")||"null");if(v){cur=v.cur||0;elapsed=v.elapsed||0;}}catch(e){}
 left=S[cur].min*60;
-const save=()=>{try{localStorage.setItem("ctrl43",JSON.stringify({cur,elapsed}));}catch(e){}};
+const save=()=>{try{localStorage.setItem("ctrl43v2",JSON.stringify({cur,elapsed}));}catch(e){}};
 const mmss=s=>{const neg=s<0;s=Math.abs(Math.round(s));return (neg?"−":"")+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");};
 
 function buildFlow(){
   $("phases").innerHTML=PH.map((p,i)=>`<div class="phase" data-ph="${i}">${p.nm} ${p.min} 分</div>`).join("");
-  const w=s=>Math.max(s.min,2.6);const cols=S.map(s=>`${w(s)}fr`).join(" ");
+  const w=s=>s.pre?3:Math.max(s.min,2.6);const cols=S.map(s=>`${w(s)}fr`).join(" ");
   $("phases").style.gridTemplateColumns=PH.map((p,i)=>`${S.filter(s=>s.ph===i).reduce((a,s)=>a+w(s),0)}fr`).join(" ");
   $("track").style.setProperty("--cols",cols);
   $("track").innerHTML=S.map((s,i)=>`<button type="button" class="node" data-i="${i}" aria-label="${s.nm}，${s.min} 分鐘"><span class="nm">${s.nm}</span><span class="mn">${s.min} 分${s.adv?" ・顧問":""}</span><span class="bar"></span></button>`).join("");
@@ -230,7 +234,7 @@ function extra(kind){
     case "stmts":return `<div class="box water"><span class="k">今天要檢查的 4 句話</span>${STMTS.map((t,i)=>`<div class="stmt"><span>${i+1}.</span><span>${t}</span></div>`).join("")}</div>`;
     case "code":return "";
     case "tip":return `<div class="box"><span class="k">量角器</span>0° 對準<b>法線</b>（虛線）・90° 對齊<b>交界面</b>（水面）・角度從法線量起</div>`;
-    case "split":return `<div class="box water"><span class="k">iPad 分割畫面</span>左邊放<b>折射偵探站</b>（我的數據），右邊放<b>因材網 e度</b>，邊看數據邊回答。</div>`;
+    case "tabs":return `<div class="box water"><span class="k">切換分頁</span><b>折射偵探站</b>（我的數據）⇄ <b>因材網 e度</b>：看數據、再回 e度 回答。</div>`;
     case "frame":return `<div class="box"><span class="k">句型（用自己的第 3 組數據）</span><div class="frame">硬幣反射的光從 <u></u> 射入 <u></u>，<br>入射角 <u></u>°、折射角 <u></u>°，光 <u></u> 法線，<br>所以光能越過杯緣進入 <u></u>。</div></div>`;
     case "padlet":return `<div class="box water"><span class="k">Padlet</span>每組一張，標題寫「第＿組」。</div>`;
     case "video":return `<video src="light-path.mp4" controls playsinline preload="metadata"></video>`;
@@ -268,7 +272,7 @@ function goTo(i,hold){cur=Math.max(0,Math.min(S.length-1,i));left=S[cur].min*60;
 function setGo(){$("go").textContent=running?"暫停":(left<S[cur].min*60?"繼續":"開始倒數");}
 function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+1.2);o.start();o.stop(a.currentTime+1.2);}catch(e){}}
 function tick(dt){
-  if(running){left-=dt;elapsed+=dt;}
+  if(running){left-=dt;if(!S[cur].pre)elapsed+=dt;}
   const full=S[cur].min*60;
   $("clock").textContent=mmss(left);
   $("ring").style.transform=`scaleX(${Math.max(0,left/full)})`;
