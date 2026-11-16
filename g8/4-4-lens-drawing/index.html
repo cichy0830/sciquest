@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>透鏡成像作圖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 安靜、清楚的課堂作圖練習，一次只做一件事
+   IDEA: 學生桌上的方格紙作圖題——光學平台畫在方格紙上，一格一格數
+   PICTURE: 大張方格紙上的透鏡、主軸與光線，學生直接在上面點
+   COLOUR: 白紙＋深藍墨水；三條特殊光線用紅、藍、綠；提示用黃色螢光筆
+   TYPE: Noto Sans TC；LAYOUT: 方格紙在左（大），步驟卡在右；窄螢幕上下排 */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0f1a24);--ink:light-dark(#13324b,#e6eef5);--mute:light-dark(#5b7184,#93a8ba);
+--grid:light-dark(#e2ebf2,#1b2b39);--grid2:light-dark(#c9d8e4,#25394b);--card:light-dark(#f2f6f9,#162432);
+--r1:light-dark(#d9452b,#ff7a5c);--r2:light-dark(#1b6fc4,#5aa8ff);--r3:light-dark(#22894a,#4fd184);
+--glass:light-dark(#bfe6f2,#1f5266);--hl:#ffb000;--ok:light-dark(#1d7f45,#5ad68f);--bad:light-dark(#b8361f,#ff8a70)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Noto Sans TC",system-ui,sans-serif;overflow-x:clip}
+header{padding:20px max(4vw,16px) 8px;display:flex;flex-wrap:wrap;align-items:end;gap:12px 28px}
+h1{font-size:clamp(26px,4vw,40px);line-height:1.1;margin:0;font-weight:900;text-wrap:balance}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{font:inherit;font-size:15px;border:2px solid var(--ink);background:none;color:var(--ink);border-radius:999px;padding:8px 16px;min-height:44px;cursor:pointer}
+nav button[aria-current=true]{background:var(--ink);color:var(--bg)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:8px max(4vw,16px) 32px;max-width:1340px}
+.fig{position:relative;border:2px solid var(--grid2);border-radius:10px;overflow:hidden;background:var(--bg)}
+svg{display:block;width:100%;height:auto;cursor:crosshair;touch-action:manipulation}
+#panel{background:var(--card);border-radius:12px;padding:18px;align-self:start}
+.meta{font-size:13px;color:var(--mute);margin:0 0 6px}
+.prev{color:var(--ok);font-size:15px;margin:0 0 10px;font-weight:500}
+.q{font-size:18px;font-weight:500;margin:0 0 12px}
+.fb{min-height:1.6em;margin:10px 0;font-weight:500}
+.fb.bad{color:var(--bad)}.fb.ok{color:var(--ok)}
+.hint{background:color-mix(in srgb,var(--hl) 22%,transparent);border-left:4px solid var(--hl);padding:8px 12px;border-radius:4px;margin:8px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.btn{font:inherit;font-size:15px;min-height:44px;padding:8px 14px;border-radius:8px;border:2px solid var(--ink);background:var(--bg);color:var(--ink);cursor:pointer}
+.btn.main{background:var(--ink);color:var(--bg)}
+.btn.on{background:var(--ink);color:var(--bg)}
+.btn.right{border-color:var(--ok);color:var(--ok)}.btn.wrong{border-color:var(--bad);color:var(--bad)}
+.btn:focus-visible,nav button:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+label.chk{display:flex;gap:8px;align-items:center;font-size:15px;min-height:44px}
+input[type=range]{width:100%;height:44px;accent-color:var(--r2)}
+h2{font-size:16px;margin:16px 0 6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{border-bottom:1px solid var(--grid2);padding:6px 4px;text-align:left}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--mute);padding:8px 2px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:4px}
+/* svg */
+.axis{stroke:var(--ink);stroke-width:2}.lens{fill:var(--glass);stroke:var(--ink);stroke-width:2;fill-opacity:.75}
+.pt{fill:var(--ink)}.lb{fill:var(--ink);font:700 20px "Noto Sans TC",sans-serif}.lbs{fill:var(--mute);font:500 15px "Noto Sans TC",sans-serif}
+.obj{stroke:var(--ink);stroke-width:5;fill:var(--ink)}.img{stroke:#8b4fc7;stroke-width:5;fill:#8b4fc7}
+.ray{fill:none;stroke-width:3;stroke-linecap:round}.r1{stroke:var(--r1)}.r2{stroke:var(--r2)}.r3{stroke:var(--r3)}.rd{stroke:var(--mute)}
+.dash{stroke-dasharray:9 7;stroke-width:2.5}
+.ink{stroke:var(--ink);stroke-width:2.5;fill:none;stroke-linecap:round}.inkd{stroke-dasharray:8 6}.inkA{stroke:var(--ink);stroke-width:4;fill:var(--ink)}.pv{stroke:var(--hl);stroke-width:2;stroke-dasharray:4 4}.pend{fill:var(--hl);stroke:var(--ink)}.brk{stroke:var(--mute);stroke-width:2;fill:none}
+.pulse{fill:var(--hl);fill-opacity:.35;stroke:var(--hl);stroke-width:3;animation:p 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes p{50%{transform:scale(1.35);fill-opacity:.15}}
+.draw{stroke-dasharray:1200;stroke-dashoffset:1200;animation:d .7s ease-out forwards}.draw.dash{animation:none;stroke-dashoffset:0;stroke-dasharray:9 7}
+@keyframes d{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.pulse,.draw{animation:none;stroke-dashoffset:0}}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header>
+<h1>透鏡成像：一步一步畫出像</h1>
+<nav id="tabs">
+<button data-m="terms" aria-current="true">① 認識名詞</button>
+<button data-m="draw">② 特殊光線作圖</button>
+<button data-m="explore">③ 探索成像性質</button>
+<button data-m="quiz">④ 挑戰：自己判斷</button>
+</nav>
+</header>
+<main>
+<div>
+<div class="fig"><svg id="fig" viewBox="0 0 900 420" role="img" aria-label="方格紙上的透鏡作圖區">
+<defs>
+<pattern id="gp" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="var(--grid)" stroke-width="1"/></pattern>
+</defs>
+<rect width="900" height="420" fill="url(#gp)"/>
+<g id="gBase"></g><g id="gRays"></g><g id="gTop"></g><g id="gInk"></g><g id="gHl"></g>
+</svg></div>
+<div class="legend" id="legend"></div>
+</div>
+<aside id="panel"></aside>
+</main>
+<script>
+{
+const W=900,H=420,AX=450,AY=210,F=120,OH=60,NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id),svg=$('fig'),panel=$('panel');
+let K=1,mode='terms',lens='convex',u=180,steps=[],si=0,wrong=0,hintLv=0,prev='',known=new Set(),names=true,guess={},revealed=false;
+const found={};
+const POS={convex:[[300,'2F 以外'],[240,'2F 上'],[180,'F 與 2F 之間'],[60,'F 以內']],concave:[[300,'遠處'],[180,'中間'],[60,'靠近透鏡']]};
+const LN={convex:'凸透鏡',concave:'凹透鏡'};
+
+function el(tag,a,p,t){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;p.appendChild(e);return e}
+const clear=id=>{$(id).innerHTML=''};
+function geo(){const s=lens==='convex'?1:-1,T={x:AX-u,y:AY-OH};
+ const v=(s>0&&u===F)?Infinity:1/(1/(s*F)-1/u);
+ const g={s,T,v,I:{x:AX+v,y:AY+OH*v/u},P1:{x:AX,y:T.y},d1:{x:F,y:OH*s},O:{x:AX,y:AY},d2:{x:u,y:OH},
+  Fl:{x:AX-F,y:AY},Fr:{x:AX+F,y:AY},F2l:{x:AX-2*F,y:AY},F2r:{x:AX+2*F,y:AY},P3:null};
+ if(s>0&&u>F){const y=T.y+OH*u/(u-F);if(y<H-8)g.P3={x:AX,y}}
+ return g}
+function ext(P,d,xl){let t=1e9;const lx=xl??(d.x>0?W-8:8);
+ if(d.x)t=Math.min(t,(lx-P.x)/d.x);if(d.y>0)t=Math.min(t,(H-8-P.y)/d.y);if(d.y<0)t=Math.min(t,(8-P.y)/d.y);
+ return{x:P.x+d.x*t,y:P.y+d.y*t}}
+function seg(a,b,c,dash){const e=el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:`ray ${c} draw${dash?' dash':''}`},$('gRays'));
+ if(!dash){const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,an=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+  el('path',{d:'M-7,-6L6,0L-7,6Z',transform:`translate(${mx},${my}) rotate(${an})`,style:`fill:var(--${c});stroke:none`},$('gRays'))}
+ return e}
+function arrow(x,yT,cls,dash){const g=$('gTop'),dir=yT<AY?1:-1;
+ el('line',{x1:x,y1:AY,x2:x,y2:yT+dir*12,class:cls,'stroke-dasharray':dash?'8 6':null},g);
+ el('path',{d:`M${x-10},${yT+dir*16}L${x},${yT}L${x+10},${yT+dir*16}Z`,class:cls,style:'stroke-width:2'},g)}
+function pulse(p,r=18){clear('gHl');el('circle',{cx:p.x,cy:p.y,r,class:'pulse'},$('gHl'))}
+
+function base(){const g=$('gBase');g.innerHTML='';const show=k=>mode==='terms'?known.has(k):mode==='quiz'?false:names;
+ el('line',{x1:10,y1:AY,x2:W-10,y2:AY,class:'axis'},g);
+ const lp=lens==='convex'?`M${AX},50Q${AX+40},${AY} ${AX},370Q${AX-40},${AY} ${AX},50Z`
+  :`M${AX-20},50L${AX+20},50Q${AX+3},${AY} ${AX+20},370L${AX-20},370Q${AX-3},${AY} ${AX-20},50Z`;
+ el('path',{d:lp,class:'lens'},g);
+ if(show('axis'))el('text',{x:W-60,y:AY-10,class:'lbs'},g,'主軸');
+ const pts=[[AX-2*F,'2F','2F'],[AX-F,'F','F'],[AX+F,'F','F'],[AX+2*F,'2F','2F']];
+ for(const[x,k,t]of pts){el('circle',{cx:x,cy:AY,r:5,class:'pt'},g);
+  if(mode!=='terms'||known.has(k)){el('text',{x,y:AY+28,'text-anchor':'middle',class:'lb'},g,t);
+   if(k==='F'&&show('F'))el('text',{x,y:AY+48,'text-anchor':'middle',class:'lbs'},g,'焦點')}}
+ el('circle',{cx:AX,cy:AY,r:5,class:'pt'},g);
+ if(show('O'))el('text',{x:AX+10,y:AY-10,class:'lbs'},g,'鏡心');
+ if(show('f')){const y=AY+68;el('path',{d:`M${AX},${y-6}V${y}H${AX+F}V${y-6}`,class:'brk'},g);
+  el('text',{x:AX+F/2,y:y+20,'text-anchor':'middle',class:'lbs'},g,'焦距 f')}
+ el('text',{x:16,y:28,class:'lbs'},g,mode==='terms'?'凸透鏡':LN[lens]+'　每格 = 1 單位，焦距 4 格');
+}
+function drawObj(){const T=geo().T;arrow(T.x,T.y,'obj')}
+function drawImg(){const g=geo();if(isFinite(g.v)&&g.I.x>8&&g.I.x<W-8&&g.I.y>8&&g.I.y<H-8)arrow(g.I.x,g.I.y,'img',g.v<0)}
+
+function props(){const g=geo();if(!isFinite(g.v))return null;const real=g.v>0,r=Math.abs(g.v)/u;
+ return{up:real?'倒立':'正立',size:r>1.02?'放大':r<.98?'縮小':'等大',kind:real?'實像':'虛像'}}
+
+/* ---------- 認識名詞 ---------- */
+function termSteps(){const O={x:AX,y:AY},Fr={x:AX+F,y:AY},F2l={x:AX-2*F,y:AY};
+ return[
+ {q:'「主軸」是穿過透鏡正中央、和透鏡垂直的那一條水平直線。請在方格紙上點一下「主軸」。',hint:'找一條橫的、從左到右貫穿整張圖、剛好穿過透鏡中間的直線。',
+  hit:p=>Math.abs(p.y-AY)<13*K,hp:{x:780,y:AY},done:()=>known.add('axis'),ok:'對！這條就是主軸。'},
+ {q:'「鏡心」是透鏡的正中心。請點「鏡心」。',hint:'鏡心就在「主軸」和「透鏡」交叉的那一點。',hit:near(O),hp:O,done:()=>known.add('O'),ok:'對！鏡心就在透鏡正中央。'},
+ {q:'看這三條「平行主軸」射進來的光線：穿過凸透鏡後，會聚在主軸上的同一點，這一點叫「焦點」。請點這個會聚點。',
+  hint:'跟著紅色光線走，看它們穿過透鏡後在右邊哪裡碰在一起。',hit:near(Fr),hp:Fr,
+  setup:()=>{for(const y of[AY-100,AY-50,AY+50,AY+100]){const P={x:AX,y};seg({x:20,y},P,'r1');seg(P,ext(P,{x:Fr.x-AX,y:AY-y}),'r1')}},
+  miss:{'左側焦點 F':'左邊那個點也是焦點沒錯，但這裡要點光線「會聚」的地方，在透鏡右側。'},
+  done:()=>{known.add('F');clear('gRays')},ok:'對！透鏡左、右兩側，離鏡心一樣遠的地方，各有一個焦點，都叫 F。'},
+ {q:'「焦距」是「鏡心到焦點」的距離。圖上標了 A、B、C 三段，哪一段是焦距？',opts:['A','B','C'],ans:1,
+  hint:'焦距的起點是「鏡心」，終點是「焦點 F」。',
+  setup:()=>{const y=AY+80,b=[[AX-2*F,AX-F,'A'],[AX-F,AX,'B'],[AX,AX+2*F,'C']];
+   b.forEach(([a,c,t],i)=>{const yy=y+i*0;el('path',{d:`M${a+3},${yy-8}V${yy}H${c-3}V${yy-8}`,class:'brk',style:'stroke:var(--r2);stroke-width:3'},$('gRays'));
+    el('text',{x:(a+c)/2,y:yy+26,'text-anchor':'middle',class:'lb',style:'fill:var(--r2)'},$('gRays'),t)})},
+  done:()=>{known.add('f');clear('gRays')},ok:'對！B 從鏡心到焦點，這張圖的焦距是 4 格。'},
+ {q:'從鏡心往外量「2 倍焦距」的位置叫「2F」。焦距是 4 格，所以 2F 離鏡心 8 格。請點透鏡「左側」的 2F。',
+  hint:'從鏡心往左數 8 格，或從左側焦點 F 再往左數 4 格。',hit:near(F2l),hp:F2l,
+  miss:{'右側 2F':'方向反了，要找透鏡「左側」的。'},done:()=>known.add('2F'),ok:'對！透鏡右側同樣也有一個 2F。'},
+ {end:true,q:'主軸、鏡心、焦點、焦距、2F 都認識了！接下來用這些位置畫「特殊光線」。'}]}
+
+/* ---------- 特殊光線作圖 ---------- */
+function drawSteps(){const g=geo(),{T,P1,O,Fl,Fr,I,P3}=g,cv=lens==='convex',real=g.v>0,st=[];
+ st.push({q:`第 1 條光線：「平行主軸」入射。從物體頂端畫一條和主軸平行的光線，射向${LN[lens]}。請點這條光線碰到透鏡的位置。`,
+  hint:'「平行主軸」＝水平。從箭頭尖端往右，高度不變，一直走到透鏡。',hit:p=>Math.abs(p.x-AX)<20*K&&Math.abs(p.y-P1.y)<20*K,hp:P1,
+  done:()=>seg(T,P1,'r1'),ok:'對！光線水平前進，碰到透鏡。'});
+ if(cv)st.push({q:'平行主軸的光線穿過凸透鏡後會偏折，並「通過另一側的焦點」。請點它會通過的那個焦點。',
+  hint:'凸透鏡會「會聚」光線：光線從左邊來，要找透鏡「右側」的焦點 F。',hit:near(Fr),hp:Fr,
+  miss:{'左側焦點 F':'這是物體同一側的焦點。光線已經穿過透鏡往右走了，要找「另一側」的焦點。','右側 2F':'這是 2F，不是焦點 F。焦點離鏡心只有 4 格。'},
+  done:()=>seg(P1,ext(P1,g.d1),'r1'),ok:'對！折射光線通過右側焦點。'});
+ else st.push({q:'凹透鏡會讓光線「發散」：平行主軸的光線穿過後往外偏，它的「延長線」會通過物體「同一側」的焦點。請點這個焦點。',
+  hint:'光線往外散開，要「往回」找：沿著光線反方向延長，會碰到透鏡左側的焦點 F。',hit:near(Fl),hp:Fl,
+  miss:{'右側焦點 F':'凹透鏡是發散的，光線不會通過右邊的焦點；要往回延長，找物體同一側（左側）的焦點。'},
+  done:()=>{seg(P1,ext(P1,g.d1),'r1');seg(P1,ext(P1,{x:-g.d1.x,y:-g.d1.y},Math.min(Fl.x,I.x)-30),'r1',1)},ok:'對！虛線是延長線，它通過左側焦點。'});
+ st.push({q:'第 2 條光線：「通過鏡心」的光線不會偏折，直直穿過透鏡。請點鏡心。',hint:'鏡心＝主軸和透鏡交叉的點。',hit:near(O),hp:O,
+  miss:{'左側焦點 F':'這是焦點，不是鏡心。鏡心在透鏡正中央。','右側焦點 F':'這是焦點，不是鏡心。鏡心在透鏡正中央。'},
+  done:()=>{seg(T,O,'r2');seg(O,ext(O,g.d2),'r2')},ok:'對！通過鏡心的光線直直前進。'});
+ if(cv&&P3){st.push({q:'第 3 條光線：「通過焦點」入射。從物體頂端畫向物體這一側的焦點。請點這個焦點。',
+  hint:'物體在透鏡左側，所以要找「左側」的焦點 F。',hit:near(Fl),hp:Fl,miss:{'右側焦點 F':'要找物體「這一側」（左側）的焦點。'},
+  done:()=>seg(T,P3,'r3'),ok:'對！光線經過左側焦點，射到透鏡上。'});
+  st.push({q:'這條「通過焦點」的光線，穿過凸透鏡後會怎麼走？',opts:['變成平行主軸射出','通過另一側焦點','直直前進不偏折'],ans:0,
+   hint:'它剛好和第 1 條光線「倒過來」：第 1 條是平行進來→通過焦點出去。',done:()=>seg(P3,ext(P3,{x:1,y:0}),'r3'),ok:'對！通過焦點入射→平行主軸射出。'})}
+ if(!real){st.push({q:'看看透鏡右側的折射光線，它們會相交嗎？',opts:['會相交','不會相交，越分越開'],ans:1,
+  hint:'把兩條光線往右延伸，看看它們的距離是越來越近還是越來越遠。',
+  done:()=>{if(cv){seg(P1,ext(P1,{x:-g.d1.x,y:-g.d1.y},I.x-40),'r1',1);seg(T,ext(T,{x:-g.d2.x,y:-g.d2.y},I.x-40),'r2',1)}},
+  ok:cv?'對！這時把折射光線「往回延長」（虛線），找延長線的交點。':'對！凹透鏡的光線一定發散，所以要看延長線（虛線）。'});
+  st.push({q:cv?'兩條虛線（延長線）的交點就是像的頂端。請點這個交點。':'紅色虛線（延長線）和藍色光線交叉的地方就是像的頂端。請點這個交點。',
+   hint:'在透鏡「左側」找，交點不在右邊。',hit:near(I,22),hp:I,done:drawImg,ok:'對！像在這裡，用虛線畫的是虛像。'})}
+ else st.push({q:'折射光線的「交點」就是像的頂端。請點光線在透鏡右側交會的地方。',hint:'看看紅、藍（綠）光線在右側哪一點碰在一起。',
+  hit:near(I,22),hp:I,done:drawImg,ok:'對！從交點往主軸畫垂直線，就是像。'});
+ const pr=props();
+ st.push({q:'和物體比較，像是「正立」還是「倒立」？',opts:['正立','倒立'],ans:pr.up==='正立'?0:1,hint:'物體箭頭朝上。看看紫色的像，箭頭朝上還是朝下？'});
+ st.push({q:'像比物體大還是小？',opts:['放大','等大','縮小'],ans:['放大','等大','縮小'].indexOf(pr.size),hint:`數數看：物體高 2 格，像高幾格？`});
+ st.push({q:'這是「實像」還是「虛像」？',opts:['實像','虛像'],ans:pr.kind==='實像'?0:1,
+  hint:'真正的光線交會成的像是「實像」（可以用紙屏接到）；只有延長線（虛線）交會成的是「虛像」。'});
+ st.push({end:true,q:`完成！物體在${posName()}時，${LN[lens]}成「${pr.up}、${pr.size}的${pr.kind}」。換一個位置再畫一次吧！`});
+ return st}
+function posName(){const p=POS[lens].find(x=>x[0]===u);return p?p[1]:''}
+function near(pt,r=24){return p=>Math.hypot(p.x-pt.x,p.y-pt.y)<r*K}
+function nameAt(p){const g=geo();const L=[['鏡心',g.O],['左側焦點 F',g.Fl],['右側焦點 F',g.Fr],['左側 2F',g.F2l],['右側 2F',g.F2r]];
+ if(mode==='draw')L.push(['物體頂端',g.T]);
+ for(const[n,q]of L)if(Math.hypot(p.x-q.x,p.y-q.y)<22*K)return n;
+ if(Math.abs(p.y-AY)<10)return'主軸上的其他位置';if(Math.abs(p.x-AX)<16)return'透鏡';return null}
+
+/* ---------- 步驟引擎 ---------- */
+function startSteps(list){steps=list;si=0;wrong=0;hintLv=0;prev='';clear('gRays');clear('gTop');clear('gHl');base();if(mode==='draw')drawObj();runSetup();renderPanel()}
+function runSetup(){const s=steps[si];s&&s.setup&&s.setup()}
+function advance(){const s=steps[si];s.done&&s.done();prev='✓ '+(s.ok||'答對了！');si++;wrong=0;hintLv=0;clear('gHl');runSetup();renderPanel()}
+function fail(msg){wrong++;if(wrong>=2&&hintLv<1)hintLv=1;if(wrong>=3&&hintLv<2){hintLv=2;const s=steps[si];s.hp&&pulse(s.hp)}renderPanel(msg)}
+function svgPt(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse())}
+const snap=p=>({x:Math.round(p.x/15)*15,y:Math.round(p.y/15)*15});
+svg.addEventListener('mousemove',e=>{if(mode!=='quiz'||!quiz||quiz.checked||!quiz.pend)return;const q=snap(svgPt(e)),a=quiz.pend;
+ clear('gHl');el('line',{x1:a.x,y1:a.y,x2:q.x,y2:q.y,class:'pv'},$('gHl'));el('circle',{cx:a.x,cy:a.y,r:6,class:'pend'},$('gHl'))});
+svg.addEventListener('click',e=>{if(mode==='quiz'){if(quiz&&!quiz.done&&!quiz.checked)qDraw(snap(svgPt(e)));return}if(mode==='explore')return;const s=steps[si];if(!s||s.end||s.opts)return;
+ K=Math.max(1,900/svg.clientWidth*.75);const p=svgPt(e);
+ if(s.hit(p))return advance();const n=nameAt(p);
+ fail(n?`你點到的是「${n}」。${(s.miss&&s.miss[n])||'再想想看。'}`:'這個位置沒有對到，再試一次。')});
+
+function ctrlHTML(){if(mode==='terms')return'';
+ let h=`<div class="row">${['convex','concave'].map(k=>`<button class="btn${lens===k?' on':''}" data-act="lens" data-v="${k}">${LN[k]}</button>`).join('')}</div>`;
+ if(mode==='draw')h+=`<p class="meta">物體位置</p><div class="row">${POS[lens].map(([p,n])=>`<button class="btn${u===p?' on':''}" data-act="pos" data-v="${p}">${n}</button>`).join('')}</div>`;
+ h+=`<label class="chk"><input type="checkbox" data-act="names" ${names?'checked':''}> 顯示名稱（鏡心、焦點…）</label>`;return h}
+function renderPanel(fb){if(mode==='explore')return renderExplore();if(mode==='quiz')return quizRender();
+ const s=steps[si],n=steps.length-1;let h=ctrlHTML();
+ h+=`<p class="meta">${s.end?'完成':`步驟 ${si+1} / ${n}`}</p>`;if(prev)h+=`<p class="prev">${prev}</p>`;
+ h+=`<p class="q">${s.q}</p>`;
+ if(s.opts)h+=`<div class="row">${s.opts.map((o,i)=>`<button class="btn" data-act="opt" data-v="${i}">${o}</button>`).join('')}</div>`;
+ else if(!s.end)h+=`<p class="meta">👉 直接在左邊的方格紙上點選</p>`;
+ if(fb)h+=`<p class="fb bad">${fb}</p>`;
+ if(hintLv>=1&&s.hint)h+=`<div class="hint">提示：${s.hint}${hintLv>=2&&s.hp?'<br>黃色圓圈標出了位置。':''}</div>`;
+ if(s.end)h+=mode==='terms'?`<div class="row"><button class="btn main" data-act="goto" data-v="draw">前往 ② 特殊光線作圖</button></div>`
+  :`<div class="row"><button class="btn main" data-act="next">換下一個位置</button><button class="btn" data-act="goto" data-v="explore">③ 探索成像性質</button><button class="btn" data-act="goto" data-v="quiz">④ 挑戰</button></div>`;
+ else h+=`<div class="row"><button class="btn" data-act="hint">${hintLv===0?'給我提示':hintLv===1&&s.hp?'再給提示（標出位置）':'提示已全部顯示'}</button><button class="btn" data-act="redo">從頭開始</button></div>`;
+ panel.innerHTML=h}
+
+/* ---------- 探索 ---------- */
+function zone(){if(lens==='concave')return'任何位置';return u>2*F?'2F 以外':u===2*F?'2F 上':u>F?'F 與 2F 之間':u===F?'F 上':'F 以內'}
+function drawExplore(){clear('gRays');clear('gTop');base();drawObj();const g=geo(),{T,P1,O,Fl,I,P3}=g,cv=g.s>0;
+ seg(T,P1,'r1');seg(P1,ext(P1,g.d1),'r1');seg(T,O,'r2');seg(O,ext(O,g.d2),'r2');
+ if(P3){seg(T,P3,'r3');seg(P3,ext(P3,{x:1,y:0}),'r3')}
+ if(isFinite(g.v)&&g.v<0){const lx=Math.max(8,(cv?I.x:Math.min(Fl.x,I.x))-40);
+  seg(P1,ext(P1,{x:-g.d1.x,y:-g.d1.y},lx),'r1',1);if(cv)seg(T,ext(T,{x:-g.d2.x,y:-g.d2.y},lx),'r2',1)}
+ drawImg()}
+function renderExplore(){panel.innerHTML=ctrlHTML()+`<p class="meta">拖動滑桿改變物距（物體到鏡心的距離）</p><input type="range" min="30" max="420" step="15" value="${u}" data-act="slide" aria-label="物距"><div id="dyn"></div>`;updDyn()}
+function updDyn(){const pr=props(),z=zone(),g=geo();let h='';
+ h+=`<p class="q">物距 ${u/30} 格　物體在「${z}」</p>`;
+ if(!pr)h+=revealed?`<p class="fb ok">折射光線互相平行，永遠不會相交 → 不成像。</p>`:`<p class="meta">先猜一猜會成什麼像？</p><div class="row"><button class="btn" data-act="reveal">看答案</button></div>`;
+ else{const G=[['up',['正立','倒立']],['size',['放大','等大','縮小']],['kind',['實像','虛像']]];
+  h+=`<p class="meta">先猜一猜，再按「看答案」</p>`+G.map(([k,o])=>`<div class="row">${o.map(x=>{let c=guess[k]===x?' on':'';if(revealed)c=pr[k]===x?' right':guess[k]===x?' wrong':'';return`<button class="btn${c}" data-act="guess" data-k="${k}" data-v="${x}">${x}</button>`}).join('')}</div>`).join('');
+  if(revealed){const off=!(g.I.x>8&&g.I.x<W-8&&g.I.y>8&&g.I.y<H-8);h+=`<p class="fb ok">${pr.up}、${pr.size}的${pr.kind}${off?'（像距很遠，像在畫面外）':''}</p>`}
+  else h+=`<div class="row"><button class="btn main" data-act="reveal">看答案</button></div>`}
+ if(revealed)found[lens+z]=pr?`${pr.up}、${pr.size}、${pr.kind}`:'不成像';
+ const rows=lens==='convex'?['2F 以外','2F 上','F 與 2F 之間','F 上','F 以內']:['任何位置'];
+ h+=`<h2>我的發現：${LN[lens]}</h2><table><tr><th>物體位置</th><th>像的性質</th></tr>${rows.map(r=>`<tr><td>${r}</td><td>${found[lens+r]||'？'}</td></tr>`).join('')}</table><div class="row" style="margin-top:14px"><button class="btn main" data-act="goto" data-v="quiz">準備好了 → ④ 挑戰：不看提示自己判斷</button></div>`;
+ $('dyn').innerHTML=h}
+
+panel.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.type==='range'||b.type==='checkbox')return;const a=b.dataset.act,v=b.dataset.v;
+ if(a==='opt'){const s=steps[si];+v===s.ans?advance():fail(`「${s.opts[v]}」不對喔。`)}
+ else if(a==='hint'){const s=steps[si];if(hintLv<2){hintLv++;if(hintLv===2&&s.hp)pulse(s.hp)}renderPanel()}
+ else if(a==='redo')setMode(mode);
+ else if(a==='goto')setMode(v);
+ else if(a==='lens'){lens=v;if(mode==='draw'&&!POS[lens].some(p=>p[0]===u))u=POS[lens][0][0];setMode(mode)}
+ else if(a==='pos'){u=+v;setMode('draw')}
+ else if(a==='next'){const L=POS[lens],i=L.findIndex(p=>p[0]===u);u=L[(i+1)%L.length][0];setMode('draw')}
+ else if(a==='guess'){if(!revealed){guess[b.dataset.k]=v;updDyn()}}
+ else if(a==='reveal'){revealed=true;updDyn()}
+ else if(a==='qa'){if(quiz.checked)return;const k=b.dataset.k;if(k==='none')quiz.a=quiz.a.none?{}:{none:true};else{delete quiz.a.none;quiz.a[k]=v}quizRender()}
+ else if(a==='qsub'){const pr=props(),A=quiz.a,ok=pr?(A.up===pr.up&&A.size===pr.size&&A.kind===pr.kind):!!A.none;quiz.res.push(ok);quiz.checked=true;drawExplore();quizRender()}
+ else if(a==='tool'){quiz.tool=v;quiz.pend=null;clear('gHl');quizRender()}
+ else if(a==='undo'){quiz.ink.pop();quiz.pend=null;clear('gHl');renderInk()}
+ else if(a==='wipe'){quiz.ink=[];quiz.pend=null;clear('gHl');renderInk()}
+ else if(a==='qnext'){quiz.i++;quiz.a={};quiz.checked=false;quiz.ink=[];quiz.pend=null;if(quiz.i>=quiz.L.length)quiz.done=true;quizRender()}
+ else if(a==='qnew'){newQuiz();quizRender()}});
+panel.addEventListener('input',e=>{const t=e.target;if(t.dataset.act==='slide'){u=+t.value;guess={};revealed=false;drawExplore();updDyn()}});
+panel.addEventListener('change',e=>{if(e.target.dataset.act==='names'){names=e.target.checked;base()}});
+
+/* ---------- 挑戰 ---------- */
+let quiz=null;
+function newQuiz(){const pk=a=>a[Math.random()*a.length|0],Z=[[330,300,270],[240],[210,180],[120],[90,60,45]];
+ const L=Z.map(z=>({lens:'convex',u:pk(z)}));L.push({lens:'concave',u:pk([300,180,90])});
+ L.push({lens:'convex',u:pk([330,270,210,90,45])});L.push({lens:pk(['convex','concave']),u:pk([270,180,90])});
+ for(let i=L.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[L[i],L[j]]=[L[j],L[i]]}
+ L.forEach((q,i)=>q.fig=i%2===0);quiz={L,i:0,a:{},checked:false,done:false,res:[],ink:[],tool:'ray',pend:null}}
+function qDraw(p){const t=quiz.tool;
+ if(t==='obj'||t==='img'){if(Math.abs(p.y-AY)<8)return;quiz.ink=quiz.ink.filter(k=>k.t!==t);quiz.ink.push({t,a:p});renderInk();return}
+ if(!quiz.pend){quiz.pend=p;clear('gHl');el('circle',{cx:p.x,cy:p.y,r:6,class:'pend'},$('gHl'));return}
+ if(p.x!==quiz.pend.x||p.y!==quiz.pend.y)quiz.ink.push({t,a:quiz.pend,b:p});quiz.pend=null;clear('gHl');renderInk()}
+function renderInk(){const g=$('gInk');g.innerHTML='';if(mode!=='quiz'||!quiz)return;
+ for(const k of quiz.ink){if(k.b){el('line',{x1:k.a.x,y1:k.a.y,x2:k.b.x,y2:k.b.y,class:'ink'+(k.t==='dash'?' inkd':'')},g);continue}
+  const x=k.a.x,y=k.a.y,d=y<AY?1:-1;el('line',{x1:x,y1:AY,x2:x,y2:y+d*12,class:'inkA'+(k.t==='img'?' inkd':''),style:'fill:none'},g);
+  el('path',{d:`M${x-9},${y+d*15}L${x},${y}L${x+9},${y+d*15}Z`,class:'inkA'},g);
+  el('text',{x:x+12,y:y+(d>0?4:14),class:'lbs'},g,k.t==='img'?'我的像':'我的物體')}}
+function inkCheck(q){const obj=q.fig?{x:AX-u,y:AY-OH}:(quiz.ink.find(k=>k.t==='obj')||{}).a,im=(quiz.ink.find(k=>k.t==='img')||{}).a,out=[];
+ if(!q.fig){if(!obj)out.push('✗ 你沒有畫出物體');else{const uu=AX-obj.x,su=u;u=uu;const z=uu>0?zone():'';u=su;
+  out.push(uu>0&&z===zone()?'✓ 物體放的位置正確':`✗ 物體位置不對（題目是「${lens==='concave'?'凹透鏡前方':zone()}」）`)}}
+ if(!obj||obj.x>=AX)return out;const uu=AX-obj.x,hh=AY-obj.y,s=lens==='convex'?1:-1;
+ const inf=s>0&&uu===F;if(inf){out.push(im?'✗ 這個位置不成像，不應該標出像':'✓ 沒有標像，正確（不成像）');return out}
+ const v=1/(1/(s*F)-1/uu),T={x:AX+v,y:AY+hh*v/uu},onPage=T.x>8&&T.x<W-8&&T.y>8&&T.y<H-8;
+ if(!im)out.push(onPage?'✗ 你沒有在圖上標出像':'像在畫面外，所以沒標出來也沒關係');
+ else out.push(Math.hypot(im.x-T.x,im.y-T.y)<22?'✓ 你標的像位置正確':'✗ 你標的像位置不對，對照紫色箭頭');
+ return out}
+const pStr=()=>{const p=props();return p?`${p.up}、${p.size}的${p.kind}`:'不成像'};
+const where=()=>lens==='concave'?'凹透鏡前方':`凸透鏡的「${zone()}」`;
+function quizRender(){const n=quiz.L.length;
+ if(quiz.done){clear('gRays');clear('gTop');clear('gHl');const sc=quiz.res.filter(Boolean).length;
+  const rows=quiz.L.map((q,i)=>{lens=q.lens;u=q.u;return`<tr><td>${i+1}</td><td>${where()}</td><td>${pStr()}</td><td>${quiz.res[i]?'✓':'✗'}</td></tr>`}).join('');
+  lens='convex';base();
+  panel.innerHTML=`<p class="meta">挑戰結果</p><p class="q" style="font-size:28px;font-weight:900">${sc} / ${n} 題答對</p>
+  <p>${sc===n?'全對！你已經能自己判斷成像性質了。':sc>=n-2?'差一點！看看錯的是哪個位置，回到 ③ 探索再確認一次。':'先回到 ② 再畫幾次光線，或到 ③ 探索整理規律，再來挑戰。'}</p>
+  <table><tr><th>#</th><th>物體位置</th><th>正確答案</th><th></th></tr>${rows}</table>
+  <div class="row" style="margin-top:12px"><button class="btn main" data-act="qnew">再挑戰一次（換新題目）</button><button class="btn" data-act="goto" data-v="explore">③ 探索</button></div>`;return}
+ const q=quiz.L[quiz.i],A=quiz.a;lens=q.lens;u=q.u;
+ $('gRays').style.opacity=quiz.checked?.45:1;if(!quiz.checked){clear('gRays');clear('gTop');base();if(q.fig)drawObj()}renderInk();
+ const pr=props(),G=[['up',['正立','倒立']],['size',['放大','等大','縮小']],['kind',['實像','虛像']]];
+ const cls=(k,x)=>{if(!quiz.checked)return A[k]===x?' on':'';const right=pr&&pr[k]===x;return right?' right':A[k]===x?' wrong':''};
+ let h=`<p class="meta">第 ${quiz.i+1} / ${n} 題　答對 ${quiz.res.filter(Boolean).length} 題　（沒有提示，靠自己判斷！）</p>`;
+ h+=`<p class="q">${q.fig?`物體放在${LN[lens]}前，如左圖。`:`物體放在${where()}。`}請在方格紙上${q.fig?'':'畫出物體、'}畫特殊光線、標出像，再判斷成像性質。</p>`;
+ if(!quiz.checked){const T=[...(q.fig?[]:[['obj','物體']]),['ray','光線'],['dash','延長線（虛線）'],['img','像']];
+  h+=`<div class="row">${T.map(([k,n])=>`<button class="btn${quiz.tool===k?' on':''}" data-act="tool" data-v="${k}">${n}</button>`).join('')}<button class="btn" data-act="undo">復原</button><button class="btn" data-act="wipe">清除</button></div>
+  <p class="meta">${quiz.tool==='ray'||quiz.tool==='dash'?'點起點、再點終點，畫一段直線（會對齊格點）':'在方格紙上點箭頭的頂端'}</p>`}
+ h+=G.map(([k,o])=>`<div class="row">${o.map(x=>`<button class="btn${cls(k,x)}" data-act="qa" data-k="${k}" data-v="${x}" ${A.none&&!quiz.checked?'disabled style="opacity:.4"':''}>${x}</button>`).join('')}</div>`).join('');
+ const nc=quiz.checked?(!pr?' right':A.none?' wrong':''):(A.none?' on':'');
+ h+=`<div class="row"><button class="btn${nc}" data-act="qa" data-k="none" data-v="1">不成像</button></div>`;
+ const ready=A.none||(A.up&&A.size&&A.kind);
+ if(!quiz.checked)h+=`<div class="row"><button class="btn main" data-act="qsub" ${ready?'':'disabled style="opacity:.4"'}>送出答案</button></div>`;
+ else{const ok=quiz.res[quiz.i];const off=pr&&!(geo().I.x>8&&geo().I.x<W-8&&geo().I.y>8&&geo().I.y<H-8);
+  h+=`<div class="hint">作圖檢查：<br>${inkCheck(q).join('<br>')}</div><p class="fb ${ok?'ok':'bad'}">${ok?'✓ 性質答對了！':'✗ 性質不對喔。'}物體在${where()}：${pStr()}。${off?'（像距很遠，像在畫面外）':''}</p><p class="meta">左圖淡色的是正確的特殊光線，和你畫的（深色）對照看看。</p>
+  <div class="row"><button class="btn main" data-act="qnext">${quiz.i+1<n?'下一題':'看結果'}</button></div>`}
+ panel.innerHTML=h}
+
+function setMode(m){mode=m;clear('gInk');clear('gHl');$('gRays').style.opacity=1;if(quiz)quiz.pend=null;document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.m===m));
+ $('legend').innerHTML=m==='terms'?'':`<span><i style="background:var(--r1)"></i>平行主軸入射</span><span><i style="background:var(--r2)"></i>通過鏡心</span>${lens==='convex'?'<span><i style="background:var(--r3)"></i>通過焦點入射</span>':''}<span><i style="background:#8b4fc7"></i>像（虛線＝虛像）</span>`;
+ if(m==='terms'){lens='convex';known=new Set();startSteps(termSteps())}
+ else if(m==='draw'){if(!POS[lens].some(p=>p[0]===u))u=POS[lens][0][0];base();startSteps(drawSteps())}
+ else if(m==='quiz'){if(!quiz||quiz.done)newQuiz();quizRender()}
+ else{guess={};revealed=false;drawExplore();renderExplore()}}
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setMode(b.dataset.m)});
+setMode('terms');
+}
+</script>
+</body>
+</html>
