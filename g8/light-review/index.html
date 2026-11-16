@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>光五關迷思提示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>:root{
+  --bg:#EFF2F5; --panel:#FFFFFF; --ink:#1B2430; --muted:#566273; --line:#CBD3DD;
+  --wave:#2C5D8A; --wave-soft:#DCE7F2; --rope:#8A4B22; --rope-soft:#F4E6DA;
+  --ok:#2F6B3A; --ok-soft:#E1EFE3;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.7}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 48px;display:grid;gap:16px}
+header{display:grid;gap:4px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--wave);font-weight:700}
+h1{font-family:var(--display);font-size:clamp(22px,5vw,30px);margin:0;line-height:1.3}
+.sub{color:var(--muted);margin:0;font-size:15px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+h2{font-size:19px;margin:0}
+p{margin:0}
+.btn{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:10px;font-weight:700;font-size:16px;border:2px solid var(--wave);color:var(--wave);background:transparent;text-align:center}
+.btn.primary{background:var(--wave);color:var(--panel)}
+.btn.rope{border-color:var(--rope);color:var(--rope)}
+.btn.rope.primary{background:var(--rope);color:var(--panel)}
+.btn:focus-visible{outline:3px solid var(--rope);outline-offset:2px}
+.btn[disabled]{opacity:.4;cursor:default}
+.note{font-size:14px;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+ol.ans{margin:0;padding-left:1.4em;display:grid;gap:8px}
+b.a{color:var(--ok);background:var(--ok-soft);border-radius:4px;padding:0 4px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+th{background:var(--bg);font-weight:700}
+.tbl{overflow-x:auto}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+[hidden]{display:none!important}
+
+.opts{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.opts li{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.opts li.right{border-color:var(--ok);background:var(--ok-soft);font-weight:700}
+.step{border-left:5px solid var(--rope);background:var(--rope-soft);border-radius:10px;padding:12px 14px;display:grid;gap:4px}
+.step.exp{border-color:var(--ok);background:var(--ok-soft)}
+.step .k{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--rope)}
+.step.exp .k{color:var(--ok)}
+.nav{display:flex;justify-content:space-between;gap:10px}
+.qno{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--wave)}
+</style></head><body><div class="wrap">
+<header><div class="eyebrow">八年級自然・4-1～4-2 複習單・第 5 關</div><h1 id="title">破解迷思：提示</h1>
+<p class="sub">先看提示一，自己再想一次；還不會再看提示二；最後才看解析。</p></header>
+<section>
+<p><span class="qno" id="no"></span> <span class="note" id="sec"></span></p>
+<p id="stem" style="font-weight:700"></p>
+<ul class="opts" id="opts"></ul>
+</section>
+<section>
+<div class="row"><button class="btn rope primary" id="b1" type="button">看提示一</button></div>
+<div class="step" id="s1" hidden><span class="k">提示一</span><p id="h1"></p></div>
+<div class="row" id="r2" hidden><button class="btn rope" id="b2" type="button">還是不會，看提示二</button></div>
+<div class="step" id="s2" hidden><span class="k">提示二</span><p id="h2"></p></div>
+<div class="row" id="r3" hidden><button class="btn" id="b3" type="button">看答案與解析</button></div>
+<div class="step exp" id="s3" hidden><span class="k">答案與解析</span><p id="ans" style="font-weight:700"></p><p id="exp"></p></div>
+</section>
+<div class="nav"><button class="btn" id="prev" type="button">← 上一題</button><button class="btn" id="next" type="button">下一題 →</button></div>
+</div>
+<script>
+const Q=[{"sec":"4-1","stem":"我們晚上能看見月亮，是因為：","opts":["月亮自己會發光","月亮反射太陽光，光進入我們的眼睛","眼睛發出的光照到月亮","天空很黑，所以月亮顯得比較亮"],"ans":1,"h1":"先判斷：月亮是不是「光源」？看得見東西，光要從哪裡跑到哪裡？","h2":"看得見一個物體，一定是光從物體進入眼睛。眼睛只會接收光，不會發出光。月亮自己會不會發光？","exp":"月亮不是光源，它反射太陽光，反射光進入眼睛，我們才看得見。(C) 是常見迷思：眼睛不會發光。"},{"sec":"4-1","stem":"針孔成像時，把很小的圓形針孔換成一樣很小的三角形針孔，紙屏上蠟燭的像會：","opts":["變成三角形的光點","仍然是倒立的蠟燭形狀","變成正立的蠟燭","完全消失"],"ans":1,"h1":"紙屏上的像，形狀是由「針孔」決定，還是由「光源」決定？","h2":"想像蠟燭火焰上每一點的光，都穿過那個很小的孔直直走到紙屏。孔的形狀會改變這些光的路線嗎？","exp":"針孔夠小時，像的形狀由光源決定，與針孔形狀無關，仍是倒立的蠟燭像。"},{"sec":"4-1","stem":"針孔成像時，把針孔慢慢戳大，紙屏上的像會：","opts":["更亮、更清楚","更亮，但比較模糊","更暗、更清楚","變成正立"],"ans":1,"h1":"孔變大，進來的光變多還是變少？","h2":"孔大時，蠟燭同一點發出的光可以從孔的不同位置穿過，落在紙屏上不同的點。這樣像會變清楚還是糊掉？","exp":"針孔變大，進入的光變多，像變亮；但同一點的光散成一片，像變模糊。像仍是倒立的。"},{"sec":"4-1","stem":"織女星距離地球約 25 光年。下列敘述何者正確？","opts":["光年是時間單位，表示織女星有 25 年那麼老","我們現在看到的織女星光，大約是 25 年前發出的","光年是速度單位，表示光跑得很快","搭飛機去織女星大約要 25 年"],"ans":1,"h1":"「光年」這個名詞有「年」字，但它是哪一種物理量的單位？","h2":"1 光年＝光走一年的「距離」。距離 25 光年，代表光要走多久才到地球？","exp":"光年是距離單位。織女星的光要走約 25 年才到地球，所以我們看到的是它約 25 年前發出的光。"},{"sec":"4-1","stem":"關於光的傳播，下列何者正確？","opts":["光和聲音一樣，需要介質才能傳播","光在水中比在空氣中快","光在真空中傳得最快","光速和聲速差不多"],"ans":2,"h1":"想想太陽光怎麼穿過太空來到地球。太空裡有空氣嗎？","h2":"對照第 4 關的光速表：真空、空氣、水、玻璃，哪一個最快？光速大約是聲速的幾倍？","exp":"光不需要介質，在真空中最快（約 3×10⁸ m/s），進入水、玻璃會變慢，比聲速快得多。(A)(B) 是把聲音的規律套到光上的迷思。"},{"sec":"4-2","stem":"雷射光照到平面鏡上，光線和鏡面的夾角是 40°，反射角是：","opts":["40°","50°","80°","100°"],"ans":1,"h1":"入射角、反射角是從哪一條線量起？是鏡面嗎？","h2":"先畫出法線（垂直鏡面）。光線和鏡面夾 40°，那光線和法線夾幾度？","exp":"入射角＝90°－40°＝50°，反射角＝入射角＝50°。(A) 是從鏡面量角的迷思。"},{"sec":"4-2","stem":"粗糙的牆壁會發生漫射。關於漫射，下列何者正確？","opts":["漫射不遵守反射定律，光是亂彈的","每一條光線仍遵守反射定律，只是表面凹凸不平，每一點的法線方向不同","漫射的光不會進入我們的眼睛","只有鏡子才會反射光，牆壁不會"],"ans":1,"h1":"把粗糙表面放大來看，它是由許多小小的、方向不一樣的平面組成的。","h2":"每一個小平面上，光都怎麼反射？反射光方向不同，是因為什麼不同？","exp":"漫射的每一條光線都遵守反射定律；表面凹凸使各點法線方向不同，反射光才射向各方向。我們能看見牆壁，正是因為漫射光進入眼睛。"},{"sec":"4-2","stem":"小華從離平面鏡 3 m 處走到 1 m 處，鏡中的像：","opts":["變大","變小","大小不變，像和人的距離變近","大小不變，像和人的距離不變"],"ans":2,"h1":"平面鏡成像的性質：像和物體的大小關係是什麼？","h2":"「看起來變大」是因為離眼睛變近。像到鏡子的距離＝人到鏡子的距離，人走近時，像會怎樣？","exp":"平面鏡的像和物體等大，所以大小不變；像距＝物距，人走近 2 m，像也走近 2 m，人和像的距離由 6 m 變成 2 m。"},{"sec":"4-2","stem":"平面鏡中的像是「虛像」，原因是：","opts":["像看起來比較模糊","鏡子後面並沒有實際光線會聚，紙屏接不到","像和物體左右相反","像比物體小"],"ans":1,"h1":"回到第 1 關：實像和虛像的差別，看的是什麼？","h2":"在鏡子後面放一張紙屏，能接到像嗎？光真的有跑到鏡子後面嗎？","exp":"平面鏡的像是反射光的延長線交會而成，鏡子後面沒有實際光線，紙屏接不到，所以是虛像。左右相反、模糊、大小都不是判斷依據。"},{"sec":"4-2","stem":"我們從平面鏡中看見蠟燭的像，光的路徑是：","opts":["眼睛 → 鏡子 → 蠟燭","蠟燭 → 鏡子 → 眼睛","鏡子後面的像 → 眼睛","蠟燭 → 鏡子後面的像 → 眼睛"],"ans":1,"h1":"光是從哪裡出發的？眼睛會發光嗎？","h2":"鏡子後面真的有光嗎？（想想上一題）光從蠟燭出發，碰到什麼才轉彎進入眼睛？","exp":"光從蠟燭出發，在鏡面反射後進入眼睛。大腦以為光是從鏡子後面直線射來，所以覺得像在鏡子後面。"},{"sec":"4-2","stem":"路口轉角的反光鏡、商店角落的大圓鏡都用凸面鏡，主要原因是：","opts":["可以把東西放大看清楚","成倒立的像比較好認","可以看到比較大的範圍","可以把光會聚起來"],"ans":2,"h1":"凸面鏡會讓光會聚，還是發散？","h2":"凸面鏡成的像是正立、放大還是縮小？像縮小了，同一面鏡子能裝進比較多還是比較少的景物？","exp":"凸面鏡使光發散，成正立、縮小的虛像，視野範圍大，適合用來觀察路口或商店角落。"},{"sec":"4-2","stem":"拿湯匙的內凹面（凹面鏡）照自己的臉，臉離湯匙稍遠時，看到的像是：","opts":["正立、放大","倒立、縮小","正立、縮小","和平面鏡一樣正立、等大"],"ans":1,"h1":"凹面鏡的成像和物體到鏡子的距離有關：很近時和稍遠時不一樣。","h2":"湯匙的焦點離湯匙很近（約 1～2 cm）。臉離湯匙稍遠時，已經在焦點外很遠的地方，凹面鏡成的是哪一種像？","exp":"物體在凹面鏡焦點外較遠處，成倒立、縮小的實像；湯匙貼得很近（焦點內）時，才是正立、放大的虛像。(C) 是凸面鏡（湯匙背面）的像。"}];const L=['(A)','(B)','(C)','(D)'];const $=id=>document.getElementById(id);
+let i=0;
+function load(){const m=location.hash.match(/^#q(\d+)$/);i=m?Math.min(Q.length,Math.max(1,+m[1]))-1:0;render();}
+function render(){const q=Q[i];
+  $('no').textContent='第 '+(i+1)+' 題';$('sec').textContent='（'+q.sec+'）';$('stem').textContent=q.stem;
+  $('opts').innerHTML='';q.opts.forEach((o,k)=>{const li=document.createElement('li');li.id='o'+k;li.textContent=L[k]+' '+o;$('opts').appendChild(li);});
+  $('h1').textContent=q.h1;$('h2').textContent=q.h2;$('ans').textContent='答案：'+L[q.ans]+' '+q.opts[q.ans];$('exp').textContent=q.exp;
+  ['s1','s2','s3','r2','r3'].forEach(id=>$(id).hidden=true);$('b1').parentElement.hidden=false;
+  $('prev').disabled=i===0;$('next').disabled=i===Q.length-1;window.scrollTo(0,0);}
+$('b1').onclick=()=>{$('s1').hidden=false;$('b1').parentElement.hidden=true;$('r2').hidden=false;};
+$('b2').onclick=()=>{$('s2').hidden=false;$('r2').hidden=true;$('r3').hidden=false;};
+$('b3').onclick=()=>{$('s3').hidden=false;$('r3').hidden=true;$('o'+Q[i].ans).classList.add('right');};
+$('prev').onclick=()=>{location.hash='q'+i;};$('next').onclick=()=>{location.hash='q'+(i+2);};
+window.addEventListener('hashchange',load);load();
+</script></body></html>
