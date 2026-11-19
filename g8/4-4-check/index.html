@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>凸透鏡成像・自我核對</title>
+<style>
+:root{--bg:#EFF2F5;--panel:#fff;--ink:#1B2430;--muted:#566273;--line:#CBD3DD;--wave:#2C5D8A;--ok:#1E7B4F;--okbg:#E5F4E4;--warn:#8A4B22;--warnbg:#F9ECE7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.7;font-size:17px}
+.wrap{max-width:760px;margin:0 auto;padding:24px 16px 64px;display:grid;gap:14px}
+h1{margin:0;font-size:26px}
+.lead{margin:0;color:var(--muted)}
+.how{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.how ol{margin:6px 0 0;padding-left:1.3em}
+details{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--wave);border-radius:12px}
+summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary .go{font-size:14px;font-weight:700;color:#fff;background:var(--wave);border-radius:999px;padding:3px 12px;white-space:nowrap}
+details[open] summary .go{background:var(--muted)}
+details[open] summary .go::after{content:"（已打開）"}
+.body{padding:0 16px 16px;display:grid;gap:10px}
+.q{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:#F6F8FA}
+.q .t{color:var(--muted);font-size:15px}
+.a{font-weight:700}
+.a b,.hl{color:var(--ok)}
+.tip{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:15px}
+.tip b{color:var(--warn)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{border:1px solid var(--line);padding:6px 6px;text-align:center;vertical-align:middle}
+th{background:#DCE7F2}
+td:first-child{text-align:left;white-space:nowrap}
+.scroll{overflow-x:auto}
+svg{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:10px}
+.done{margin-top:8px;background:var(--okbg);color:var(--ok);border-radius:12px;padding:12px 16px;font-weight:700}
+@media (max-width:520px){body{font-size:16px}th,td{font-size:13px;padding:4px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>凸透鏡的成像觀察・自我核對</h1>
+  <p class="lead">八年級自然 4-4　學習單與紀錄簿 p.42～p.44</p>
+
+  <div class="how"><b>怎麼核對？</b>
+    <ol>
+      <li>一次只打開<b>一個</b>部分，先自己對照，不要一口氣全部看完。</li>
+      <li>寫錯的地方用<b>紅筆</b>訂正，不要擦掉原本的答案。</li>
+      <li>看完說明還是不懂的題目，在題號旁邊畫「？」，等一下問老師或顧問。</li>
+    </ol>
+  </div>
+
+  <details>
+    <summary>一、先畫畫看：物體在 2F 的成像<span class="go">看答案</span></summary>
+    <div class="body">
+      <svg viewBox="0 0 760 330" role="img" aria-label="物體在 2F 時，在另一側 2F 成倒立等大實像">
+        <defs>
+          <pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#E2E8F0"/></pattern>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1B2430"/></marker>
+          <marker id="rr" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#C2410C"/></marker>
+          <marker id="br" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2C5D8A"/></marker>
+        </defs>
+        <rect x="40" y="20" width="680" height="280" fill="url(#g)"/>
+        <line x1="40" y1="160" x2="720" y2="160" stroke="#1B2430" stroke-width="1.5"/>
+        <g stroke="#1B2430" stroke-width="2"><line x1="220" y1="154" x2="220" y2="166"/><line x1="300" y1="154" x2="300" y2="166"/><line x1="460" y1="154" x2="460" y2="166"/><line x1="540" y1="154" x2="540" y2="166"/></g>
+        <g font-size="15" font-weight="700" fill="#1B2430" text-anchor="middle"><text x="220" y="184">2F</text><text x="300" y="184">F</text><text x="448" y="184">F</text><text x="562" y="184">2F</text></g>
+        <line x1="380" y1="160" x2="380" y2="30" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar)"/>
+        <line x1="380" y1="160" x2="380" y2="290" stroke="#94A3B8" stroke-width="2" marker-end="url(#ar)"/>
+        <!-- 光線①：平行主軸 → 過右側 F -->
+        <polyline points="220,100 300,100 380,100" fill="none" stroke="#C2410C" stroke-width="2.5" marker-mid="url(#rr)"/>
+        <polyline points="380,100 500,190 580,250" fill="none" stroke="#C2410C" stroke-width="2.5" marker-mid="url(#rr)"/>
+        <!-- 光線②：過鏡心直線前進 -->
+        <polyline points="220,100 300,130 380,160 500,205 580,235" fill="none" stroke="#2C5D8A" stroke-width="2.5" marker-mid="url(#br)"/>
+        <!-- 物體與像 -->
+        <line x1="220" y1="160" x2="220" y2="100" stroke="#1E7B4F" stroke-width="4" marker-end="url(#ar)"/>
+        <line x1="540" y1="160" x2="540" y2="220" stroke="#1E7B4F" stroke-width="4" stroke-dasharray="0" marker-end="url(#ar)"/>
+        <g font-size="16" font-weight="700" fill="#1B2430"><text x="200" y="100">A</text><text x="200" y="152">B</text><text x="512" y="242">A′</text><text x="548" y="152">B′</text></g>
+        <g font-size="14"><text x="400" y="92" fill="#C2410C">① 平行主軸 → 通過 F</text><text x="236" y="200" fill="#2C5D8A">② 通過鏡心直走</text></g>
+      </svg>
+      <div class="q"><span class="t">像 A′B′ 在透鏡右側的＿＿位置</span><span class="a">右側的 <b>2F</b></span></div>
+      <div class="q"><span class="t">物體 AB 高＿＿格，像 A′B′ 高＿＿格</span><span class="a">都是 <b>3</b> 格</span></div>
+      <div class="q"><span class="t">像是＿＿立、和物體＿＿大的＿＿像</span><span class="a"><b>倒</b>立、<b>等</b>大的<b>實</b>像</span></div>
+      <div class="q"><span class="t">結論</span><span class="a">物體在 2F 時，像也在另一側的 <b>2F</b>，而且和物體<b>一樣大（等大）</b>。</span></div>
+      <div class="tip"><b>常見錯誤：</b>平行主軸的光，折射後要通過<b>另一側</b>的焦點，不是同一側。兩條光線交會的點才是 A′，交點在主軸下方，所以像是倒立的。</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>二、先預測（對照實驗結果）<span class="go">看答案</span></summary>
+    <div class="body">
+      <p style="margin:0">預測沒有對錯，請看實驗結果和你的預測哪裡不一樣，寫進「九、我的結論」第 1 題。</p>
+      <div class="q"><span class="t">1. 白屏要放的位置（像距）</span><span class="a"><b>越來越遠</b></span></div>
+      <div class="q"><span class="t">2. 像的大小</span><span class="a"><b>越來越大</b></span></div>
+      <div class="q"><span class="t">3. 白屏上的 F</span><span class="a"><b>上下顛倒，左右也相反</b></span></div>
+      <div class="q"><span class="t">4. 光源非常靠近透鏡（F 以內）時，白屏</span><span class="a"><b>接不到像</b></span></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>三、動手找出焦距<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">怎麼算焦距</span><span class="a">白屏上的 F 和原本一樣大時，光源到鏡心的距離 ＝ <b>2f</b>，再<b>除以 2</b> 就是焦距 f，寫在<b>紀錄簿 p.42 紀錄 1</b>。</span></div>
+      <div class="tip"><b>自我檢查：</b>這時光源到鏡心、鏡心到白屏的距離應該差不多一樣。如果差很多，代表兩邊沒有保持一樣遠，請重量一次。</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>紀錄簿 p.42 紀錄 2<span class="go">看答案</span></summary>
+    <div class="body">
+      <p style="margin:0">每組的數字不一樣沒關係，請檢查<b>規律</b>有沒有對：</p>
+      <div class="scroll"><table>
+        <tr><th>物距</th><th>像距</th><th>倒立／正立</th><th>縮小／放大</th></tr>
+        <tr><td>&gt; 2f</td><td>在 f 與 2f 之間</td><td>倒立</td><td>縮小</td></tr>
+        <tr><td>2f</td><td>約 2f</td><td>倒立</td><td>等大</td></tr>
+        <tr><td>2f ～ f</td><td>比 2f 遠</td><td>倒立</td><td>放大</td></tr>
+        <tr><td>f</td><td>無像</td><td>無</td><td>無</td></tr>
+        <tr><td>&lt; f</td><td>無像（白屏接不到）</td><td>正立</td><td>放大</td></tr>
+      </table></div>
+      <div class="tip"><b>自我檢查：</b>「2f ～ f」的像距應該比「2f」大。如果你的數字反過來，多半是白屏還沒找到最清楚的位置。</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>五、補充記錄<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="scroll"><table>
+        <tr><th>光源的位置</th><th>白屏接得到像嗎</th><th>看到的 F</th><th>實像／虛像</th></tr>
+        <tr><td>① 2F 以外</td><td>接得到</td><td>倒立</td><td>實像</td></tr>
+        <tr><td>② 剛好在 2F</td><td>接得到</td><td>倒立</td><td>實像</td></tr>
+        <tr><td>③ F 與 2F 之間</td><td>接得到</td><td>倒立</td><td>實像</td></tr>
+        <tr><td>④ 剛好在 F</td><td>接不到</td><td>不成像</td><td>—</td></tr>
+        <tr><td>⑤ F 以內</td><td>接不到</td><td>正立</td><td>虛像</td></tr>
+      </table></div>
+      <div class="tip"><b>自我檢查：</b>「倒立」的 F 要畫成<b>上下顛倒、左右也相反</b>（像把紙轉半圈）。如果你只畫上下顛倒，請訂正。</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>六、找出規律<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">1. 光源在 F 以外時，白屏＿＿接到像，所以是＿＿像</span><span class="a"><b>可以</b>；<b>實</b>像</span></div>
+      <div class="q"><span class="t">2. 光源剛好在 2F 時，像距約等於＿＿ f，像和原本的 F ＿＿大</span><span class="a">約等於 <b>2</b> f；<b>一樣（等）</b>大</span></div>
+      <div class="q"><span class="t">3. 光源剛好在 F 時，白屏怎麼移動都＿＿清楚的像</span><span class="a"><b>找不到（接不到）</b></span></div>
+      <div class="q"><span class="t">4. 光源在 F 以內時，透過透鏡看到的是＿＿像</span><span class="a"><b>虛</b>像</span></div>
+      <div class="q"><span class="t">5. 判斷是實像還是虛像，要看＿＿</span><span class="a">光線有沒有<b>真的會聚</b>成像，也就是<b>白屏接不接得到像</b>：接得到是實像，接不到是虛像</span></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>七、生活應用<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="scroll"><table>
+        <tr><th>用品</th><th>物體的位置</th><th>像的特性</th></tr>
+        <tr><td>照相機</td><td>① 2F 以外</td><td>倒立、縮小的實像</td></tr>
+        <tr><td>投影機</td><td>③ F 與 2F 之間</td><td>倒立、放大的實像</td></tr>
+        <tr><td>放大鏡</td><td>⑤ F 以內</td><td>正立、放大的虛像</td></tr>
+      </table></div>
+      <div class="q"><span class="t">投影機的底片為什麼要倒著放？</span><span class="a">投影機成的是<b>倒立</b>的像，底片先倒著放，投到螢幕上才會變成正的。</span></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>八、迷思挑戰<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">遮住透鏡上半部，白屏上的像會？</span><span class="a"><b>像還是完整，但變暗</b></span></div>
+      <div class="q"><span class="t">為什麼？</span><span class="a">F 上每一個點發出的光，經過透鏡的上半部和下半部，都會<b>會聚到同一個像點</b>。遮住上半部只是讓到達的<b>光變少</b>，每個像點都還在，所以像完整但變暗。</span></div>
+      <div class="tip"><b>常見錯誤：</b>以為「遮住上半部，像就少了上半部」。像的上半部和下半部，不是分別由透鏡的上半部和下半部負責的。</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>九、我的結論（參考寫法）<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">2. 凸透鏡什麼時候成實像、什麼時候成虛像？</span><span class="a">物體在<b>焦點（F）以外</b>，成<b>倒立的實像</b>；物體在<b>焦點以內</b>，成<b>正立、放大的虛像</b>。</span></div>
+      <p style="margin:0;color:var(--muted)">用自己的話寫也可以，只要有說到「焦點以外／以內」和「實像／虛像」就算對。</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>紀錄簿 p.43 問題與討論<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">1. f 公分代表什麼意義？</span><span class="a">平行的太陽光經透鏡折射<b>會聚成點</b>的距離（焦點到透鏡中心的距離）。</span></div>
+      <div class="q"><span class="t">2. 呈現在屏幕上的像，共通性質？燈具靠近透鏡時？</span><span class="a"><b>上下顛倒</b>、<b>左右相反</b>；成像會<b>遠離</b>透鏡，且逐漸變<b>大</b>。</span></div>
+      <div class="q"><span class="t">3. 用眼睛透過透鏡看到的像，共通性質？燈具靠近透鏡時？</span><span class="a">都是<b>正立</b>，且較原物<b>放大</b>；燈具逐漸靠近透鏡，成像會逐漸<b>縮小</b>。</span></div>
+      <div class="tip"><b>常見錯誤：</b>很多人寫「再靠近，像變大」。放大鏡貼著書看，字反而比較小；稍微拿遠一點（還在焦點以內），字才變大。</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>十、題組小提示<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">1. A、B、O、C、D 各點之間的距離皆等於什麼？</span><span class="a"><b>焦距</b></span></div>
+      <div class="q"><span class="t">2. O 點在透鏡的哪裡？</span><span class="a">透鏡的中心，也就是<b>鏡心</b></span></div>
+      <div class="q"><span class="t">3. 離 O 點 1 個焦距、2 個焦距的是哪兩點？</span><span class="a">1 個焦距：<b>B、C</b>（兩側的 F）；2 個焦距：<b>A、D</b>（兩側的 2F）</span></div>
+      <div class="q"><span class="t">4. 甲～己各區的範圍</span><span class="a">甲：左側 <b>2F 以外</b>　乙：左側 <b>F 與 2F 之間</b>　丙：左側 <b>F 以內</b><br>丁：右側 F 以內　戊：右側 <b>F 與 2F 之間</b>　己：右側 2F 以外</span></div>
+    </div>
+  </details>
+
+  <details>
+    <summary>紀錄簿 p.44 實驗題組<span class="go">看答案</span></summary>
+    <div class="body">
+      <div class="q"><span class="t">(1) 關於此實驗的敘述</span><span class="a">答案 <b>(A)</b>：在探討不同物距的成像情形。透鏡的規格是<b>控制</b>變因、物距是<b>操作</b>變因、成像情形是<b>應變</b>變因。</span></div>
+      <div class="q"><span class="t">(2) 蠟燭在甲區</span><span class="a">答案 <b>(B)</b>：甲區在 2F 以外，像在鏡後 F 與 2F 之間（戊區），成<b>倒立縮小實像</b>。</span></div>
+      <div class="q"><span class="t">(3) 遮住透鏡上半部</span><span class="a">答案 <b>(B)</b>：大小不變，亮度變暗（跟學習單八、迷思挑戰一樣）。</span></div>
+      <div class="q"><span class="t">(4) 透過凸透鏡看直尺</span><span class="a">答案 <b>(A)</b>：圖中的尺是倒立縮小，代表在 2F 以外的甲區；移到乙區（F 與 2F 之間）會變成倒立放大，所以成像變大。</span></div>
+    </div>
+  </details>
+
+  <div class="done">全部核對完：把紅筆訂正的地方拍給組長確認，再交學習單。</div>
+</div>
+</body>
+</html>
